@@ -1,9 +1,22 @@
 import type { ThemePreference } from '@/types/domain';
+
 type Listener = () => void;
-let theme: ThemePreference = 'system';
+type UiState = { theme: ThemePreference };
+
+let state: UiState = { theme: 'system' };
 const listeners = new Set<Listener>();
+
+const emit = () => listeners.forEach((listener) => listener());
+
 export const uiStore = {
-  getSnapshot: () => ({ theme }),
-  subscribe(listener: Listener) { listeners.add(listener); return () => listeners.delete(listener); },
-  setTheme(value: ThemePreference) { theme = value; listeners.forEach((listener) => listener()); },
+  getSnapshot: () => state,
+  subscribe(listener: Listener) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
+  setTheme(theme: ThemePreference) {
+    if (state.theme === theme) return;
+    state = { ...state, theme };
+    emit();
+  },
 };
