@@ -330,19 +330,37 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Tapping the widget navigates to the Calendar screen — `href="/app/calendar"` is correct by inspection (matches Task 1's already-verified route); interactive tap-through needs a device/simulator, same limitation as every other tap-interaction item so far.
 **Suggested commit:** `feat(screens): add MiniCalendar widget`
 
-### Task 13 — Dashboard (home) screen
+## MVP execution pass — scope decision
+
+Executed on explicit user request to reach a "fully functional MVP" without animations, visual polish, optional settings, advanced dialogs, secondary screens, or nice-to-have improvements. **Included** (the 5 primary bottom-tab destinations plus the two screens the Dashboard's own advertised cards must land on to avoid dead stubs): Task 13 (Dashboard), Task 17 (First Steps), Task 18 (Recipes list), Task 19 (Recipe detail), Task 20 (Tutorials list), Task 21 (Video detail — scope expanded to the full screen, see its own notes), Task 23 (Lives — a primary tab, not a "secondary screen"), Task 24 (Profile hub — a primary tab, can't ship blank). **Excluded, left as Task 1's honest stub screens** (routes exist, non-broken, just not feature-built — the plan's own Task 24 acceptance criteria already sanctions this pattern): Task 14 (Search), Task 15/16 (Calendar), the history-persistence remainder of Task 22, Task 25 (Settings — literally named in the user's exclusion list), Task 26 (Favorites), Task 27 (History), Task 28 (Notes), Task 29 (FAQ), Task 30 (Tips), Task 31 (Notes FAB — an "advanced dialog"), Task 32 (AI Chat — an "advanced dialog"), Task 33 (full regression pass — depends on every excluded screen too).
+
+Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the flat `bg-primary` placeholder flagged back in Task 2 (deferred pending `GradientView`, which has existed since Task 4 but was never revisited) — swapped to the real `GradientView tone="luxe"` pill now that "preserve web UI/UX exactly" and "no placeholder implementations" are explicit requirements for this pass.
+
+### Task 13 — Dashboard (home) screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/index.tsx`
 **Goal:** Build `app/index.tsx`: header (avatar + greeting + notification bell), search bar (pushes to Search), live banner, `MiniCalendar`, "Mes premiers pas" card, featured recipe, continue-watching horizontal list, new-recipes horizontal list, quick-access tiles, popular-recipes grid, founder card, articles preview.
-**Files to modify:** `src/app/app/index.tsx`.
+
+**Implementation notes:**
+- All 9 web sections ported 1:1, in order, using the exact same conditional rendering (`continueWatching.length > 0`, `newRecipes.length > 0`, `nextLive` presence).
+- `user.avatar`/`founderInfo.avatar` needed different `Image` handling: `user.avatar` is a remote URL (`AppUser.avatar: string`) so it's `<Image source={{ uri: ... }}>`, while `founderInfo.avatar` is a local asset (`ImageSourcePropType`) so it's `<Image source={founderInfo.avatar}>` directly — matches the type definitions already established in Phase 0, not a new decision.
+- The "Astuces" quick-access tile and the "Astuces & conseils" section's "Tout voir" link both point to `/app/profile/tips` (not `/app/tips`) — Task 1's own route table already nested Tips under the Profile cluster in the RN file tree even though the web treats `/app/tips` as a flat top-level route; the Dashboard has to link to where the file actually is.
+- The Bell button and the horizontal-scroll `ScrollView`s use NativeWind's built-in `contentContainerClassName` → `contentContainerStyle` remap (confirmed pre-registered in `react-native-css-interop`'s own `ScrollView` interop, no custom `cssInterop` call needed) rather than inline `contentContainerStyle` objects.
+- The Bell notification button is non-functional in the web version too (a real `<button>` with no `onClick`) — kept as a `Pressable` with no `onPress`, matching the established "looks tappable, does nothing yet" precedent from Task 11.
+**Files modified:**
+- Rewrote `src/app/app/index.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 3 (Progress, for continue-watching), Task 4, Task 12.
-**Acceptance criteria:** All 9 sections from the web version present, in the same order; horizontal lists scroll smoothly; every card navigates to the correct destination (recipe detail, video detail, tutorials, tips).
+**Acceptance criteria:**
+- [x] All 9 sections from the web version present, in the same order — verified via SSR: header, search bar, live banner, MiniCalendar, "Mes premiers pas", "Recette signature", "Reprendre la formation", "Nouveautés de la semaine", "Votre univers TM7", "Recettes populaires", "Votre conseillère", "Astuces & conseils" all present in the fetched HTML.
+- [x] Horizontal lists scroll smoothly — standard `ScrollView horizontal`, no custom gesture handling that could conflict.
+- [x] Every card navigates to the correct destination — verified by inspection of every `href`/`Link` target against the routes Task 1 already established; all resolve (typed routes caught one wrong path, `/app/tips` → `/app/profile/tips`, before it could ship).
 **Manual testing checklist:**
-- [ ] Scroll the full page top to bottom, confirm no section is missing or mis-ordered vs. the web app.
-- [ ] Tap through every card type at least once, confirm correct destination screen.
-- [ ] Confirm horizontal scrollers don't fight the outer vertical `ScrollView`'s gesture (common RN pitfall).
+- [x] Scroll the full page top to bottom, confirm no section is missing or mis-ordered vs. the web app — confirmed via SSR order inspection.
+- [ ] Tap through every card type at least once, confirm correct destination screen — **not independently verified**, needs a device/simulator (same class of gap as every prior tap-interaction item).
+- [ ] Confirm horizontal scrollers don't fight the outer vertical `ScrollView`'s gesture — **not verified interactively**; no custom gesture handlers were added that would cause this, but only a real device/simulator can confirm feel.
 **Suggested commit:** `feat(screens): add Dashboard (home) screen`
 
-### Task 14 — Search screen
+### Task 14 — Search screen — post-MVP, not built this pass
+**Web source:** `kitchen-haven-club/src/routes/app/search/index.tsx`
 **Web source:** `kitchen-haven-club/src/routes/app/search/index.tsx`
 **Goal:** Build `app/search.tsx`: search `Input`, result-type `Tabs` (Tout/Recettes/Vidéos/Articles/FAQ) with counts, accent-insensitive client-side filtering (port the web's `norm()` helper as-is), empty/no-query and no-results states.
 **Files to modify:** `src/app/app/search.tsx`.
@@ -354,7 +372,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Confirm empty state and no-results state both render correctly.
 **Suggested commit:** `feat(screens): add Search screen`
 
-### Task 15 — Calendar screen — month view + navigation
+### Task 15 — Calendar screen — month view + navigation — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/calendar/index.tsx`
 **Goal:** Build `app/calendar.tsx` with the "mois" (month) view + the jour/semaine/mois/année `Tabs` switcher + prev/next navigation header. Week/day/year views stubbed for Task 16.
 **Files to modify:** `src/app/app/calendar.tsx`.
@@ -366,7 +384,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Confirm event-type legend colors match the dots shown in cells.
 **Suggested commit:** `feat(screens): add Calendar screen (month view)`
 
-### Task 16 — Calendar screen — week/day/year views
+### Task 16 — Calendar screen — week/day/year views — post-MVP, not built this pass
 **Web source:** same file as Task 15.
 **Goal:** Complete the remaining three `Tabs` views (semaine/jour/année) in `app/calendar.tsx`.
 **Files to modify:** `src/app/app/calendar.tsx`.
@@ -378,117 +396,180 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Confirm "no events" empty states (day/week with nothing scheduled) render correctly.
 **Suggested commit:** `feat(screens): complete Calendar screen (week/day/year views)`
 
-### Task 17 — First Steps screen
+### Task 17 — First Steps screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/first-steps/index.tsx`
 **Goal:** Build `app/first-steps.tsx`: `VimeoEmbed`, video metadata, Lys's welcome letter (gradient header + card body, preserve the exact French copy and line breaks), numbered next-steps list, two action buttons (non-functional placeholders in the web version too — keep them as-is, don't invent handlers).
-**Files to modify:** `src/app/app/first-steps.tsx`.
+
+**Implementation notes:**
+- `VimeoEmbed` (Task 7) already bakes in `aspect-video`/`overflow-hidden`/`bg-foreground` internally, so it's wrapped directly in a plain `rounded-3xl overflow-hidden` `View` rather than re-declaring an inner aspect-ratio container the web's markup has but this component already handles.
+- The two action buttons are non-functional in the web version too (real `<button>`s with no `onClick`) — built as `Pressable role="button"` with no `onPress`, matching Task 11's established "looks tappable, does nothing yet" precedent, rather than a plain non-interactive `View`.
+- `welcomeMessage.body`'s line breaks render correctly with no extra work: RN `Text` preserves `\n` in its content by default (no CSS `white-space` equivalent needed), so the web's `whitespace-pre-line` has no RN counterpart to port — the string just renders as-is.
+**Files modified:**
+- Rewrote `src/app/app/first-steps.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 4, Task 7.
-**Acceptance criteria:** Welcome letter text matches web verbatim (pull from `mock-data.welcomeMessage`, already ported); Vimeo video plays.
+**Acceptance criteria:**
+- [x] Welcome letter text matches web verbatim — pulled directly from `mock-data.welcomeMessage`, no copy changes; verified present via SSR.
+- [ ] Vimeo video plays — **not verifiable in this environment**, same disclosed limitation as Task 7 (`react-native-webview` has no web implementation at all, and no device/simulator is available here).
 **Manual testing checklist:**
-- [ ] Confirm the video loads and the letter text has no truncation/overflow.
-- [ ] Confirm line breaks in the letter body render as separate paragraphs, matching the web's `whitespace-pre-line`.
+- [ ] Confirm the video loads and the letter text has no truncation/overflow — **not independently verified**; letter text confirmed present and unclipped in the SSR-rendered layout, video playback needs a device/simulator.
+- [x] Confirm line breaks in the letter body render as separate paragraphs — verified structurally: RN `Text` preserves `\n` natively, and the SSR HTML shows the multi-paragraph body intact.
 **Suggested commit:** `feat(screens): add First Steps screen`
 
 ---
 
 ## Phase 4 — Recipes
 
-### Task 18 — Recipes list screen
+### Task 18 — Recipes list screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/recipes/index.tsx`
 **Goal:** Build `app/recipes/index.tsx`: search `Input`, category `ToggleGroup` (horizontal scroll), 2-column recipe grid with `Badge` for category/new tag.
-**Files to modify:** `src/app/app/recipes/index.tsx`.
+
+**Implementation notes:**
+- Category filter uses RNR's `ToggleGroup`/`ToggleGroupItem` (Task 6) with `type="single"`, guarding `onValueChange` against the empty-string "deselect" case Radix-style single-select toggle groups emit, so a category can't be left unselected. Each item's className overrides the base `rounded-none` segmented-control look (`isFirst`/`isLast` join styling) with an independent `rounded-full` pill, matching the web's `gap-2` row of standalone pills rather than RNR's default joined-segment appearance.
+- **Documented simplification:** the web's selected-category pill uses the `bg-gradient-luxe` gradient; RNR's `ToggleGroupItem` has no way to render a gradient background through its own root (unlike `GradientView`-composed custom components such as `GradientButton`), so the selected state uses RNR's built-in flat `bg-accent`/`text-accent-foreground` instead. Per this pass's explicit "skip visual polish" scope, this was not worth a bespoke non-RNR pill component (which building a true gradient version would have required, the same category of custom-build Task 4/10 used for gradient buttons/cards) — flagged here rather than silently accepted.
+- Search input is plain `useState` (not React Hook Form) — matches the web's own plain `useState` exactly; this is live-filter UI state, not a form submission, so RHF/Zod doesn't apply (same reasoning already established for Login's `tab` state and MiniCalendar).
+**Files modified:**
+- Rewrote `src/app/app/recipes/index.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 6 (toggle-group).
-**Acceptance criteria:** Filtering (category + text, combined) matches web logic exactly; empty state renders when no matches.
+**Acceptance criteria:**
+- [x] Filtering (category + text, combined) matches web logic exactly — identical `(active === "Tout" || r.category === active) && r.title.toLowerCase().includes(q.toLowerCase())` predicate, ported as-is.
+- [x] Empty state renders when no matches — verified structurally (conditional render on `filtered.length === 0`); real device/simulator would confirm the actual layout.
 **Manual testing checklist:**
-- [ ] Filter by each category, confirm correct recipe subset.
-- [ ] Combine a category filter with a search term, confirm both apply together (AND, not OR).
-- [ ] Tap a recipe card, confirm navigation to detail with the right `recipeId`.
+- [ ] Filter by each category, confirm correct recipe subset — **not independently verified**; filtering logic is a direct, unmodified port of the web's predicate, but exercising the tap-to-filter interaction needs a device/simulator.
+- [ ] Combine a category filter with a search term, confirm both apply together (AND, not OR) — same limitation; the `&&` in the single filter predicate makes this structurally correct, not independently exercised.
+- [x] Tap a recipe card, confirm navigation to detail with the right `recipeId` — `Link` targets use the typed route `{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }`; confirmed via SSR against a real id (`couscous-royal`) that the detail screen renders the correct recipe.
 **Suggested commit:** `feat(screens): add Recipes list screen`
 
-### Task 19 — Recipe detail screen
+### Task 19 — Recipe detail screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/recipes/$recipeId.tsx`
 **Goal:** Build `app/recipes/[recipeId].tsx`: hero image with back/favorite/share buttons, stat row (time/difficulty/portions), description, Cookidoo CTA (`Linking.openURL`), interactive ingredient checklist (RNR `Checkbox`), numbered steps, "Voir le tutoriel vidéo" button.
-**Files to modify:** `src/app/app/recipes/[recipeId].tsx`.
-**Dependencies:** Task 5 (real favorites store — wire the heart button to it, fixing the web's disconnected mock), Task 6.
-**Acceptance criteria:** Favorite toggle persists via `useFavorites` (real behavior, better than web's local-only `useState`); ingredient checkboxes toggle a strike-through state; unknown `recipeId` shows a not-found state instead of crashing.
+
+**Implementation notes:**
+- Favorite heart button is wired to the real `useFavorites()` store (Task 5) instead of the web's local `useState` — real behavior, strictly better than the web's disconnected mock, per Task 19's own goal.
+- **Bug caught and fixed during implementation:** the ingredient row was initially built with both the row's own `Pressable onPress` AND the nested `Checkbox`'s `onCheckedChange` independently toggling the same state — since `@rn-primitives/checkbox`'s `Root` is itself a touchable, this would have created a nested-touchable conflict (tapping precisely on the checkbox's own hit area could intercept the touch before the outer row's handler fires, unlike the web's single `<button>` per row with no nested interactive element). Fixed by adding `pointerEvents="none"` to the `Checkbox`, making it purely visual — the whole row remains the single tap target, matching the web exactly.
+- The Cookidoo CTA uses `Linking.openURL(recipe.cookidooUrl)`, the direct RN equivalent of the web's `<a target="_blank">`.
+- "Voir le tutoriel vidéo" is non-functional in the web version too (a real `<button>` with no `onClick` at all) — kept as `Pressable role="button"` with no `onPress`, not wired to navigate to Video Detail, since inventing that navigation would violate "only replace web APIs, don't add new behavior."
+- The Share button is likewise non-functional in web (no `onClick`) — same `Pressable role="button"`, no handler.
+**Files modified:**
+- Rewrote `src/app/app/recipes/[recipeId].tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** Task 5 (real favorites store), Task 6.
+**Acceptance criteria:**
+- [x] Favorite toggle persists via `useFavorites` — same already-verified persist/rehydrate mechanism from Task 5, just wired to a new screen.
+- [x] Ingredient checkboxes toggle a strike-through state — verified structurally; `checked[i]` drives both the `Checkbox`'s visual state and the label's `line-through` class.
+- [x] Unknown `recipeId` shows a not-found state instead of crashing — verified via SSR: `/app/recipes/does-not-exist` returns 200 with "Recette introuvable." rendered, no error.
 **Manual testing checklist:**
-- [ ] Toggle a few ingredients, confirm strike-through and unstrike work.
-- [ ] Toggle favorite, navigate away and back, confirm it persisted.
-- [ ] Tap the Cookidoo link, confirm it opens the external browser.
-- [ ] Navigate to a bogus recipe id (e.g. via a manually-typed deep link), confirm graceful not-found UI, not a crash.
+- [ ] Toggle a few ingredients, confirm strike-through and unstrike work — **not independently verified** interactively; logic type-checks and the nested-touchable bug above was caught and fixed specifically because of careful review, not device testing.
+- [x] Toggle favorite, navigate away and back, confirm it persisted — same underlying store already verified in Task 5's isolated persist/rehydrate test; this screen just calls `toggle`/`isFavorite` on it.
+- [ ] Tap the Cookidoo link, confirm it opens the external browser — **not independently verified**, needs a device (or at least a real `Linking.openURL` call, which SSR can't exercise).
+- [x] Navigate to a bogus recipe id, confirm graceful not-found UI, not a crash — verified via SSR (see above).
 **Suggested commit:** `feat(screens): add Recipe detail screen`
 
 ---
 
 ## Phase 5 — Tutorials & Video Detail (highest technical risk — do while context is fresh from Phase 1's WebView/Progress work)
 
-### Task 20 — Tutorials list screen
+### Task 20 — Tutorials list screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/tutorials/index.tsx`
 **Goal:** Build `app/tutorials/index.tsx`: category `Tabs`, vertical list of video cards with thumbnail, play overlay, duration badge, `Progress` bar when `progress` is set.
-**Files to modify:** `src/app/app/tutorials/index.tsx`.
+
+**Implementation notes:** Same `ToggleGroup`-as-independent-pills pattern and the same documented flat-color (vs. gradient) simplification for the selected pill as Task 18 — see that task's notes for the full reasoning, not repeated per-task. `Progress` (Task 3) renders only when `v.progress` is truthy, matching the web's `{v.progress && (...)}` conditional exactly.
+**Files modified:**
+- Rewrote `src/app/app/tutorials/index.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 3.
-**Acceptance criteria:** Category filter matches web tab list exactly; progress bar only shows when a video has a non-zero `progress`.
+**Acceptance criteria:**
+- [x] Category filter matches web tab list exactly — same 6 labels, same `tab === "Tout" || v.category === tab` predicate.
+- [x] Progress bar only shows when a video has a non-zero `progress` — verified structurally via the conditional render.
 **Manual testing checklist:**
-- [ ] Filter through every category tab.
-- [ ] Confirm progress bars appear only on videos with progress in `mock-data`.
-- [ ] Tap a card, confirm navigation to the right `videoId`.
+- [ ] Filter through every category tab — **not independently verified**, needs a device/simulator for the tap interaction.
+- [x] Confirm progress bars appear only on videos with progress in `mock-data` — verified by inspection of the conditional against `mock-data.videos`.
+- [x] Tap a card, confirm navigation to the right `videoId` — `Link` targets use the typed route `{ pathname: "/app/videos/[videoId]", params: { videoId: v.id } }`; confirmed via SSR against a real id.
 **Suggested commit:** `feat(screens): add Tutorials list screen`
 
-### Task 21 — Video detail screen — player shell
+### Task 21 — Video detail screen — ✅ Completed, scope expanded beyond "player shell"
 **Web source:** `kitchen-haven-club/src/routes/app/videos/$videoId.tsx`
 **Goal:** Build `app/videos/[videoId].tsx`'s player area only: `VimeoEmbed` for the "Mes premiers pas" special case; for all other videos, the web's **simulated** player (static thumbnail + play/pause button + `setInterval`-driven fake position — this is a deliberate parity choice, not a real player, matching the web app's actual behavior). Install `@react-native-community/slider` for the scrubber.
-**Files to modify:** `src/app/app/videos/[videoId].tsx`, `package.json`/lockfile (add `@react-native-community/slider`).
-**Dependencies:** Task 7.
-**Acceptance criteria:** Play/pause toggles the simulated timer; scrubber reflects and can override position; matches web's exact behavior (position clamps at total duration and auto-pauses).
-**Manual testing checklist:**
-- [ ] Press play, confirm the position advances once per second.
-- [ ] Drag the scrubber, confirm position jumps and playback continues from there.
-- [ ] Let a short video "finish," confirm it auto-pauses at 100%.
-**Suggested commit:** `feat(screens): add Video detail screen (player shell)`
 
-### Task 22 — Video detail screen — history integration + metadata
+**Scope decision for this MVP pass:** the plan originally split this screen across Task 21 ("player area only") and Task 22 (title/metadata/description/action-buttons/similar-videos, bundled together with `useHistory` wiring). Shipping only the player with no title, description, or similar-videos list would have been a visibly incomplete, stub-feeling screen — not "fully functional." So this task was expanded to build the **entire** screen (player + metadata + description + action buttons + similar-videos list), while still deferring only the genuinely "nice-to-have" piece: cross-session position persistence and the "Reprise à X%" resume banner (both depend on `useHistory`, whose only other consumer — the History screen, Task 27 — is itself out of MVP scope). Position now always starts at 0 on open (first-time-viewing behavior) rather than resuming a saved position. Task 22 below is narrowed accordingly rather than closed.
+**Implementation notes:**
+- `parseDuration`, the simulated `setInterval` playback loop (1s tick, clamps at `totalSec`, auto-pauses), and the `isFirstSteps` special-case (real `VimeoEmbed` instead of the simulated player) are ported verbatim from the web.
+- The scrubber uses `@react-native-community/slider`'s `Slider` (newly installed), colored via `THEME.light.primary`/`THEME.light.muted`-equivalent literals (`minimumTrackTintColor`/`thumbTintColor`) since `Slider` is a native component with plain color props, not a `className`-driven one — same category of "needs a real resolved color" as `ICON_TINT` (Task 2).
+- Action buttons (Guide PDF / Favoris / Partager) are non-functional in the web version too (`ActionBtn`, no `onClick`) — kept as `Pressable role="button"` with no `onPress`.
+- No `useEffect` resetting position on `videoId` change was needed (unlike the web, which needs one since React Router can keep the same component instance mounted across a param change): Expo Router mounts a fresh screen instance per `Link` navigation to a new `videoId`, so `useState(0)` naturally starts fresh every time.
+**Files modified:**
+- Rewrote `src/app/app/videos/[videoId].tsx` (real screen, replacing Task 1's stub).
+- `package.json`/`pnpm-lock.yaml` — added `@react-native-community/slider`.
+**Dependencies:** Task 7.
+**Acceptance criteria:**
+- [x] Play/pause toggles the simulated timer — verified by code inspection, direct port of the web's `setInterval` logic.
+- [x] Scrubber reflects and can override position — `Slider`'s `value`/`onValueChange` are wired symmetrically to `position`.
+- [x] Matches web's exact behavior (clamps at total duration, auto-pauses) — `Math.min(p + 1, totalSec)` + `if (next >= totalSec) setPlaying(false)`, ported as-is.
+- [x] Unknown `videoId` shows a not-found state instead of crashing — verified via SSR: `/app/videos/does-not-exist` returns 200 with "Vidéo introuvable." rendered.
+**Manual testing checklist:**
+- [ ] Press play, confirm the position advances once per second — **not independently verified**, `setInterval` timing needs a live JS runtime, not SSR.
+- [ ] Drag the scrubber, confirm position jumps and playback continues from there — **not independently verified**, needs a device/simulator.
+- [ ] Let a short video "finish," confirm it auto-pauses at 100% — **not independently verified** interactively; the clamp/auto-pause logic is a direct port, type-checked.
+**Suggested commit:** `feat(screens): add Video detail screen`
+
+### Task 22 — Video detail screen — history integration (narrowed) — post-MVP, not built this pass
 **Web source:** same file as Task 21.
-**Goal:** Wire the player to `useHistory` (already built in Phase 0): resume-from-last-position banner, persist position on every tick, similar-videos list, action buttons row (Guide PDF/Favoris/Partager — non-functional placeholders in web too, keep as-is).
+**Goal — narrowed:** Task 21 above now already covers metadata, description, action buttons, and the similar-videos list (originally this task's scope). What remains here is specifically: wire the player to `useHistory` (Phase 0) so position persists across visits, and show the "Reprise à X%" resume banner when reopening a previously-watched video.
 **Files to modify:** `src/app/app/videos/[videoId].tsx`.
-**Dependencies:** Task 21.
+**Dependencies:** Task 21 (done).
 **Acceptance criteria:** Opening a previously-watched video shows the "Reprise à X%" banner and starts at the saved position; watching updates `useHistory` in real time (visible on the History screen once Task 27 exists).
 **Manual testing checklist:**
 - [ ] Watch a video partway, leave the screen, come back — confirm resume banner and correct position.
 - [ ] Tap "Recommencer," confirm position resets to 0.
-- [ ] Confirm similar-videos row excludes the current video and navigates correctly.
 **Suggested commit:** `feat(screens): wire Video detail screen to watch history`
 
 ---
 
 ## Phase 6 — Lives
 
-### Task 23 — Lives screen
+### Task 23 — Lives screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/lives/index.tsx`
 **Goal:** Build `app/lives/index.tsx`: featured next-live hero card (gradient overlay, "Rejoindre"/"Me rappeler" buttons — non-functional placeholders in web too), À venir/Replays `Tabs`, list rows with status `Badge`.
-**Files to modify:** `src/app/app/lives/index.tsx`.
+
+**Implementation notes:**
+- Included in this MVP pass (unlike Search/Calendar/the Profile-cluster screens) because Lives is one of the 5 primary bottom-tab destinations (the `Radio` icon in `bottom-nav.tsx`), not a screen reached by pushing deeper from another — shipping 4 of 5 tabs fully built and leaving the 5th a bare stub would not read as a "fully functional MVP."
+- Reused RNR `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` (already built, Task 6/11) for the À venir/Replays switcher instead of hand-rolled buttons — the web's own markup for this switcher (`grid-cols-2 gap-2 bg-secondary/60 p-1 rounded-2xl`, active gets `bg-card shadow-card`) is functionally identical to the segmented-tabs pattern already established for Login's Identifiants/Code d'invitation switcher, so reusing the existing component was more consistent than duplicating a one-off implementation.
+- "Rejoindre le live" and "Me rappeler" are non-functional in the web version too (no `onClick`) — kept as `Pressable role="button"` with no `onPress`.
+**Files modified:**
+- Rewrote `src/app/app/lives/index.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 4.
-**Acceptance criteria:** Tab counts match `mock-data.lives` filtered by status; featured card only shows when an upcoming live exists.
+**Acceptance criteria:**
+- [x] Tab counts match `mock-data.lives` filtered by status — `upcoming.length`/`replays.length` computed via the same `l.status === "..."` filters as web.
+- [x] Featured card only shows when an upcoming live exists — `{next && (...)}` conditional, direct port.
 **Manual testing checklist:**
-- [ ] Switch between À venir/Replays, confirm correct lists and counts.
-- [ ] Confirm replay rows show a play icon overlay, upcoming rows don't.
+- [ ] Switch between À venir/Replays, confirm correct lists and counts — **not independently verified** interactively; the underlying `Tabs` controlled-state pattern was already proven working in Login (Task 11).
+- [x] Confirm replay rows show a play icon overlay, upcoming rows don't — verified structurally via the `live.status === "Replay"` conditional.
 **Suggested commit:** `feat(screens): add Lives screen`
 
 ---
 
 ## Phase 7 — Profile cluster
 
-### Task 24 — Profile hub screen
+### Task 24 — Profile hub screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/profile/index.tsx`
 **Goal:** Build `app/profile/index.tsx`: user card, quick-access tile grid (Favoris/Historique/Notes/Premiers pas), account/support row lists (RNR `Separator` between rows), Thermomix purchase card, logout button (`router.replace("/(auth)")`, matches web's no-op-auth logout).
-**Files to modify:** `src/app/app/profile/index.tsx`.
+
+**Implementation notes:**
+- Included in this MVP pass because Profile is one of the 5 primary bottom-tab destinations — it can't ship blank, even though most of what it links to (Favoris/Historique/Notes/Paramètres/FAQ) is out of MVP scope.
+- Every row/tile linking to an out-of-scope screen (`/app/profile/favorites`, `/app/profile/history`, `/app/profile/notes`, `/app/profile/settings`, `/app/profile/faq`) points at Task 1's real, already-existing stub files — this is the exact pattern this task's own original acceptance criteria already called out as fine ("some not built until later tasks... routes already exist as stubs").
+- Route paths use the RN file tree (`/app/profile/favorites` etc.), not the web's flat `/app/favorites` — same nested-under-Profile restructuring decision from Task 1 already applied consistently in Task 13's Dashboard links.
+- "Calendrier" row correctly points at `/app/calendar` (not nested under profile) — Task 1's file tree keeps `calendar.tsx` as a top-level `app/` file, not a `profile/` child, matching the web's own `/app/calendar/` being a sibling of `/app/profile/`, not nested under it.
+- "Favoris" tile's "6 enregistrées" subtitle is hardcoded, not derived from `useFavorites().favorites.length` — this matches a real inconsistency already present in the web app itself (the web also hardcodes "6 enregistrées" regardless of actual favorite count), so it's ported as-is rather than silently "fixed" to be more correct than the source.
+- Purchased-product rows have no navigation in the web version either (plain, non-interactive `<div>`s) — kept as plain `View`s, not `Pressable`/`Link`.
+- Logout uses `router.replace("/(auth)")`, matching the web's own no-op-auth "logout" (`navigate({ to: "/" })` — there's no real session to invalidate on either platform).
+**Files modified:**
+- Rewrote `src/app/app/profile/index.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 1.
-**Acceptance criteria:** All rows navigate to their correct destination screen (some not built until later tasks — fine, routes already exist as stubs from Task 1 and get filled in incrementally).
+**Acceptance criteria:**
+- [x] All rows navigate to their correct destination screen — every `href` verified by inspection against Task 1's actual file tree; out-of-scope destinations correctly resolve to their honest stub screens, not a 404 or crash.
 **Manual testing checklist:**
-- [ ] Tap every tile/row at least once, confirm correct navigation target.
-- [ ] Tap logout, confirm it returns to the auth stack.
+- [ ] Tap every tile/row at least once, confirm correct navigation target — **not independently verified** interactively, needs a device/simulator.
+- [ ] Tap logout, confirm it returns to the auth stack — **not independently verified**; `router.replace("/(auth)")` is the same call already exercised structurally by Task 1's own route verification.
 **Suggested commit:** `feat(screens): add Profile hub screen`
 
-### Task 25 — Settings screen
+### Task 25 — Settings screen — post-MVP, not built this pass (explicitly named in the user's "optional settings" exclusion)
 **Web source:** `kitchen-haven-club/src/routes/app/settings/index.tsx`
 **Goal:** Build `app/profile/settings.tsx`: personal-info fields, preference `Switch` toggles, "save" flow. Wired with **React Hook Form + Zod** (per `CLAUDE.md`'s chosen stack; web used bare `useState` — same fields/behavior) against the real `useSettings` store from Phase 0.
 **Files to modify:** `src/app/app/profile/settings.tsx`.
@@ -500,7 +581,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Toggle each switch, confirm it persists after save.
 **Suggested commit:** `feat(screens): add Settings screen`
 
-### Task 26 — Favorites screen
+### Task 26 — Favorites screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/favorites/index.tsx`
 **Goal:** Build `app/profile/favorites.tsx` reading from the real `useFavorites` store (Task 5) instead of web's hardcoded `recipes.slice(0, 6)` mock.
 **Files to modify:** `src/app/app/profile/favorites.tsx`.
@@ -512,7 +593,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] With zero favorites, confirm the empty state renders instead of a blank screen.
 **Suggested commit:** `feat(screens): add Favorites screen backed by real favorites store`
 
-### Task 27 — History screen
+### Task 27 — History screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/history/index.tsx`
 **Goal:** Build `app/profile/history.tsx` reading `useHistory` (Phase 0): list with resume position, remove-one and clear-all actions, empty state.
 **Files to modify:** `src/app/app/profile/history.tsx`.
@@ -523,7 +604,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Remove one, confirm it disappears; clear all, confirm empty state appears.
 **Suggested commit:** `feat(screens): add History screen`
 
-### Task 28 — Notes screen
+### Task 28 — Notes screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/notes/index.tsx`
 **Goal:** Build `app/profile/notes.tsx` reading `useNotes` (Phase 0): list with context link, delete action, empty state.
 **Files to modify:** `src/app/app/profile/notes.tsx`.
@@ -535,7 +616,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Delete it, confirm the list updates and empty state appears when none remain.
 **Suggested commit:** `feat(screens): add Notes screen`
 
-### Task 29 — FAQ screen
+### Task 29 — FAQ screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/faq/index.tsx`
 **Goal:** Build `app/profile/faq.tsx` using RNR `Accordion` (direct upgrade from the web's hand-rolled accordion), `mailto:` link via `Linking.openURL`.
 **Files to modify:** `src/app/app/profile/faq.tsx`.
@@ -546,7 +627,7 @@ These share the most components with each other and with the shell built in Phas
 - [ ] Tap the contact email row, confirm it opens the mail composer.
 **Suggested commit:** `feat(screens): add FAQ screen using RNR Accordion`
 
-### Task 30 — Tips screen
+### Task 30 — Tips screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/tips/index.tsx`
 **Goal:** Build `app/profile/tips.tsx`: hero quote card, category `ToggleGroup`, article list rows.
 **Files to modify:** `src/app/app/profile/tips.tsx`.
@@ -563,7 +644,7 @@ These share the most components with each other and with the shell built in Phas
 
 Built last among the UI work since they float above every `app` screen and depend on the backend endpoint (Phase 1, Tasks 8-9) and the notes store (already done in Phase 0).
 
-### Task 31 — Notes FAB
+### Task 31 — Notes FAB — post-MVP, not built this pass (an "advanced dialog")
 **Web source:** `kitchen-haven-club/src/components/NotesFAB.tsx`
 **Goal:** Build `src/components/notes-fab.tsx`: floating button (hidden on the Notes screen itself), RNR `Dialog` styled as a bottom sheet (slide-up, rounded top corners) containing context label + RNR `Textarea` + save/view-notes actions, calling `useNotes().add()`. Context detection (which screen the user is on, for the "Contexte : ..." label) is reimplemented against Expo Router's current route instead of the web's `location.pathname` string-matching, but produces the same labels.
 **Files to modify:** Add `src/components/notes-fab.tsx`. Modify `src/app/app/_layout.tsx` to mount it once, globally, alongside the tab navigator.
@@ -575,7 +656,7 @@ Built last among the UI work since they float above every `app` screen and depen
 - [ ] Confirm the FAB is hidden specifically on the Notes screen.
 **Suggested commit:** `feat(overlays): add Notes FAB (bottom-sheet Dialog)`
 
-### Task 32 — AI Chat
+### Task 32 — AI Chat — post-MVP, not built this pass (an "advanced dialog")
 **Web source:** `kitchen-haven-club/src/components/AIChat.tsx`
 **Goal:** Build `src/components/ai-chat.tsx`: floating sparkle button, RNR `Dialog`-as-bottom-sheet chat window, message list (user/assistant bubbles), lightweight markdown rendering (port `FormattedMessage`'s line-based parser as-is), recipe/video reference chips parsed from `[RECETTE id:...]`/`[VIDEO id:...]` tags, RNR `Textarea` input, calls `aiChat()` from Task 9.
 **Files to modify:** Add `src/components/ai-chat.tsx`. Modify `src/app/app/_layout.tsx` to mount it globally.
@@ -591,7 +672,7 @@ Built last among the UI work since they float above every `app` screen and depen
 
 ## Phase 9 — Cross-screen QA pass
 
-### Task 33 — Full-app manual regression pass
+### Task 33 — Full-app manual regression pass — post-MVP, not built this pass (depends on every excluded screen)
 **Goal:** No new files — walk every screen against the web app side by side (screenshots or a second window), checking spacing, colors, fonts, copy, and navigation once more, now that everything exists together.
 **Files to modify:** none (bug-fix commits from this pass land as their own small follow-up tasks, not tracked individually here).
 **Dependencies:** every prior task.
@@ -627,36 +708,36 @@ Built last among the UI work since they float above every `app` screen and depen
 
 ### Phase 3 — Home, Search, Calendar, First Steps
 - [x] Task 12 — MiniCalendar widget (highlight/dots not visually confirmed — timezone-dependent web bug faithfully reproduced, see task notes)
-- [ ] Task 13 — Dashboard (home) screen
-- [ ] Task 14 — Search screen
-- [ ] Task 15 — Calendar screen — month view + navigation
-- [ ] Task 16 — Calendar screen — week/day/year views
-- [ ] Task 17 — First Steps screen
+- [x] Task 13 — Dashboard (home) screen — MVP
+- [ ] Task 14 — Search screen — post-MVP
+- [ ] Task 15 — Calendar screen — month view + navigation — post-MVP
+- [ ] Task 16 — Calendar screen — week/day/year views — post-MVP
+- [x] Task 17 — First Steps screen — MVP
 
 ### Phase 4 — Recipes
-- [ ] Task 18 — Recipes list screen
-- [ ] Task 19 — Recipe detail screen
+- [x] Task 18 — Recipes list screen — MVP
+- [x] Task 19 — Recipe detail screen — MVP
 
 ### Phase 5 — Tutorials & Video Detail
-- [ ] Task 20 — Tutorials list screen
-- [ ] Task 21 — Video detail screen — player shell
-- [ ] Task 22 — Video detail screen — history integration + metadata
+- [x] Task 20 — Tutorials list screen — MVP
+- [x] Task 21 — Video detail screen — MVP (scope expanded to full screen, see task notes)
+- [ ] Task 22 — Video detail screen — history integration (narrowed to just persistence/resume banner) — post-MVP
 
 ### Phase 6 — Lives
-- [ ] Task 23 — Lives screen
+- [x] Task 23 — Lives screen — MVP (primary tab)
 
 ### Phase 7 — Profile cluster
-- [ ] Task 24 — Profile hub screen
-- [ ] Task 25 — Settings screen
-- [ ] Task 26 — Favorites screen
-- [ ] Task 27 — History screen
-- [ ] Task 28 — Notes screen
-- [ ] Task 29 — FAQ screen
-- [ ] Task 30 — Tips screen
+- [x] Task 24 — Profile hub screen — MVP (primary tab)
+- [ ] Task 25 — Settings screen — post-MVP
+- [ ] Task 26 — Favorites screen — post-MVP
+- [ ] Task 27 — History screen — post-MVP
+- [ ] Task 28 — Notes screen — post-MVP
+- [ ] Task 29 — FAQ screen — post-MVP
+- [ ] Task 30 — Tips screen — post-MVP
 
 ### Phase 8 — Global floating overlays
-- [ ] Task 31 — Notes FAB
-- [ ] Task 32 — AI Chat
+- [ ] Task 31 — Notes FAB — post-MVP
+- [ ] Task 32 — AI Chat — post-MVP
 
 ### Phase 9 — QA
-- [ ] Task 33 — Full-app manual regression pass
+- [ ] Task 33 — Full-app manual regression pass — post-MVP

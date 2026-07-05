@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GradientView } from "@/components/ui/gradient-view";
 import { ICON_TINT } from "@/constants/theme";
 import { cn } from "@/lib/utils";
 
@@ -11,14 +12,9 @@ import { cn } from "@/lib/utils";
 //
 // Custom `tabBar` for app/_layout.tsx's <Tabs>, matching the web's floating
 // rounded nav: a card of 5 icon+label buttons, active tab gets a filled
-// pill background.
-//
-// Deviation from web (tracked for Task 4): the web's active pill uses the
-// `bg-gradient-luxe` gradient. Task 4 (gradient helper + expo-linear-
-// gradient) hasn't been built yet, so the active pill here uses a plain
-// `bg-primary` fill as a placeholder — swap for <GradientView tone="luxe">
-// once Task 4 lands. Everything else (layout, icons, label styling,
-// active/inactive states) matches the web version.
+// `luxe` gradient pill background (Task 4's `GradientView`, swapped in here
+// after Task 2 originally shipped a flat `bg-primary` placeholder since
+// `GradientView` didn't exist yet).
 //
 // `state.routes` includes every screen registered on the Tabs navigator,
 // including the `href: null` ones (search/calendar/first-steps) — those
@@ -82,13 +78,15 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
               accessibilityState={isFocused ? { selected: true } : {}}
               className="items-center gap-0.5 rounded-2xl px-2.5 py-1.5"
             >
-              <View className={cn("rounded-xl p-1.5", isFocused && "bg-primary")}>
-                <Icon
-                  size={20}
-                  strokeWidth={isFocused ? 2.4 : 2}
-                  color={isFocused ? ICON_TINT.primaryForeground : ICON_TINT.mutedForeground}
-                />
-              </View>
+              {isFocused ? (
+                <GradientView tone="luxe" className="rounded-xl p-1.5">
+                  <Icon size={20} strokeWidth={2.4} color={ICON_TINT.primaryForeground} />
+                </GradientView>
+              ) : (
+                <View className="rounded-xl p-1.5">
+                  <Icon size={20} strokeWidth={2} color={ICON_TINT.mutedForeground} />
+                </View>
+              )}
               <Text
                 className={cn(
                   "text-[10px] font-medium tracking-wide",
