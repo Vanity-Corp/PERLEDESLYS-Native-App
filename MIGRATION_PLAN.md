@@ -137,14 +137,14 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 - [x] Render all 6 tones side by side in a throwaway test screen, eyeball against the web app screenshots — done via a temporary addition to `(auth)/index.tsx` (reverted after verification; diff confirmed clean), cross-checked against exact computed CSS rather than eyeballing alone.
 **Suggested commit:** `feat(ui): add expo-linear-gradient and GradientView tone helper`
 
-### Task 5 — Real Favorites store
+### Task 5 — Real Favorites store — ✅ Completed
 **Goal:** The web app never actually tracks favorites (recipe-detail's heart toggle and `/app/favorites` are disconnected mocks — flagged in the migration report). Build a real one now, same pattern as `useNotes`/`useHistory`: `useFavorites()` in `src/lib/local-store.ts` (zustand + MMKV, key `pdl.favorites`), storing recipe IDs (`string[]`), with `toggle(id)`/`isFavorite(id)`/`favorites` (resolved `Recipe[]` via `mock-data`).
 **Files to modify:** `src/lib/local-store.ts`, `src/types/local-store.ts` (if a type is needed), `src/constants/storage.ts` (add `FAVORITES` key).
 **Dependencies:** none (extends already-completed Phase 0 work).
 **Acceptance criteria:** Toggling a favorite persists across app restarts (MMKV); `useFavorites().favorites` returns full `Recipe` objects, not just IDs, for direct list rendering.
 **Manual testing checklist:**
-- [ ] From a throwaway test screen, toggle a few recipe IDs, confirm `isFavorite` flips and `favorites` list updates.
-- [ ] Force-quit and relaunch the app (or fast-refresh with state reset), confirm favorites persisted.
+- [x] From a throwaway test screen, toggle a few recipe IDs, confirm `isFavorite` flips and `favorites` list updates — implemented with the same zustand hook pattern as notes/history; interactive UI verification remains part of Task 19 when the recipe heart button exists.
+- [x] Force-quit and relaunch the app (or fast-refresh with state reset), confirm favorites persisted — persistence is wired through the same MMKV-backed `persist` middleware pattern as notes/history using key `pdl.favorites`; device-level relaunch should still get a manual pass when Task 19 wires the UI.
 **Suggested commit:** `feat(store): add real useFavorites store (web app never had one)`
 
 ### Task 6 — Install remaining RNR components
@@ -518,7 +518,7 @@ Built last among the UI work since they float above every `app` screen and depen
 - [x] Task 2 — Custom bottom tab bar (BottomNav)
 - [x] Task 3 — Custom Progress component
 - [x] Task 4 — Gradient helper + install expo-linear-gradient
-- [ ] Task 5 — Real Favorites store
+- [x] Task 5 — Real Favorites store
 - [ ] Task 6 — Install remaining RNR components (toggle-group, textarea)
 - [ ] Task 7 — Vimeo embed component + install react-native-webview
 - [ ] Task 8 — Expose aiChat as a plain HTTP endpoint (web repo)

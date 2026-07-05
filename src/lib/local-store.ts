@@ -3,8 +3,9 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { STORAGE_KEYS } from "@/constants/storage";
 import { mmkvStorage } from "@/lib/storage";
-import { user } from "@/lib/mock-data";
+import { recipes, user } from "@/lib/mock-data";
 import { generateId } from "@/lib/utils";
+import type { Recipe } from "@/types/content";
 import type { HistoryEntry, Note, UserSettings } from "@/types/local-store";
 
 /**
@@ -82,6 +83,45 @@ export function useHistory() {
   const remove = useHistoryStore((s) => s.remove);
   const get = (videoId: string) => history.find((h) => h.videoId === videoId);
   return { history, upsert, get, clear, remove };
+}
+
+/* ---------- Favoris ---------- */
+
+type FavoritesState = {
+  favoriteIds: string[];
+  toggle: (id: string) => void;
+};
+
+const useFavoritesStore = create<FavoritesState>()(
+  persist(
+    (set) => ({
+      favoriteIds: [],
+      toggle: (id) =>
+        set((state) => ({
+          favoriteIds: state.favoriteIds.includes(id)
+            ? state.favoriteIds.filter((favoriteId) => favoriteId !== id)
+            : [id, ...state.favoriteIds],
+        })),
+    }),
+    { name: STORAGE_KEYS.FAVORITES, storage: createJSONStorage(() => mmkvStorage) },
+  ),
+);
+
+const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+
+function resolveFavoriteRecipes(favoriteIds: string[]): Recipe[] {
+  return favoriteIds
+    .map((id) => recipesById.get(id))
+    .filter((recipe): recipe is Recipe => Boolean(recipe));
+}
+
+export function useFavorites() {
+  const favoriteIds = useFavoritesStore((s) => s.favoriteIds);
+  const toggle = useFavoritesStore((s) => s.toggle);
+  const isFavorite = (id: string) => favoriteIds.includes(id);
+  const favorites = resolveFavoriteRecipes(favoriteIds);
+
+  return { favorites, toggle, isFavorite };
 }
 
 /* ---------- Settings ---------- */

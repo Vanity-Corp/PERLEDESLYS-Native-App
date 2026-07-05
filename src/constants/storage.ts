@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   NOTES: "pdl.notes",
   HISTORY: "pdl.history",
   SETTINGS: "pdl.settings",
+  FAVORITES: "pdl.favorites",
 } as const;
