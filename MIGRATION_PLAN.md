@@ -290,22 +290,44 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 - [ ] Back button/gesture returns to Landing — the back arrow's `href="/(auth)"` is correct by inspection; the native swipe-back gesture itself needs a device/simulator.
 **Suggested commit:** `feat(screens): add Login screen with tabbed identifiants/invite form`
 
+### Real-device bugs found after Tasks 2/4/10/11 (retroactive fixes)
+
+Tasks 1-11 were only ever verified via `expo start --web` + curl/SSR-snapshot inspection (no simulator/device was available). Once the user ran the app on a real Android device, two real bugs surfaced that this verification method structurally could not have caught — both now fixed, documented here rather than rewriting the already-completed tasks above:
+
+1. **`GradientView` had no `cssInterop` registration.** `expo-linear-gradient`'s `LinearGradient` is a third-party native component NativeWind has zero built-in awareness of (confirmed: no mention of it anywhere in NativeWind's own source). On native, an unregistered component's `className` prop is a silent no-op — but `react-native-web` compiles `className` to real CSS regardless of whether the component "knows" about NativeWind, so every prior web-only SSR check looked correct while native rendering was actually broken. Symptom: solid black backgrounds instead of the cream/luxe/rose gradients on Landing, Login, and the BottomNav's active-tab pill (everywhere `GradientView` is used). Fixed in `src/components/ui/gradient-view.tsx` by adding `cssInterop(LinearGradient, { className: "style" })`, mirroring the same pattern already used for `lucide-react-native` icons in `ui/icon.tsx`. Verified: `tsc` clean, gradient CSS output on web unchanged (regression-checked).
+2. **RNR's CLI-generated components auto-follow OS dark mode, which the web app never actually has.** `ui/input.tsx` and `ui/tabs.tsx` (Task 6/pre-existing CLI scaffolding) ship with `dark:` variant classes (`dark:bg-input/30`, `dark:text-muted-foreground`, etc.) for automatic OS-driven dark mode — a real NativeWind/RNR feature, but one `kitchen-haven-club` never uses (confirmed: no `next-themes`, no dark-mode state, nothing anywhere in the web repo ever toggles a `.dark` class; its `.dark` CSS block is dead code no visitor ever triggers). `AppThemeProvider` (`src/providers/theme-provider.tsx`) was wired to RN's OS-driven `useColorScheme()`, and NativeWind's native runtime independently also defaults to tracking `Appearance.getColorScheme()` regardless of the `darkMode: "class"` tailwind config — so on a device with system dark mode on, Input/Tabs rendered dark while the hardcoded `GradientView` backgrounds stayed light, producing muddy tab pills and washed-out/illegible field text. Fixed by forcing `colorScheme.set("light")` (from `nativewind`) at module load in `theme-provider.tsx`, **guarded to native only** (`Platform.OS !== "web"`) — an unconditional call was tried first and broke web SSR entirely (`colorScheme.set()` throws outside a browser environment); web doesn't need it anyway since `darkMode: "class"` already always resolves to light there with nothing ever adding the class. Verified: `tsc` clean, web SSR back to 200 with no `.dark` class on `<html>`.
+
+Neither fix changes any already-recorded acceptance criteria for Tasks 2/4/10/11 — the SSR-based checks they relied on were and remain accurate for *web*; native-only rendering just wasn't something that verification method could reach. Flagged here as the concrete instance of that blind spot the task notes had been calling out abstractly since Task 7.
+
 ---
 
 ## Phase 3 — Home, Search, Calendar, First Steps
 
 These share the most components with each other and with the shell built in Phase 1, so they go first among the `app` screens.
 
-### Task 12 — MiniCalendar widget
+### Task 12 — MiniCalendar widget — ✅ Completed
 **Web source:** `kitchen-haven-club/src/components/MiniCalendar.tsx`
 **Goal:** Build `src/components/mini-calendar.tsx`: 7-day week strip, today highlighted with `luxe` gradient, event dots, tapping navigates to `app/calendar`.
-**Files to modify:** Add `src/components/mini-calendar.tsx`.
+
+**Real pre-existing web bug found and faithfully reproduced, not fixed:** `startOfWeek()`'s `r.setHours(0, 0, 0, 0)` builds each day of the week at **local** midnight, but `iso()` reads it back via `d.toISOString().slice(0, 10)` (UTC-based). In any timezone *ahead* of UTC — which includes mainland France (UTC+1/+2), this app's actual audience — local midnight falls in the *previous* UTC calendar day, so every `week[]` entry's computed iso string is off by one versus `todayIso` and versus `mock-data`'s `events[].date` values (generated via `isoDay(offset)`, which preserves time-of-day instead of truncating to midnight, so it doesn't hit the same issue). Net effect: `isToday` never matches and no event dot/preview ever appears, for any user east of Greenwich. Reproduced and confirmed via a standalone Node check (this environment's real clock: 2026-07-05, UTC+1) — `todayIso` resolved to `"2026-07-05"` while the week array's Sunday entry resolved to `"2026-07-04"`, and the rendered `weekEvents` list was empty even though `mock-data.events` has an entry dated exactly today. This is byte-for-byte the same `startOfWeek`/`iso` code as the web source, so the exact same failure exists there too — per `CLAUDE.md`'s "don't redesign/improve" rule, left as-is rather than silently fixed. Flagging here since it means the widget will visibly show no highlight/dots for most real testers in Europe/Africa/Asia timezones, which could otherwise look like a porting defect.
+
+**Implementation notes:**
+- The whole card is `<Link href="/app/calendar" asChild><Pressable>...</Pressable></Link>`, the same `asChild`+`Pressable` wrapping pattern Task 11 established for non-Text-child links.
+- Today's cell uses `<GradientView tone="luxe">` (Task 4) instead of the web's `bg-gradient-luxe` class; other cells are plain `View`s with `bg-secondary` when they have an event, matching the web's three-way conditional exactly.
+- Text color inside the today cell is switched explicitly per-`Text` (`isToday && "text-primary-foreground"`) rather than via a `TextClassContext.Provider` — simpler for the 2 short `Text` children here than introducing a context wrapper.
+- Followed `ui/card.tsx`'s established shadow convention (`shadow-sm shadow-black/5`, a NativeWind-native-compatible utility) instead of Task 2's earlier plain-`style`-prop shadow workaround, which predated discovering that NativeWind already handles `shadow-*` classes on native.
+- Event title truncation uses RN `Text`'s `numberOfLines={1}` prop (no prior precedent for single-line ellipsis truncation existed in this codebase to follow).
+
+**Files modified:**
+- Added `src/components/mini-calendar.tsx`.
 **Dependencies:** Task 4.
-**Acceptance criteria:** Correctly computes the current Mon-Sun week (matches web's `startOfWeek` logic, Monday-first); shows up to 3 upcoming events below the strip.
+**Acceptance criteria:**
+- [x] Correctly computes the current Mon-Sun week (matches web's `startOfWeek` logic, Monday-first) — verified via SSR: rendered week was Mon 29 (Jun) → Sun 5 (Jul), correctly bracketing today (Sun Jul 5, 2026) with Monday-first ordering.
+- [x] Shows up to 3 upcoming events below the strip — logic verified by code inspection (`slice(0, 3)`, identical to web); no events actually rendered in this specific SSR check due to the timezone bug above, which is expected/faithful behavior, not a slicing defect.
 **Manual testing checklist:**
-- [ ] Confirm today's date is highlighted and matches the device's actual current date.
-- [ ] Confirm event dots appear only on days that have events in `mock-data`'s `events`.
-- [ ] Tapping the widget navigates to the Calendar screen.
+- [ ] Confirm today's date is highlighted and matches the device's actual current date — **verified structurally, not visually**: SSR confirmed the correct day-number is under the "Dim"/Sunday label, but the gradient highlight itself doesn't trigger in this environment's UTC+1 timezone due to the bug above (expected, matches web). Worth a real-device check in a UTC-behind timezone (e.g. anywhere in the Americas) if visually confirming the highlight branch itself matters — the branch is otherwise standard ternary JSX, type-checked and using already-proven `GradientView`/`Icon`/`Text` patterns.
+- [ ] Confirm event dots appear only on days that have events in `mock-data`'s `events` — **not independently visually verified** for the same timezone-bug reason; matching logic (`(eventsByDate[dayIso] ?? []).length > 0`) is a direct, unmodified port of the web's own logic.
+- [ ] Tapping the widget navigates to the Calendar screen — `href="/app/calendar"` is correct by inspection (matches Task 1's already-verified route); interactive tap-through needs a device/simulator, same limitation as every other tap-interaction item so far.
 **Suggested commit:** `feat(screens): add MiniCalendar widget`
 
 ### Task 13 — Dashboard (home) screen
@@ -604,7 +626,7 @@ Built last among the UI work since they float above every `app` screen and depen
 - [x] Task 11 — Login screen
 
 ### Phase 3 — Home, Search, Calendar, First Steps
-- [ ] Task 12 — MiniCalendar widget
+- [x] Task 12 — MiniCalendar widget (highlight/dots not visually confirmed — timezone-dependent web bug faithfully reproduced, see task notes)
 - [ ] Task 13 — Dashboard (home) screen
 - [ ] Task 14 — Search screen
 - [ ] Task 15 — Calendar screen — month view + navigation
