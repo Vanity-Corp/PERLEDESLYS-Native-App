@@ -54,11 +54,11 @@ export default function FirstStepsScreen() {
           <Text className="mt-2 text-sm leading-relaxed text-muted-foreground">{video.description}</Text>
         </View>
 
-        {/* Message de Lys */}
+        {/* Message de Ghania */}
         <View className="mx-5 mt-6 overflow-hidden rounded-3xl">
           <GradientView tone="luxe" className="p-5">
             <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
-              Mot de Lys
+              Mot de Ghania
             </Text>
             <Text className="mt-1 font-italiana text-2xl text-primary-foreground">
               {welcomeMessage.subject}

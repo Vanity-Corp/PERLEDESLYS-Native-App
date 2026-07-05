@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MiniCalendar } from "@/components/mini-calendar";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { Progress } from "@/components/ui/progress";
 import { articles, founderInfo, lives, recipes, user, videos } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
@@ -133,7 +134,7 @@ export default function DashboardScreen() {
                         <Text className="text-[11px] text-primary-foreground opacity-90">Vidéo 35 min</Text>
                       </View>
                       <Text className="text-[11px] text-primary-foreground opacity-90">·</Text>
-                      <Text className="text-[11px] text-primary-foreground opacity-90">Mot de Lys inclus</Text>
+                      <Text className="text-[11px] text-primary-foreground opacity-90">Mot de Ghania inclus</Text>
                     </View>
                   </View>
                   <Icon as={ChevronRight} size={20} className="text-primary-foreground opacity-80" />
@@ -205,6 +206,11 @@ export default function DashboardScreen() {
                   asChild
                 >
                   <Pressable className="w-64">
+                    {/* v2 rebrand (dashboard-page.png): category/title moved
+                        onto the image itself (over the existing overlay
+                        scrim) and the progress bar is a bold overlay strip
+                        at the image's bottom edge, replacing the old
+                        below-image text block + thin progress hairline. */}
                     <View className="relative aspect-video overflow-hidden rounded-2xl">
                       <Image
                         source={v.image}
@@ -218,17 +224,23 @@ export default function DashboardScreen() {
                           <Icon as={Play} size={20} className="text-primary" fill="currentColor" />
                         </View>
                       </View>
-                      <View className="absolute bottom-2 right-2 rounded-full bg-background/95 px-2 py-0.5">
+                      <View className="absolute right-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
                         <Text className="text-[10px] font-medium text-foreground">{v.duration}</Text>
                       </View>
-                    </View>
-                    <View className="mt-2">
-                      <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
-                        {v.category}
-                      </Text>
-                      <Text className="mt-0.5 text-sm font-medium leading-snug text-foreground" numberOfLines={2}>
-                        {v.title}
-                      </Text>
+                      <View className="absolute bottom-3 left-2 right-2">
+                        <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground">
+                          {v.category}
+                        </Text>
+                        <Text
+                          className="mt-0.5 text-sm font-medium leading-snug text-primary-foreground"
+                          numberOfLines={2}
+                        >
+                          {v.title}
+                        </Text>
+                      </View>
+                      {v.progress ? (
+                        <Progress value={v.progress} className="absolute inset-x-0 bottom-0 h-1.5" />
+                      ) : null}
                     </View>
                   </Pressable>
                 </Link>

@@ -3,11 +3,21 @@
 @tailwind utilities;
 
 /*
- * PERLEDESLYS palette — converted 1:1 from the web app's oklch tokens
- * (kitchen-haven-club/src/styles.css) to "H S% L%" hsl triplets via the
- * OKLab matrices, so hue/chroma/lightness match rather than being
- * eyeballed. NativeWind resolves these through tailwind.config.js's
- * `hsl(var(--x))` color mappings, on both native and web.
+ * Perle des Lys palette — v2 client rebrand (2026-07-05 assets:
+ * assets/new-assets/*, sampled with a pngjs pixel script against the real
+ * mockup PNGs rather than eyeballed). `--primary`/`--ring` come from an
+ * exact match found in two independent places: `ogee-arch.svg`'s fill and
+ * the "Se connecter" button's flat fill color in auth-page.png (both
+ * `#B75469`, no gradient variation across the button at all — confirmed by
+ * sampling 5 points across it). `--background` barely moved (the new
+ * mockups' background is `#fef8f7`, nearly identical to the prior value).
+ * `--secondary` was retargeted to the new warm tan `#eedbc4` sampled from
+ * the Login screen's tab-switcher track — replacing the old pale-pink
+ * secondary, since that tan is the new design's actual secondary surface
+ * color.
+ *
+ * Everything below `--secondary-foreground` is unchanged from the original
+ * v1 oklch-derived palette — no mockup evidence called for changing it.
  *
  * rose/gold/cream/noir aren't redefined by the web app's own `.dark`
  * block either (they fall back to :root there), so they're only
@@ -15,15 +25,15 @@
  */
 @layer base {
   :root {
-    --background: 6.4 100% 98.5%;
+    --background: 8.6 77.8% 98.2%;
     --foreground: 9.1 22.4% 9.1%;
     --card: 9.2 100% 99.3%;
     --card-foreground: 9.1 22.4% 9.1%;
     --popover: 9.2 100% 99.3%;
     --popover-foreground: 9.1 22.4% 9.1%;
-    --primary: 355.5 36.1% 61.1%;
+    --primary: 347.3 40.7% 52.4%;
     --primary-foreground: 6.1 100% 99%;
-    --secondary: 5.9 66.9% 94.7%;
+    --secondary: 32.9 55.3% 85.1%;
     --secondary-foreground: 9.1 17.7% 16.7%;
     --muted: 5.9 43.4% 93.2%;
     --muted-foreground: 5.7 8.3% 40%;
@@ -33,7 +43,7 @@
     --destructive-foreground: 6.1 100% 99%;
     --border: 5.9 19.3% 87.8%;
     --input: 5.9 24.6% 90.4%;
-    --ring: 355.5 36.1% 61.1%;
+    --ring: 347.3 40.7% 52.4%;
     --radius: 1rem;
 
     --rose: 357.2 54.4% 84.3%;

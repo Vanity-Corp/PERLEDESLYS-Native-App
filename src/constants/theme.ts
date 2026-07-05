@@ -4,7 +4,7 @@ import {
   type Theme,
 } from "expo-router/react-navigation";
 
-// PERLEDESLYS palette — converted 1:1 from the web app's oklch tokens
+// Perle des Lys palette — converted 1:1 from the web app's oklch tokens
 // (kitchen-haven-club/src/styles.css) to hsl via the OKLab matrices, so the
 // hue/chroma/lightness match exactly rather than being eyeballed. `rose` /
 // `goldSoft` / `cream` etc. aren't redefined by the web app's `.dark` block
@@ -17,17 +17,20 @@ const roseGoldCream = {
   cream: "hsl(37.1 53.9% 95.2%)",
 };
 
+// v2 client rebrand values (see the matching comment block in global.css)
+// mirrored here since NAV_THEME/GRADIENTS/ICON_TINT need real resolved
+// strings, not `hsl(var(--x))` references.
 export const THEME = {
   light: {
-    background: "hsl(6.4 100.0% 98.5%)",
+    background: "hsl(8.6 77.8% 98.2%)",
     foreground: "hsl(9.1 22.4% 9.1%)",
     card: "hsl(9.2 100.0% 99.3%)",
     cardForeground: "hsl(9.1 22.4% 9.1%)",
     popover: "hsl(9.2 100.0% 99.3%)",
     popoverForeground: "hsl(9.1 22.4% 9.1%)",
-    primary: "hsl(355.5 36.1% 61.1%)",
+    primary: "hsl(347.3 40.7% 52.4%)",
     primaryForeground: "hsl(6.1 100.0% 99.0%)",
-    secondary: "hsl(5.9 66.9% 94.7%)",
+    secondary: "hsl(32.9 55.3% 85.1%)",
     secondaryForeground: "hsl(9.1 17.7% 16.7%)",
     muted: "hsl(5.9 43.4% 93.2%)",
     mutedForeground: "hsl(5.7 8.3% 40.0%)",
@@ -37,7 +40,7 @@ export const THEME = {
     destructiveForeground: "hsl(6.1 100.0% 99.0%)",
     border: "hsl(5.9 19.3% 87.8%)",
     input: "hsl(5.9 24.6% 90.4%)",
-    ring: "hsl(355.5 36.1% 61.1%)",
+    ring: "hsl(347.3 40.7% 52.4%)",
     radius: "1rem",
     ...roseGoldCream,
   },
@@ -69,10 +72,21 @@ export const THEME = {
 // Gradient stops matching the web app's `--gradient-*` tokens (styles.css).
 // Not native `background` CSS — these are plain color arrays meant to be
 // passed to `expo-linear-gradient`'s `colors` prop once screens are built.
+//
+// `luxe` was a rose→gold two-stop gradient in v1. The v2 rebrand assets show
+// no gradient anywhere — confirmed by pixel-sampling the "Se connecter"
+// button in auth-page.png at 5 points (left/mid/right/top/bottom): all
+// exactly `#b75469`, zero variation. Rather than rip out every screen's
+// `<GradientView tone="luxe">` usage (BottomNav's active pill, Dashboard's
+// cards, Recipe Detail's Cookidoo CTA, Lives, Profile — all built against
+// mockups from before this rebrand), both stops are set to the same new
+// primary color, so it renders visually solid through the existing
+// gradient-based architecture rather than requiring an app-wide refactor
+// this rebrand's own assets don't give evidence for beyond these 3 screens.
 export const GRADIENTS = {
   rose: ["hsl(357.2, 59.5%, 85.6%)", "hsl(4.9, 67.7%, 76.5%)"],
   gold: ["hsl(37.8, 69.2%, 68.5%)", "hsl(28.1, 58.2%, 53.8%)"],
-  luxe: ["hsl(357.2, 54.4%, 84.3%)", "hsl(38.2, 64.0%, 62.2%)"],
+  luxe: ["hsl(347.3, 40.7%, 52.4%)", "hsl(347.3, 40.7%, 52.4%)"],
   cream: ["hsl(8.1, 100.0%, 98.2%)", "hsl(2.0, 78.3%, 94.1%)"],
   overlay: ["transparent", "hsla(8.9, 29.2%, 9.2%, 0.85)"],
   roseOverlay: ["transparent", "hsla(354.5, 30.6%, 37.0%, 0.85)"],

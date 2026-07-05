@@ -31,7 +31,7 @@ export default function LivesScreen() {
               Lives privés
             </Text>
             <Text className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Rendez-vous exclusifs avec Lys
+              Rendez-vous exclusifs avec Ghania
             </Text>
           </View>
         </View>

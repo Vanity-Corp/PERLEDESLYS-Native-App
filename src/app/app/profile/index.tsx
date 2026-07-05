@@ -55,7 +55,7 @@ export default function ProfileScreen() {
               {user.name}
             </Text>
             <Text className="mt-0.5 text-[11px] text-primary-foreground opacity-90">
-              Cliente PERLEDESLYS · depuis {user.memberSince}
+              Cliente Perle des Lys · depuis {user.memberSince}
             </Text>
             <View className="mt-1 flex-row items-center gap-1">
               <Icon as={KeyRound} size={12} className="text-primary-foreground opacity-80" />
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         </Pressable>
 
         <Text className="mt-4 text-center font-italiana text-[10px] tracking-[0.3em] text-muted-foreground">
-          PERLEDESLYS · v1.0
+          Perle des Lys · v1.0
         </Text>
       </ScrollView>
     </SafeAreaView>

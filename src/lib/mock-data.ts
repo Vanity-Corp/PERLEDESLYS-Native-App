@@ -11,7 +11,7 @@ import msemen from "@/assets/perledeslys/perle-msemen.jpg";
 import mhalbi from "@/assets/perledeslys/perle-mhalbi.jpg";
 import the from "@/assets/perledeslys/perle-the.jpg";
 import tm7 from "@/assets/perledeslys/perle-tm7.jpg";
-import founder from "@/assets/perledeslys/perle-founder.jpg";
+import founder from "@/assets/perledeslys/perle-hero-2.png";
 import liveImg from "@/assets/perledeslys/perle-live.jpg";
 
 import { FIRST_STEPS_VIDEO_ID } from "@/constants/content";
@@ -36,7 +36,7 @@ export const liveCover = liveImg;
 export const recipes: Recipe[] = [
   {
     id: "couscous-royal",
-    title: "Couscous royal de Lys",
+    title: "Couscous royal de Ghania",
     image: couscous,
     time: "1h30",
     difficulty: "Moyen",
@@ -345,7 +345,7 @@ export const videos: Video[] = [
     duration: "35 min",
     category: "Mes premiers pas",
     description:
-      "La vidéo offerte par Lys à toutes ses nouvelles clientes : présentation complète, première utilisation, conseils essentiels et premiers réflexes pour cuisiner sereinement avec votre TM7.",
+      "La vidéo offerte par Ghania à toutes ses nouvelles clientes : présentation complète, première utilisation, conseils essentiels et premiers réflexes pour cuisiner sereinement avec votre TM7.",
     progress: 0,
   },
   {
@@ -406,7 +406,7 @@ export const videos: Video[] = [
     image: couscous,
     duration: "22 min",
     category: "Recette vidéo",
-    description: "Suivez Lys pas à pas pour réussir son couscous signature.",
+    description: "Suivez Ghania pas à pas pour réussir son couscous signature.",
     progress: 60,
   },
   {
@@ -504,7 +504,7 @@ export const lives: Live[] = [
   },
   {
     id: "replay-couscous",
-    title: "Replay : Couscous royal façon Lys",
+    title: "Replay : Couscous royal façon Ghania",
     date: "18 mars",
     time: "Replay 1h45",
     image: couscous,
@@ -519,7 +519,7 @@ export const lives: Live[] = [
     time: "Replay 55 min",
     image: tajine,
     status: "Replay",
-    description: "Maîtrisez le tajine fondant avec les astuces de Lys.",
+    description: "Maîtrisez le tajine fondant avec les astuces de Ghania.",
     platform: "Replay Vimeo",
   },
 ];
@@ -538,8 +538,8 @@ export const user: AppUser = {
 };
 
 export const founderInfo: FounderInfo = {
-  name: "Lys",
-  fullName: "Lys, votre conseillère Thermomix",
+  name: "Ghania",
+  fullName: "Ghania, votre conseillère Thermomix",
   bio: "Conseillère Thermomix classée parmi les meilleures de France, spécialisée dans les recettes algériennes adaptées au TM7.",
   avatar: founder,
 };
@@ -582,7 +582,7 @@ Cette vidéo est strictement réservée à mes clientes. Merci de ne pas la part
 J'ai absolument besoin de ton retour écrit après le visionnage : dis-moi si tout est clair, si tu as pu démarrer sereinement une recette, et si tu te sens à l'aise avec ton Thermomix. C'est essentiel pour moi afin de vérifier que tout va bien.
 
 Avec tout mon cœur,
-Lys`,
+Ghania`,
 };
 
 export const faqItems: FaqItem[] = [
@@ -615,7 +615,7 @@ export const faqItems: FaqItem[] = [
     a: "Non. Vos notes, votre historique et vos favoris restent privés sur votre appareil.",
   },
   {
-    q: "Comment contacter Lys ?",
+    q: "Comment contacter Ghania ?",
     a: "Via Profil > Support, ou directement par email à contact@perledelys.fr.",
   },
 ];

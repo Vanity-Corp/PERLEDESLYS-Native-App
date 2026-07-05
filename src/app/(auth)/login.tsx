@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useRouter } from "expo-router";
-import { ArrowLeft, ArrowRight, KeyRound, Lock, Mail } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { KeyRound, User } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
+import OgeeArch from "@/assets/perledeslys/ogee-arch.svg";
 import { Button } from "@/components/ui/button";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
@@ -16,6 +17,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Web source: kitchen-haven-club/src/routes/login.tsx
+//
+// Rebuilt per the client's v2 rebrand mockup (assets/new-assets/auth-page.png):
+// the small logo-circle header + "Bon retour parmi nous." headline are
+// replaced by a big ogee-arch graphic with the welcome-back copy set inside
+// its lower opening; tabs are relabeled Se connecter/S'inscrire (kept as
+// the same internal "login"/"invite" values — no mockup exists for the
+// S'inscrire tab's own content, so it reuses the invite-code fields that
+// already existed here, which fits an invite-only club's idea of "signing
+// up" reasonably well).
 //
 // The web version has no real validation either — submit always navigates
 // regardless of field content. React Hook Form + Zod here is purely for
@@ -48,113 +58,73 @@ export default function LoginScreen() {
   return (
     <GradientView tone="cream" className="flex-1">
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <View className="flex-1 px-6 pb-10 pt-2">
-          <Link href="/(auth)" asChild>
-            <Pressable className="-ml-2 self-start rounded-full p-2">
-              <Icon as={ArrowLeft} size={20} className="text-foreground" />
-            </Pressable>
-          </Link>
-
-          <View className="mt-4 flex-row items-center gap-2.5">
-            <GradientView tone="luxe" className="h-11 w-11 items-center justify-center rounded-full">
-              <Text className="font-italiana text-xl text-primary-foreground">P</Text>
-            </GradientView>
-            <View>
-              <Text className="font-italiana text-base tracking-[0.2em] text-foreground">
-                PERLEDESLYS
-              </Text>
-              <Text className="text-[9px] uppercase tracking-[0.25em] text-primary/80">
-                Espace privé
+        <View className="flex-1 px-6 pb-10 pt-6">
+          <View className="relative items-center">
+            <OgeeArch width={280} height={241} />
+            <View className="absolute bottom-6 items-center px-8">
+              <Text className="text-center font-display text-2xl font-bold leading-tight text-primary">
+                Ça fait plaisir{"\n"}de vous revoir !
               </Text>
             </View>
-          </View>
-
-          <View className="mt-8">
-            <Text className="font-display text-[2.2rem] leading-tight tracking-tight text-foreground">
-              Bon retour{"\n"}
-              <Text className="font-italiana italic text-primary">parmi nous.</Text>
-            </Text>
-            <Text className="mt-3 text-sm text-muted-foreground">
-              Retrouvez vos recettes, lives et tutoriels TM7 exclusifs.
-            </Text>
           </View>
 
           <Tabs
             value={tab}
             onValueChange={(value) => setTab(value as "login" | "invite")}
-            className="mt-6"
+            className="mt-4"
           >
             <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1">
               <TabsTrigger value="login" className="flex-1 rounded-xl py-2.5">
-                <Text className="text-xs font-medium">Identifiants</Text>
+                <Text className="text-xs font-medium">Se connecter</Text>
               </TabsTrigger>
               <TabsTrigger value="invite" className="flex-1 rounded-xl py-2.5">
-                <Text className="text-xs font-medium">Code d'invitation</Text>
+                <Text className="text-xs font-medium">S'inscrire</Text>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login" className="mt-6 gap-4">
-              <View className="gap-1.5">
-                <Label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Email
-                </Label>
-                <View className="justify-center">
-                  <Icon
-                    as={Mail}
-                    size={16}
-                    className="absolute left-4 z-10 text-muted-foreground"
-                  />
-                  <Controller
-                    control={control}
-                    name="email"
-                    render={({ field }) => (
-                      <Input
-                        value={field.value}
-                        onChangeText={field.onChange}
-                        onBlur={field.onBlur}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        className="rounded-2xl py-3.5 pl-11 pr-4"
-                      />
-                    )}
-                  />
-                </View>
+            <Text className="mt-4 text-center text-sm text-muted-foreground">
+              Cette application est réservée uniquement à mes clientes
+            </Text>
+
+            <TabsContent value="login" className="mt-5 gap-4">
+              <View className="justify-center">
+                <Icon as={User} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      autoCapitalize="none"
+                      placeholder="IDENTIFIANT"
+                      className="rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                    />
+                  )}
+                />
               </View>
 
-              <View className="gap-1.5">
-                <Label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Mot de passe
-                </Label>
-                <View className="justify-center">
-                  <Icon
-                    as={Lock}
-                    size={16}
-                    className="absolute left-4 z-10 text-muted-foreground"
-                  />
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field }) => (
-                      <Input
-                        value={field.value}
-                        onChangeText={field.onChange}
-                        onBlur={field.onBlur}
-                        secureTextEntry
-                        className="rounded-2xl py-3.5 pl-11 pr-4"
-                      />
-                    )}
-                  />
-                </View>
-              </View>
-
-              <View className="items-end">
-                <Button variant="link" size="sm">
-                  <Text className="text-xs font-medium text-primary">Mot de passe oublié ?</Text>
-                </Button>
+              <View className="justify-center">
+                <Icon as={KeyRound} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      secureTextEntry
+                      placeholder="MOT DE PASSE"
+                      className="rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                    />
+                  )}
+                />
               </View>
             </TabsContent>
 
-            <TabsContent value="invite" className="mt-6 gap-1.5">
+            <TabsContent value="invite" className="mt-5 gap-1.5">
               <Label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Code d'invitation privée
               </Label>
@@ -169,28 +139,26 @@ export default function LoginScreen() {
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
                       autoCapitalize="characters"
-                      className="rounded-2xl py-3.5 pl-11 pr-4 font-medium tracking-widest"
+                      className="rounded-full py-3.5 pl-11 pr-4 font-medium tracking-widest"
                     />
                   )}
                 />
               </View>
               <Text className="text-[11px] text-muted-foreground">
-                Le code unique que Lys vous a transmis personnellement.
+                Le code unique que Ghania vous a transmis personnellement.
               </Text>
             </TabsContent>
           </Tabs>
 
-          <GradientButton tone="luxe" onPress={onSubmit} className="mt-6">
-            <Text className="font-medium text-primary-foreground">Entrer dans mon espace</Text>
-            <Icon as={ArrowRight} size={16} className="text-primary-foreground" />
+          <GradientButton tone="luxe" onPress={onSubmit} className="mt-8">
+            <Text className="font-medium text-primary-foreground">
+              {tab === "login" ? "Se connecter" : "S'inscrire"}
+            </Text>
           </GradientButton>
 
-          <View className="mt-auto items-center gap-1 pt-8">
-            <Text className="text-center text-xs text-muted-foreground">
-              Vous êtes cliente Thermomix et n'avez pas encore d'accès ?
-            </Text>
+          <View className="mt-auto items-center pt-8">
             <Button variant="link" size="sm">
-              <Text className="text-xs font-medium text-primary">Demander une invitation à Lys</Text>
+              <Text className="text-xs font-medium text-muted-foreground">Mot de passe oublié ?</Text>
             </Button>
           </View>
         </View>

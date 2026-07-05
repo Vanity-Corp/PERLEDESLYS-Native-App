@@ -73,14 +73,18 @@ function MiniCalendar() {
           <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
         </View>
 
-        <View className="flex-row gap-1">
+        <View className="flex-row gap-1.5">
           {week.map((d, i) => {
             const dayIso = iso(d);
             const isToday = dayIso === todayIso;
             const has = (eventsByDate[dayIso] ?? []).length > 0;
 
+            // v2 rebrand (dashboard-page.png): each day is its own
+            // bordered pill rather than a plain flat cell — the active day
+            // is the one exception, filled solid with no border.
             const cellClassName = cn(
               "flex-1 flex-col items-center rounded-xl py-2",
+              isToday ? "border border-transparent" : "border border-border",
               !isToday && has && "bg-secondary",
             );
             const textClassName = cn(isToday && "text-primary-foreground");
