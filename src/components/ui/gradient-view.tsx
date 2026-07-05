@@ -1,4 +1,5 @@
 import { LinearGradient, type LinearGradientPoint, type LinearGradientProps } from "expo-linear-gradient";
+import { cssInterop } from "nativewind";
 
 import { GRADIENTS } from "@/constants/theme";
 
@@ -12,6 +13,19 @@ import { GRADIENTS } from "@/constants/theme";
 // {x:0.5,y:0}->{x:0.5,y:1} default: `luxe`/`rose`/`gold` are 135deg
 // (top-left -> bottom-right diagonal), `cream`/`overlay`/`roseOverlay` are
 // 180deg (straight down).
+//
+// NativeWind has no built-in awareness of expo-linear-gradient's
+// LinearGradient (confirmed: nothing in its source even mentions it) — on
+// native, an unregistered third-party component's `className` prop is a
+// no-op (it just gets passed through as a meaningless string), even though
+// it *looks* like it works when only checked via a web build (react-native-
+// web compiles className to real CSS regardless of the component). This
+// bit us for real: the cream/luxe backgrounds rendered as plain black on an
+// actual Android device (className="flex-1" etc. silently doing nothing)
+// despite verifying fine via `expo start --web`. `cssInterop` registration
+// is the fix — same pattern `ui/icon.tsx` already uses for lucide icons.
+cssInterop(LinearGradient, { className: "style" });
+
 export type GradientTone = keyof typeof GRADIENTS;
 
 const DIAGONAL: { start: LinearGradientPoint; end: LinearGradientPoint } = {
