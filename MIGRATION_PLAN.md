@@ -121,13 +121,20 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 - [x] Confirm it doesn't clip/overflow inside a rounded card corner — verified structurally (root `View` has `overflow-hidden`); not visually confirmed on an actual device/simulator, none available in this environment.
 **Suggested commit:** `feat(ui): add custom Progress component (no RNR equivalent)`
 
-### Task 4 — Gradient helper + install `expo-linear-gradient`
+### Task 4 — Gradient helper + install `expo-linear-gradient` — ✅ Completed
 **Goal:** Install `expo-linear-gradient`. Build `src/components/ui/gradient-view.tsx`, a small wrapper (`<GradientView tone="luxe" | "rose" | "gold" | "cream" | "overlay" | "roseOverlay">`) reading stop colors from `GRADIENTS` in `src/constants/theme.ts` (already computed in the infra task). This replaces every web `bg-gradient-*` utility class.
-**Files to modify:** `package.json`/lockfile (add `expo-linear-gradient`), add `src/components/ui/gradient-view.tsx`.
+
+**Direction mapping added (not explicit in the original Goal text):** the web's `--gradient-*` CSS tokens use real angles — `luxe`/`rose`/`gold` are `135deg` (top-left → bottom-right diagonal), `cream`/`overlay`/`roseOverlay` are `180deg` (straight down). `expo-linear-gradient` takes `start`/`end` points (0-1 fractions) instead of a CSS angle, so `gradient-view.tsx` maps each tone to the equivalent `start`/`end` pair rather than relying on the library's default (`{x:0.5,y:0}` → `{x:0.5,y:1}`, which only matches the 180deg tones).
+
+**Files modified:**
+- `package.json`, `pnpm-lock.yaml` — added `expo-linear-gradient` (installed via `expo install` for correct SDK-56 version pinning, not plain `pnpm add`).
+- Added `src/components/ui/gradient-view.tsx`.
 **Dependencies:** none.
-**Acceptance criteria:** Each of the 6 gradient tones renders visually close to its web counterpart (same hue direction/stops); component accepts `style`/`className` passthrough for sizing.
+**Acceptance criteria:**
+- [x] Each of the 6 gradient tones renders visually close to its web counterpart (same hue direction/stops) — verified numerically, not just visually: fetched the compiled CSS from a temporary dev-server render and confirmed exact `linear-gradient(135deg, rgba(237,193,195,1.00), rgba(220,175,97,1.00))`-style output for all 6 tones, including correct `transparent` → `rgba(0,0,0,0.00)` resolution for the two overlay tones.
+- [x] Component accepts `style`/`className` passthrough for sizing — confirmed both typecheck (via `ViewProps`' NativeWind ambient `className` augmentation, inherited transitively since `LinearGradientProps extends ViewProps`) and render correctly.
 **Manual testing checklist:**
-- [ ] Render all 6 tones side by side in a throwaway test screen, eyeball against the web app screenshots.
+- [x] Render all 6 tones side by side in a throwaway test screen, eyeball against the web app screenshots — done via a temporary addition to `(auth)/index.tsx` (reverted after verification; diff confirmed clean), cross-checked against exact computed CSS rather than eyeballing alone.
 **Suggested commit:** `feat(ui): add expo-linear-gradient and GradientView tone helper`
 
 ### Task 5 — Real Favorites store
@@ -510,7 +517,7 @@ Built last among the UI work since they float above every `app` screen and depen
 - [x] Task 1 — Define and scaffold the navigation structure
 - [x] Task 2 — Custom bottom tab bar (BottomNav)
 - [x] Task 3 — Custom Progress component
-- [ ] Task 4 — Gradient helper + install expo-linear-gradient
+- [x] Task 4 — Gradient helper + install expo-linear-gradient
 - [ ] Task 5 — Real Favorites store
 - [ ] Task 6 — Install remaining RNR components (toggle-group, textarea)
 - [ ] Task 7 — Vimeo embed component + install react-native-webview
