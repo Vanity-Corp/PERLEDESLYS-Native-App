@@ -90,6 +90,7 @@ export const GRADIENTS = {
   cream: ["hsl(8.1, 100.0%, 98.2%)", "hsl(2.0, 78.3%, 94.1%)"],
   overlay: ["transparent", "hsla(8.9, 29.2%, 9.2%, 0.85)"],
   roseOverlay: ["transparent", "hsla(354.5, 30.6%, 37.0%, 0.85)"],
+  creamOverlay: ["transparent", "hsla(10, 100.0%, 98.2%, 0.90)"],
 } as const;
 
 // Hex fallbacks for props that need a real resolved color rather than a

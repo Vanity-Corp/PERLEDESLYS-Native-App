@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PerleDesLysText from "@/assets/perledeslys/Logo-rose.svg";
+import PerleDesLysWordmark from "@/assets/perledeslys/perle-des-lys-log-no-text.svg";
 import heroImg from "@/assets/perledeslys/perle-hero-2.png";
 import { Button } from "@/components/ui/button";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -24,21 +25,22 @@ export default function LandingScreen() {
     <GradientView tone="cream" className="flex-1">
       <SafeAreaView className="flex-1" edges={["bottom"]}>
         {/* Hero image — full-bleed, extends behind the status bar */}
-        <View className="relative  w-full h-[50%]">
+        <View className="relative  w-full h-[53%]">
           <Image
             source={heroImg}
+            contentPosition="top"
             contentFit="cover"
             style={{ width: "100%", height: "100%" }}
             accessibilityLabel="Perle des Lys"
           />
-          <GradientView tone="roseOverlay" className="absolute inset-0" />
-          {/* <SafeAreaView edges={["top"]}>
+          <GradientView tone="creamOverlay" className="absolute inset-0" />
+          <SafeAreaView className="absolute right-0 top-0" edges={["top"]}>
             <View className="flex-row items-center justify-end gap-1.5 px-5 pt-3">
               <PerleDesLysWordmark width={72} height={68} />
             </View>
-          </SafeAreaView>*/}
+          </SafeAreaView>
           <View className="absolute bottom-4 left-5 flex-row items-center gap-1.5 rounded-full bg-background/95 px-3 py-1.5">
-            <Icon as={Sparkles} size={12} className="text-primary" />
+            <Icon as={Sparkles} size={20} className="text-primary" />
             <Text className="text-[11px] font-medium text-foreground">
               Accès cliente uniquement
             </Text>
@@ -46,8 +48,8 @@ export default function LandingScreen() {
         </View>
 
         {/* Content */}
-        <View className="flex-1 items-center px-6 pb-6 pt-6">
-          <PerleDesLysText />
+        <View className="flex-1 items-center px-6 pb-6 ">
+          <PerleDesLysText width={300} />
           <Text className="-mt-2 text-base font-medium text-foreground">
             Par Ghania
           </Text>
@@ -56,7 +58,7 @@ export default function LandingScreen() {
             votre TM7, créés avec amour par Ghania - votre conseillère Thermomix
           </Text>
 
-          <View className="mt-auto w-full gap-3 pt-8">
+          <View className="mt-auto w-full gap-3">
             <Link href="/(auth)/login" asChild>
               <GradientButton tone="luxe">
                 <Text className="font-medium tracking-wide text-primary-foreground">
@@ -67,9 +69,9 @@ export default function LandingScreen() {
             <Link href="/(auth)/login" asChild>
               <Button
                 variant="outline"
-                className="rounded-2xl border-primary/30 bg-card py-4"
+                className="rounded-2xl h-fit border-primary/30 bg-card p-4"
               >
-                <Text className="font-medium text-foreground/80">
+                <Text className="font-medium text-foreground/80 ">
                   Créer un compte
                 </Text>
               </Button>

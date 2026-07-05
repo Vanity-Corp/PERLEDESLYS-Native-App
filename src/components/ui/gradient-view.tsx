@@ -1,4 +1,8 @@
-import { LinearGradient, type LinearGradientPoint, type LinearGradientProps } from "expo-linear-gradient";
+import {
+  LinearGradient,
+  type LinearGradientPoint,
+  type LinearGradientProps,
+} from "expo-linear-gradient";
 import { cssInterop } from "nativewind";
 
 import { GRADIENTS } from "@/constants/theme";
@@ -37,23 +41,37 @@ const VERTICAL: { start: LinearGradientPoint; end: LinearGradientPoint } = {
   end: { x: 0, y: 1 },
 };
 
-const DIRECTIONS: Record<GradientTone, { start: LinearGradientPoint; end: LinearGradientPoint }> = {
+const DIRECTIONS: Record<
+  GradientTone,
+  { start: LinearGradientPoint; end: LinearGradientPoint }
+> = {
   luxe: DIAGONAL,
   rose: DIAGONAL,
   gold: DIAGONAL,
   cream: VERTICAL,
   overlay: VERTICAL,
   roseOverlay: VERTICAL,
+  creamOverlay: VERTICAL,
 };
 
-type GradientViewProps = Omit<LinearGradientProps, "colors" | "start" | "end"> & {
+type GradientViewProps = Omit<
+  LinearGradientProps,
+  "colors" | "start" | "end"
+> & {
   tone: GradientTone;
 };
 
 function GradientView({ tone, ...props }: GradientViewProps) {
   const { start, end } = DIRECTIONS[tone];
 
-  return <LinearGradient colors={GRADIENTS[tone]} start={start} end={end} {...props} />;
+  return (
+    <LinearGradient
+      colors={GRADIENTS[tone]}
+      start={start}
+      end={end}
+      {...props}
+    />
+  );
 }
 
 export { GradientView };

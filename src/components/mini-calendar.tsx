@@ -1,12 +1,19 @@
 import { Link } from "expo-router";
-import { Bell, CalendarDays, ChevronRight, Palette, Radio, Sparkles } from "lucide-react-native";
+import {
+  Bell,
+  CalendarDays,
+  ChevronRight,
+  Palette,
+  Radio,
+  Sparkles,
+} from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { cn } from "@/lib/utils";
 import { events } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
 import type { AppEvent } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/components/MiniCalendar.tsx
@@ -53,18 +60,29 @@ function MiniCalendar() {
     return acc;
   }, {});
 
-  const weekEvents = week.flatMap((d) => eventsByDate[iso(d)] ?? []).slice(0, 3);
+  const weekEvents = week
+    .flatMap((d) => eventsByDate[iso(d)] ?? [])
+    .slice(0, 3);
 
   return (
     <Link href="/app/calendar" asChild>
       <Pressable className="mx-5 mt-3 rounded-3xl border border-border bg-card p-4 shadow-sm shadow-black/5">
         <View className="mb-3 flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
-            <GradientView tone="luxe" className="h-9 w-9 items-center justify-center rounded-xl">
-              <Icon as={CalendarDays} size={16} className="text-primary-foreground" />
+            <GradientView
+              tone="luxe"
+              className="h-9 w-9 items-center justify-center rounded-xl"
+            >
+              <Icon
+                as={CalendarDays}
+                size={16}
+                className="text-primary-foreground"
+              />
             </GradientView>
             <View>
-              <Text className="font-display text-lg leading-none text-foreground">Ma semaine</Text>
+              <Text className="font-display text-lg leading-none text-foreground">
+                Ma semaine
+              </Text>
               <Text className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                 Lives & ateliers
               </Text>
@@ -90,15 +108,28 @@ function MiniCalendar() {
             const textClassName = cn(isToday && "text-primary-foreground");
             const dotClassName = cn(
               "mt-1 h-1 w-1 rounded-full",
-              has ? (isToday ? "bg-background" : "bg-primary") : "bg-transparent",
+              has
+                ? isToday
+                  ? "bg-background"
+                  : "bg-primary"
+                : "bg-transparent",
             );
 
             const content = (
               <>
-                <Text className={cn("text-[9px] uppercase tracking-wider opacity-80", textClassName)}>
+                <Text
+                  className={cn(
+                    "text-[9px] uppercase tracking-wider opacity-80",
+                    textClassName,
+                  )}
+                >
                   {DAYS[i]}
                 </Text>
-                <Text className={cn("mt-0.5 text-sm font-semibold", textClassName)}>{d.getDate()}</Text>
+                <Text
+                  className={cn("mt-0.5 text-sm font-semibold", textClassName)}
+                >
+                  {d.getDate()}
+                </Text>
                 <View className={dotClassName} />
               </>
             );
@@ -119,15 +150,25 @@ function MiniCalendar() {
           <View className="mt-3 gap-1.5">
             {weekEvents.map((e) => (
               <View key={e.id} className="flex-row items-center gap-2">
-                <Icon as={typeIcon(e.type)} size={12} className="text-primary" />
-                <Text className="flex-1 text-[11px] text-foreground/80" numberOfLines={1}>
+                <Icon
+                  as={typeIcon(e.type)}
+                  size={12}
+                  className="text-primary"
+                />
+                <Text
+                  className="flex-1 text-[11px] text-foreground/80"
+                  numberOfLines={1}
+                >
                   {e.title}
                 </Text>
-                <Text className="text-[11px] text-muted-foreground">{e.time}</Text>
+                <Text className="text-[11px] text-muted-foreground">
+                  {e.time}
+                </Text>
               </View>
             ))}
           </View>
         )}
+        <View></View>
       </Pressable>
     </Link>
   );

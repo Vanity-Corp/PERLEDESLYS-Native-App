@@ -73,11 +73,17 @@ export default function LoginScreen() {
             onValueChange={(value) => setTab(value as "login" | "invite")}
             className="mt-4"
           >
-            <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1">
-              <TabsTrigger value="login" className="flex-1 rounded-xl py-2.5">
+            <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1 h-fit">
+              <TabsTrigger
+                value="login"
+                className="flex-1 rounded-xl py-2.5 h-fit"
+              >
                 <Text className="text-xs font-medium">Se connecter</Text>
               </TabsTrigger>
-              <TabsTrigger value="invite" className="flex-1 rounded-xl py-2.5">
+              <TabsTrigger
+                value="invite"
+                className="flex-1 rounded-xl py-2.5 h-fit"
+              >
                 <Text className="text-xs font-medium">S'inscrire</Text>
               </TabsTrigger>
             </TabsList>
@@ -87,8 +93,12 @@ export default function LoginScreen() {
             </Text>
 
             <TabsContent value="login" className="mt-5 gap-4">
-              <View className="justify-center">
-                <Icon as={User} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+              <View className="justify-center h-fit">
+                <Icon
+                  as={User}
+                  size={16}
+                  className="absolute left-4 z-10 text-muted-foreground"
+                />
                 <Controller
                   control={control}
                   name="email"
@@ -99,14 +109,18 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       autoCapitalize="none"
                       placeholder="IDENTIFIANT"
-                      className="rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                      className="rounded-full py-3.5 pl-11 pr-4  h-fit uppercase tracking-wide"
                     />
                   )}
                 />
               </View>
 
               <View className="justify-center">
-                <Icon as={KeyRound} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+                <Icon
+                  as={KeyRound}
+                  size={16}
+                  className="absolute left-4 z-10  text-muted-foreground"
+                />
                 <Controller
                   control={control}
                   name="password"
@@ -117,7 +131,7 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       secureTextEntry
                       placeholder="MOT DE PASSE"
-                      className="rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                      className="rounded-full py-3.5 pl-11 pr-4  h-fit uppercase tracking-wide"
                     />
                   )}
                 />
@@ -129,7 +143,11 @@ export default function LoginScreen() {
                 Code d'invitation privée
               </Label>
               <View className="justify-center">
-                <Icon as={KeyRound} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+                <Icon
+                  as={KeyRound}
+                  size={16}
+                  className="absolute left-4 z-10 text-muted-foreground"
+                />
                 <Controller
                   control={control}
                   name="code"
@@ -139,7 +157,7 @@ export default function LoginScreen() {
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
                       autoCapitalize="characters"
-                      className="rounded-full py-3.5 pl-11 pr-4 font-medium tracking-widest"
+                      className="rounded-full py-3.5  h-fit pl-11 pr-4 font-medium tracking-widest"
                     />
                   )}
                 />
@@ -158,7 +176,9 @@ export default function LoginScreen() {
 
           <View className="mt-auto items-center pt-8">
             <Button variant="link" size="sm">
-              <Text className="text-xs font-medium text-muted-foreground">Mot de passe oublié ?</Text>
+              <Text className="text-xs font-medium text-muted-foreground">
+                Mot de passe oublié ?
+              </Text>
             </Button>
           </View>
         </View>

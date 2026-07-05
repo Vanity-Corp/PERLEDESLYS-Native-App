@@ -1,7 +1,7 @@
+import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Flame, Search, Sparkles } from "lucide-react-native";
 import { useState } from "react";
-import { Image } from "expo-image";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -36,7 +36,10 @@ export default function RecipesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-2">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">
@@ -44,7 +47,7 @@ export default function RecipesScreen() {
             </Pressable>
           </Link>
           <View>
-            <Text className="font-display text-2xl font-medium tracking-tight text-foreground">
+            <Text className="text-primary font-display text-3xl font-semibold tracking-tight ">
               Recettes
             </Text>
             <Text className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -62,7 +65,7 @@ export default function RecipesScreen() {
               value={q}
               onChangeText={setQ}
               placeholder="Rechercher une recette..."
-              className="rounded-2xl py-3.5 pl-11 pr-4"
+              className="rounded-2xl py-3.5 pl-11 pr-4 h-fit"
             />
           </View>
         </View>
@@ -73,7 +76,11 @@ export default function RecipesScreen() {
           contentContainerClassName="gap-2 px-5 pb-1"
           className="mt-4"
         >
-          <ToggleGroup type="single" value={active} onValueChange={(v) => v && setActive(v)}>
+          <ToggleGroup
+            type="single"
+            value={active}
+            onValueChange={(v) => v && setActive(v)}
+          >
             {CATEGORIES.map((c) => (
               <ToggleGroupItem
                 key={c}
@@ -90,7 +97,10 @@ export default function RecipesScreen() {
           {filtered.map((r) => (
             <Link
               key={r.id}
-              href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }}
+              href={{
+                pathname: "/app/recipes/[recipeId]",
+                params: { recipeId: r.id },
+              }}
               asChild
             >
               <Pressable style={{ width: "47%" }}>
@@ -102,31 +112,54 @@ export default function RecipesScreen() {
                     accessibilityLabel={r.title}
                   />
                   <View className="absolute left-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
-                    <Text className="text-[9px] font-semibold uppercase text-foreground">{r.category}</Text>
+                    <Text className="text-[9px] font-semibold uppercase text-foreground">
+                      {r.category}
+                    </Text>
                   </View>
                   {r.isNew && (
                     <GradientView
                       tone="gold"
                       className="absolute right-2 top-2 flex-row items-center gap-1 rounded-full px-2 py-0.5"
                     >
-                      <Icon as={Sparkles} size={10} className="text-foreground" />
-                      <Text className="text-[9px] font-semibold uppercase text-foreground">New</Text>
+                      <Icon
+                        as={Sparkles}
+                        size={10}
+                        className="text-foreground"
+                      />
+                      <Text className="text-[9px] font-semibold uppercase text-foreground">
+                        New
+                      </Text>
                     </GradientView>
                   )}
                 </View>
                 <View className="mt-2">
-                  <Text className="text-sm font-medium leading-snug text-foreground" numberOfLines={2}>
+                  <Text
+                    className="text-sm font-medium leading-snug text-foreground"
+                    numberOfLines={2}
+                  >
                     {r.title}
                   </Text>
                   <View className="mt-1 flex-row items-center gap-2">
                     <View className="flex-row items-center gap-0.5">
-                      <Icon as={Clock} size={10} className="text-muted-foreground" />
-                      <Text className="text-[10px] text-muted-foreground">{r.time}</Text>
+                      <Icon
+                        as={Clock}
+                        size={10}
+                        className="text-muted-foreground"
+                      />
+                      <Text className="text-[10px] text-muted-foreground">
+                        {r.time}
+                      </Text>
                     </View>
                     <Text className="text-[10px] text-muted-foreground">·</Text>
                     <View className="flex-row items-center gap-0.5">
-                      <Icon as={Flame} size={10} className="text-muted-foreground" />
-                      <Text className="text-[10px] text-muted-foreground">{r.difficulty}</Text>
+                      <Icon
+                        as={Flame}
+                        size={10}
+                        className="text-muted-foreground"
+                      />
+                      <Text className="text-[10px] text-muted-foreground">
+                        {r.difficulty}
+                      </Text>
                     </View>
                   </View>
                 </View>

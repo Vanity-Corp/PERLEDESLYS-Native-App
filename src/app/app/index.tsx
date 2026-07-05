@@ -21,7 +21,7 @@ import { MiniCalendar } from "@/components/mini-calendar";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
-import { articles, founderInfo, lives, recipes, user, videos } from "@/lib/mock-data";
+import { articles, founderInfo, lives, recipes, videos } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
@@ -33,24 +33,16 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-32" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-32"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
           <View className="flex-row items-center gap-3">
-            <Image
-              source={{ uri: user.avatar }}
-              contentFit="cover"
-              style={{ width: 44, height: 44, borderRadius: 22 }}
-              accessibilityLabel={user.name}
-            />
-            <View>
-              <Text className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                Marhba
-              </Text>
-              <Text className="font-display text-lg font-medium leading-tight text-foreground">
-                {user.firstName}
-              </Text>
-            </View>
+            <Text className="text-primary font-display text-3xl font-semibold tracking-tight ">
+              Accueil
+            </Text>
           </View>
           <Pressable
             role="button"
@@ -117,9 +109,16 @@ export default function DashboardScreen() {
           <View className="px-5">
             <Link href="/app/first-steps" asChild>
               <Pressable className="overflow-hidden rounded-3xl">
-                <GradientView tone="luxe" className="flex-row items-center gap-4 p-5">
+                <GradientView
+                  tone="luxe"
+                  className="flex-row items-center gap-4 p-5"
+                >
                   <View className="h-14 w-14 items-center justify-center rounded-2xl bg-background/20">
-                    <Icon as={Compass} size={28} className="text-primary-foreground" />
+                    <Icon
+                      as={Compass}
+                      size={28}
+                      className="text-primary-foreground"
+                    />
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
@@ -130,14 +129,29 @@ export default function DashboardScreen() {
                     </Text>
                     <View className="mt-1 flex-row items-center gap-2">
                       <View className="flex-row items-center gap-1">
-                        <Icon as={Play} size={12} className="text-primary-foreground" fill="currentColor" />
-                        <Text className="text-[11px] text-primary-foreground opacity-90">Vidéo 35 min</Text>
+                        <Icon
+                          as={Play}
+                          size={12}
+                          className="text-primary-foreground"
+                          fill="currentColor"
+                        />
+                        <Text className="text-[11px] text-primary-foreground opacity-90">
+                          Vidéo 35 min
+                        </Text>
                       </View>
-                      <Text className="text-[11px] text-primary-foreground opacity-90">·</Text>
-                      <Text className="text-[11px] text-primary-foreground opacity-90">Mot de Ghania inclus</Text>
+                      <Text className="text-[11px] text-primary-foreground opacity-90">
+                        ·
+                      </Text>
+                      <Text className="text-[11px] text-primary-foreground opacity-90">
+                        Mot de Ghania inclus
+                      </Text>
                     </View>
                   </View>
-                  <Icon as={ChevronRight} size={20} className="text-primary-foreground opacity-80" />
+                  <Icon
+                    as={ChevronRight}
+                    size={20}
+                    className="text-primary-foreground opacity-80"
+                  />
                 </GradientView>
               </Pressable>
             </Link>
@@ -147,7 +161,13 @@ export default function DashboardScreen() {
         {/* Featured recipe */}
         <Section title="Recette signature" href="/app/recipes">
           <View className="px-5">
-            <Link href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: featured.id } }} asChild>
+            <Link
+              href={{
+                pathname: "/app/recipes/[recipeId]",
+                params: { recipeId: featured.id },
+              }}
+              asChild
+            >
               <Pressable className="aspect-[16/10] overflow-hidden rounded-3xl">
                 <View className="relative h-full w-full">
                   <Image
@@ -176,16 +196,34 @@ export default function DashboardScreen() {
                     </Text>
                     <View className="mt-2 flex-row items-center gap-3">
                       <View className="flex-row items-center gap-1">
-                        <Icon as={Clock} size={12} className="text-primary-foreground" />
-                        <Text className="text-[11px] text-primary-foreground opacity-95">{featured.time}</Text>
+                        <Icon
+                          as={Clock}
+                          size={12}
+                          className="text-primary-foreground"
+                        />
+                        <Text className="text-[11px] text-primary-foreground opacity-95">
+                          {featured.time}
+                        </Text>
                       </View>
                       <View className="flex-row items-center gap-1">
-                        <Icon as={Flame} size={12} className="text-primary-foreground" />
-                        <Text className="text-[11px] text-primary-foreground opacity-95">{featured.difficulty}</Text>
+                        <Icon
+                          as={Flame}
+                          size={12}
+                          className="text-primary-foreground"
+                        />
+                        <Text className="text-[11px] text-primary-foreground opacity-95">
+                          {featured.difficulty}
+                        </Text>
                       </View>
                       <View className="ml-auto flex-row items-center gap-1 rounded-full bg-background/95 px-2 py-0.5">
-                        <Icon as={ExternalLink} size={12} className="text-foreground" />
-                        <Text className="text-[11px] text-foreground">Cookidoo</Text>
+                        <Icon
+                          as={ExternalLink}
+                          size={12}
+                          className="text-foreground"
+                        />
+                        <Text className="text-[11px] text-foreground">
+                          Cookidoo
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -198,11 +236,18 @@ export default function DashboardScreen() {
         {/* Continue watching */}
         {continueWatching.length > 0 && (
           <Section title="Reprendre la formation" href="/app/tutorials">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 px-5">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="gap-3 px-5"
+            >
               {continueWatching.map((v) => (
                 <Link
                   key={v.id}
-                  href={{ pathname: "/app/videos/[videoId]", params: { videoId: v.id } }}
+                  href={{
+                    pathname: "/app/videos/[videoId]",
+                    params: { videoId: v.id },
+                  }}
                   asChild
                 >
                   <Pressable className="w-64">
@@ -218,14 +263,24 @@ export default function DashboardScreen() {
                         style={{ width: "100%", height: "100%" }}
                         accessibilityLabel={v.title}
                       />
-                      <GradientView tone="overlay" className="absolute inset-0" />
+                      <GradientView
+                        tone="overlay"
+                        className="absolute inset-0"
+                      />
                       <View className="absolute inset-0 items-center justify-center">
                         <View className="h-12 w-12 items-center justify-center rounded-full bg-background/95">
-                          <Icon as={Play} size={20} className="text-primary" fill="currentColor" />
+                          <Icon
+                            as={Play}
+                            size={20}
+                            className="text-primary"
+                            fill="currentColor"
+                          />
                         </View>
                       </View>
                       <View className="absolute right-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
-                        <Text className="text-[10px] font-medium text-foreground">{v.duration}</Text>
+                        <Text className="text-[10px] font-medium text-foreground">
+                          {v.duration}
+                        </Text>
                       </View>
                       <View className="absolute bottom-3 left-2 right-2">
                         <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground">
@@ -239,7 +294,10 @@ export default function DashboardScreen() {
                         </Text>
                       </View>
                       {v.progress ? (
-                        <Progress value={v.progress} className="absolute inset-x-0 bottom-0 h-1.5" />
+                        <Progress
+                          value={v.progress}
+                          className="absolute inset-x-0 bottom-0 h-1.5"
+                        />
                       ) : null}
                     </View>
                   </Pressable>
@@ -252,11 +310,18 @@ export default function DashboardScreen() {
         {/* New recipes */}
         {newRecipes.length > 0 && (
           <Section title="Nouveautés de la semaine" href="/app/recipes">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 px-5">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="gap-3 px-5"
+            >
               {newRecipes.map((r) => (
                 <Link
                   key={r.id}
-                  href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }}
+                  href={{
+                    pathname: "/app/recipes/[recipeId]",
+                    params: { recipeId: r.id },
+                  }}
                   asChild
                 >
                   <Pressable className="w-44">
@@ -267,9 +332,17 @@ export default function DashboardScreen() {
                         style={{ width: "100%", height: "100%" }}
                         accessibilityLabel={r.title}
                       />
-                      <GradientView tone="overlay" className="absolute inset-0" />
-                      <GradientView tone="gold" className="absolute left-2 top-2 rounded-full px-2 py-0.5">
-                        <Text className="text-[9px] font-semibold uppercase text-foreground">Nouveau</Text>
+                      <GradientView
+                        tone="overlay"
+                        className="absolute inset-0"
+                      />
+                      <GradientView
+                        tone="gold"
+                        className="absolute left-2 top-2 rounded-full px-2 py-0.5"
+                      >
+                        <Text className="text-[9px] font-semibold uppercase text-foreground">
+                          Nouveau
+                        </Text>
                       </GradientView>
                       <View className="absolute bottom-2 left-2 right-2">
                         <Text className="text-[9px] uppercase tracking-wider text-primary-foreground opacity-80">
@@ -295,10 +368,19 @@ export default function DashboardScreen() {
           <View className="flex-row gap-3 px-5">
             <Link href="/app/tutorials" asChild>
               <Pressable className="flex-1">
-                <GradientView tone="luxe" className="aspect-square flex-col justify-between rounded-2xl p-4">
-                  <Icon as={Play} size={24} className="text-primary-foreground" />
+                <GradientView
+                  tone="luxe"
+                  className="aspect-square flex-col justify-between rounded-2xl p-4"
+                >
+                  <Icon
+                    as={Play}
+                    size={24}
+                    className="text-primary-foreground"
+                  />
                   <View>
-                    <Text className="font-display text-lg leading-tight text-primary-foreground">Tutoriels</Text>
+                    <Text className="font-display text-lg leading-tight text-primary-foreground">
+                      Tutoriels
+                    </Text>
                     <Text className="mt-0.5 text-[10px] text-primary-foreground opacity-90">
                       {videos.length} vidéos TM7
                     </Text>
@@ -311,8 +393,12 @@ export default function DashboardScreen() {
                 <View className="aspect-square flex-col justify-between rounded-2xl border border-border bg-card p-4">
                   <Icon as={Sparkles} size={24} className="text-primary" />
                   <View>
-                    <Text className="font-display text-lg leading-tight text-foreground">Astuces</Text>
-                    <Text className="mt-0.5 text-[10px] text-muted-foreground">Conseils & batch cooking</Text>
+                    <Text className="font-display text-lg leading-tight text-foreground">
+                      Astuces
+                    </Text>
+                    <Text className="mt-0.5 text-[10px] text-muted-foreground">
+                      Conseils & batch cooking
+                    </Text>
                   </View>
                 </View>
               </Pressable>
@@ -326,7 +412,10 @@ export default function DashboardScreen() {
             {popularRecipes.map((r) => (
               <Link
                 key={r.id}
-                href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }}
+                href={{
+                  pathname: "/app/recipes/[recipeId]",
+                  params: { recipeId: r.id },
+                }}
                 asChild
               >
                 <Pressable style={{ width: "47%" }}>
@@ -338,20 +427,35 @@ export default function DashboardScreen() {
                       accessibilityLabel={r.title}
                     />
                     <View className="absolute left-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
-                      <Text className="text-[9px] font-semibold uppercase text-foreground">{r.category}</Text>
+                      <Text className="text-[9px] font-semibold uppercase text-foreground">
+                        {r.category}
+                      </Text>
                     </View>
                   </View>
                   <View className="mt-2">
-                    <Text className="text-sm font-medium leading-snug text-foreground" numberOfLines={2}>
+                    <Text
+                      className="text-sm font-medium leading-snug text-foreground"
+                      numberOfLines={2}
+                    >
                       {r.title}
                     </Text>
                     <View className="mt-1 flex-row items-center gap-2">
                       <View className="flex-row items-center gap-0.5">
-                        <Icon as={Clock} size={10} className="text-muted-foreground" />
-                        <Text className="text-[10px] text-muted-foreground">{r.time}</Text>
+                        <Icon
+                          as={Clock}
+                          size={10}
+                          className="text-muted-foreground"
+                        />
+                        <Text className="text-[10px] text-muted-foreground">
+                          {r.time}
+                        </Text>
                       </View>
-                      <Text className="text-[10px] text-muted-foreground">·</Text>
-                      <Text className="text-[10px] text-muted-foreground">{r.difficulty}</Text>
+                      <Text className="text-[10px] text-muted-foreground">
+                        ·
+                      </Text>
+                      <Text className="text-[10px] text-muted-foreground">
+                        {r.difficulty}
+                      </Text>
                     </View>
                   </View>
                 </Pressable>
@@ -362,7 +466,10 @@ export default function DashboardScreen() {
 
         {/* Founder card */}
         <Section title="Votre conseillère">
-          <GradientView tone="luxe" className="mx-5 flex-row items-center gap-4 rounded-3xl p-5">
+          <GradientView
+            tone="luxe"
+            className="mx-5 flex-row items-center gap-4 rounded-3xl p-5"
+          >
             <Image
               source={founderInfo.avatar}
               contentFit="cover"
@@ -398,12 +505,21 @@ export default function DashboardScreen() {
                   <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
                     {a.category}
                   </Text>
-                  <Text className="mt-0.5 text-sm font-medium leading-snug text-foreground" numberOfLines={2}>
+                  <Text
+                    className="mt-0.5 text-sm font-medium leading-snug text-foreground"
+                    numberOfLines={2}
+                  >
                     {a.title}
                   </Text>
                   <View className="mt-1.5 flex-row items-center gap-1">
-                    <Icon as={BookOpen} size={12} className="text-muted-foreground" />
-                    <Text className="text-[10px] text-muted-foreground">{a.readTime} de lecture</Text>
+                    <Icon
+                      as={BookOpen}
+                      size={12}
+                      className="text-muted-foreground"
+                    />
+                    <Text className="text-[10px] text-muted-foreground">
+                      {a.readTime} de lecture
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -415,15 +531,27 @@ export default function DashboardScreen() {
   );
 }
 
-function Section({ title, href, children }: { title: string; href?: string; children: ReactNode }) {
+function Section({
+  title,
+  href,
+  children,
+}: {
+  title: string;
+  href?: string;
+  children: ReactNode;
+}) {
   return (
     <View className="mt-7">
       <View className="mb-3 flex-row items-center justify-between px-5">
-        <Text className="font-display text-xl font-medium tracking-tight text-foreground">{title}</Text>
+        <Text className="font-display text-xl font-medium tracking-tight text-primary">
+          {title}
+        </Text>
         {href && (
           <Link href={href as never} asChild>
             <Pressable className="flex-row items-center gap-0.5">
-              <Text className="text-xs font-medium text-primary">Tout voir</Text>
+              <Text className="text-xs font-medium text-primary">
+                Tout voir
+              </Text>
               <Icon as={ChevronRight} size={12} className="text-primary" />
             </Pressable>
           </Link>
