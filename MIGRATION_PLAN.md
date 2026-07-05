@@ -5,13 +5,13 @@ Source of truth: [`kitchen-haven-club/MIGRATION_REPORT.md`](../kitchen-haven-clu
 **Ground rules for every task below** (from `CLAUDE.md`):
 - Reproduce the web app's UI/UX as closely as possible — no redesigns, no "improvements," no simplified layouts, no renamed concepts.
 - Prefer a **React Native Reusables (RNR)** component first. Only build a custom component when RNR has no equivalent (progress bar, video scrubber, calendar grid, Vimeo embed, gradient hero cards, bottom-sheet-style modals — none of these exist in RNR).
-- Business logic, state shape, and folder structure carry over; only the platform APIs change (`div`→`View`, `input`→`TextInput`/RNR `Input`, `localStorage`→ the MMKV+zustand stores already built, `Link`→ Expo Router `Link`, etc).
+- Business logic, state shape, and folder structure carry over; only the platform APIs change (`div`→`View`, `input`→`TextInput`/RNR `Input`, `localStorage`→ the AsyncStorage+zustand stores already built, `Link`→ Expo Router `Link`, etc).
 - Install new RNR components with `npx @react-native-reusables/cli@latest add <name>`.
 
 ## Phase 0 — Foundation (already completed)
 
 Not re-listed as tasks; already done in prior sessions:
-- Shared non-UI code ported: `src/lib/mock-data.ts`, `src/lib/local-store.ts` (zustand + MMKV), `src/lib/storage.ts`, `src/lib/utils.ts`, `src/types/*`, `src/constants/content.ts`, `src/constants/storage.ts`.
+- Shared non-UI code ported: `src/lib/mock-data.ts`, `src/lib/local-store.ts` (zustand + AsyncStorage — originally MMKV, swapped after a real-device crash; see "Real-device bug" note after Task 5), `src/lib/storage.ts`, `src/lib/utils.ts`, `src/types/*`, `src/constants/content.ts`, `src/constants/storage.ts`.
 - Infra wired: React Query (`src/lib/query-client.ts`, `src/providers/query-provider.tsx`), Safe Area + Gesture Handler (`src/providers/index.tsx`), theme tokens converted from the web's oklch palette into `src/global.css` / `src/constants/theme.ts` / `tailwind.config.js`, fonts loaded via `@expo-google-fonts/*` + `src/hooks/use-app-fonts.ts`, root layout (`src/app/_layout.tsx`) gated on font load and wrapped in `AppProviders`.
 - RNR already installed: `accordion`, `alert`, `alert-dialog`, `aspect-ratio`, `avatar`, `badge`, `button`, `card`, `checkbox`, `collapsible`, `dialog`, `dropdown-menu`, `input`, `label`, `separator`, `skeleton`, `switch`, `tabs`, `text`, `toggle`, `tooltip` (+ `lucide-react-native` for icons).
 
@@ -156,6 +156,24 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 - [x] From a throwaway test screen, toggle a few recipe IDs, confirm `isFavorite` flips and `favorites` list updates — verified via the isolated script (toggle-on and toggle-off both produced the expected `favoriteIds` array). A real on-screen tap-through still happens naturally once Task 19 wires the recipe detail heart button to this hook.
 - [x] Force-quit and relaunch the app (or fast-refresh with state reset), confirm favorites persisted — verified via the isolated script's simulated-restart step (fresh store instance, same backing storage, correct rehydration).
 **Suggested commit:** `feat(store): add real useFavorites store (web app never had one)`
+
+### Real-device bug found and fixed (during the MVP pass, Task 19) — MMKV → AsyncStorage
+
+Once Task 19 (Recipe Detail) shipped and became the **first real screen** to actually mount `useFavorites()` in the running app — every prior screen either didn't touch `local-store.ts` at all (Landing, Login, MiniCalendar) or only exercised it via Task 5's isolated `tsx` script, never through the app itself — the user hit an immediate crash on their real device:
+```
+Cannot read propert[y]... (createMMKV)
+  <global> (src/lib/storage.ts:1)
+  <global> (src/lib/local-store.ts:5)
+  <global> (src/app/app/recipes/[recipeId].tsx:21)
+```
+Root cause: `react-native-mmkv` v4 depends on `react-native-nitro-modules`, which requires custom native code. That's incompatible with plain **Expo Go** (confirmed: no `expo-dev-client` in `package.json`, no custom dev-client build) — Expo Go only ships a fixed set of pre-built native modules, and Nitro-based libraries aren't in it. The crash happened at module-evaluation time (`createMMKV()` runs at import, not inside a component), so it fired the instant any screen imported `local-store.ts` — which simply hadn't happened yet in the real running app before Task 19.
+
+Given a choice between switching to a custom dev client (keeps MMKV's speed, but requires an Android/iOS native build toolchain) or swapping to `@react-native-async-storage/async-storage` (pure JS, Expo-Go-compatible, no workflow change), the user chose **AsyncStorage** — already one of the two options this project's own instructions sanctioned from the start ("Replace localStorage with AsyncStorage or MMKV"). Fixed by:
+- Rewriting `src/lib/storage.ts`: `createMMKV()`/`mmkvStorage` → a plain `AsyncStorage.getItem`/`setItem`/`removeItem`-backed `asyncStorage` (zustand's `StateStorage` shape supports async engines natively, no adapter needed).
+- Updating all 4 stores in `local-store.ts` (`useNotes`, `useHistory`, `useFavorites`, `useSettings`) to import `asyncStorage` instead of `mmkvStorage`.
+- Uninstalling `react-native-mmkv` (no longer referenced anywhere).
+
+This retroactively changes the storage backend for every Phase 0 store and for Task 5's own "(MMKV)" acceptance-criteria wording above — the persist/rehydrate *mechanism and guarantee* verified there is unchanged (zustand `persist` + a `StateStorage` adapter, exactly the same pattern), only the underlying engine differs. Verified after the swap: `tsc` clean, and the exact screen that crashed (Recipe Detail, `/app/recipes/couscous-royal`) now renders successfully via the dev-server SSR check with no errors in the bundler log.
 
 ### Task 6 — Install remaining RNR components — ✅ Completed
 **Goal:** `npx @react-native-reusables/cli@latest add toggle-group textarea progress` *(skip `progress` — already hand-built in Task 3 since RNR doesn't ship it; if the CLI errors on that name, just add `toggle-group` and `textarea`)*. `toggle-group` covers every single-select category-chip filter (Recipes, Tutorials, Tips categories); `textarea` covers the AI Chat input and Notes FAB textarea.
@@ -574,7 +592,7 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 **Goal:** Build `app/profile/settings.tsx`: personal-info fields, preference `Switch` toggles, "save" flow. Wired with **React Hook Form + Zod** (per `CLAUDE.md`'s chosen stack; web used bare `useState` — same fields/behavior) against the real `useSettings` store from Phase 0.
 **Files to modify:** `src/app/app/profile/settings.tsx`.
 **Dependencies:** Task 1 (Phase 0's `useSettings` already exists).
-**Acceptance criteria:** Editing a field and saving persists via `useSettings` (MMKV); a draft edited-but-not-saved change is discarded on leaving the screen, matching web's draft/commit-on-save behavior.
+**Acceptance criteria:** Editing a field and saving persists via `useSettings` (AsyncStorage — see the "Real-device bug" note after Task 5 for why this isn't MMKV); a draft edited-but-not-saved change is discarded on leaving the screen, matching web's draft/commit-on-save behavior.
 **Manual testing checklist:**
 - [ ] Edit a field, save, navigate away and back — confirm it persisted.
 - [ ] Edit a field, navigate away *without* saving, come back — confirm the unsaved edit was discarded.
@@ -696,7 +714,7 @@ Built last among the UI work since they float above every `app` screen and depen
 - [x] Task 2 — Custom bottom tab bar (BottomNav)
 - [x] Task 3 — Custom Progress component
 - [x] Task 4 — Gradient helper + install expo-linear-gradient
-- [x] Task 5 — Real Favorites store
+- [x] Task 5 — Real Favorites store (storage backend swapped MMKV → AsyncStorage after a real-device crash, see task notes)
 - [x] Task 6 — Install remaining RNR components (toggle-group, textarea)
 - [x] Task 7 — Vimeo embed component + install react-native-webview (code done; device/simulator playback verification still pending)
 - [x] Task 8 — Expose aiChat as a plain HTTP endpoint (web repo) (code done; runtime verification still pending — see task notes)

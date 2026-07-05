@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { STORAGE_KEYS } from "@/constants/storage";
-import { mmkvStorage } from "@/lib/storage";
+import { asyncStorage } from "@/lib/storage";
 import { recipes, user } from "@/lib/mock-data";
 import { generateId } from "@/lib/utils";
 import type { Recipe } from "@/types/content";
@@ -15,8 +15,9 @@ import type { HistoryEntry, Note, UserSettings } from "@/types/local-store";
  * synchronized across components with a `window.dispatchEvent(CustomEvent)`
  * bus — neither API exists in React Native. Here the same three hooks
  * (`useNotes`, `useHistory`, `useSettings`) are re-implemented on top of
- * zustand stores persisted to MMKV, which gives the same "read/write from
- * any screen, stays in sync everywhere" behavior natively.
+ * zustand stores persisted to AsyncStorage (see `storage.ts`), which gives
+ * the same "read/write from any screen, stays in sync everywhere" behavior
+ * natively.
  */
 
 /* ---------- Notes ---------- */
@@ -37,7 +38,7 @@ const useNotesStore = create<NotesState>()(
         })),
       remove: (id) => set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
     }),
-    { name: STORAGE_KEYS.NOTES, storage: createJSONStorage(() => mmkvStorage) },
+    { name: STORAGE_KEYS.NOTES, storage: createJSONStorage(() => asyncStorage) },
   ),
 );
 
@@ -72,7 +73,7 @@ const useHistoryStore = create<HistoryState>()(
       remove: (videoId) =>
         set((state) => ({ history: state.history.filter((h) => h.videoId !== videoId) })),
     }),
-    { name: STORAGE_KEYS.HISTORY, storage: createJSONStorage(() => mmkvStorage) },
+    { name: STORAGE_KEYS.HISTORY, storage: createJSONStorage(() => asyncStorage) },
   ),
 );
 
@@ -103,7 +104,7 @@ const useFavoritesStore = create<FavoritesState>()(
             : [id, ...state.favoriteIds],
         })),
     }),
-    { name: STORAGE_KEYS.FAVORITES, storage: createJSONStorage(() => mmkvStorage) },
+    { name: STORAGE_KEYS.FAVORITES, storage: createJSONStorage(() => asyncStorage) },
   ),
 );
 
@@ -155,7 +156,7 @@ const useSettingsStore = create<SettingsState>()(
               : next,
         })),
     }),
-    { name: STORAGE_KEYS.SETTINGS, storage: createJSONStorage(() => mmkvStorage) },
+    { name: STORAGE_KEYS.SETTINGS, storage: createJSONStorage(() => asyncStorage) },
   ),
 );
 
