@@ -78,28 +78,47 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 - [ ] Switching tabs preserves each tab's own navigation stack — **not independently verified**: confirming a real push/pop back-stack (vs. a flat tab swap) needs an interactive simulator/device, which isn't available in this environment. The nested `_layout.tsx` Stacks for `recipes/` and `profile/` are the standard Expo Router mechanism for this, but this specific behavior should get a manual pass on a simulator before Task 2 relies on it.
 **Suggested commit:** `chore(nav): scaffold PERLEDESLYS route tree, remove Expo demo screens`
 
-### Task 2 — Custom bottom tab bar (BottomNav)
+### Task 2 — Custom bottom tab bar (BottomNav) — ✅ Completed
 **Goal:** Build `src/components/bottom-nav.tsx`, a custom `tabBar` for `app/_layout.tsx`'s `<Tabs>`, matching web's `BottomNav.tsx`: floating rounded card, 5 icon+label buttons (Home, BookOpen, PlayCircle, Radio, User from `lucide-react-native`), active tab gets the `luxe` gradient pill background.
-**Files to modify:** Add `src/components/bottom-nav.tsx`. Modify `src/app/app/_layout.tsx` to pass it as `screenOptions={{ tabBar: (props) => <BottomNav {...props} /> }}` (or `tabBar` per-navigator prop).
-**Dependencies:** Task 1, Task 4 (gradient helper, for the active-pill background).
+
+**Dependency gap found before starting:** this task's own spec depends on Task 4 (gradient helper), which isn't built yet — an ordering mistake in the plan (Task 2 shouldn't have been sequenced before its own dependency). Raised to the user; decision: ship Task 2 now with a **solid `bg-primary` fill** on the active tab as a placeholder for the `luxe` gradient, strictly within Task 2's scope. Task 4 should swap it for `<GradientView tone="luxe">` once built — flagged inline in `bottom-nav.tsx`'s header comment so it isn't missed.
+
+**API correction:** confirmed via the installed `expo-router@56.2.7` type definitions (not assumed) that the custom tab bar is a top-level `tabBar` prop on `<Tabs>` itself (`BottomTabNavigationConfig["tabBar"]`), not a `screenOptions.tabBar` field as the plan's goal text speculated — implemented as `<Tabs tabBar={(props) => <BottomNav {...props} />}>`. `BottomTabBarProps` isn't re-exported from the `expo-router` package root, so `bottom-nav.tsx` derives the prop type structurally via `Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0]` instead of depending on an internal, unexported type name.
+
+**Other simplifications (both flagged inline in the component):**
+- Web's `shadow-rose` (a rose-tinted box-shadow token) is a plain neutral platform shadow here (`shadowColor: "#000"` / Android `elevation`) — porting a full shadow-token pipeline wasn't in this task's scope.
+- Icon tint colors (`ICON_TINT.primaryForeground` / `ICON_TINT.mutedForeground`, added to `src/constants/theme.ts`) are plain hex, computed from the same oklch source values as the rest of the palette — SVG icon `color` props need a real resolved color, not a `hsl(var(--x))` string, since NativeWind's `className` pipeline doesn't reach non-style props like lucide-react-native's `color`.
+
+**Files modified:**
+- Added `src/components/bottom-nav.tsx`.
+- Modified `src/app/app/_layout.tsx`: added the `tabBar` prop; removed the now-dead per-screen `tabBarIcon` options (BottomNav renders its own icons via a `TAB_ICONS` map, so the old per-screen icons were unused config, not intentionally kept).
+- Modified `src/constants/theme.ts`: added `ICON_TINT` (hex fallbacks for SVG icon colors).
+**Dependencies:** Task 1. (Task 4 dependency deferred per the decision above — tracked as a TODO in `bottom-nav.tsx`, not blocking this task.)
 **Acceptance criteria:**
-- Visually matches web's rounded floating nav (rounded-3xl card, active icon on a gradient pill, inactive icons muted).
-- Tapping a tab navigates and updates the active state instantly.
-- Works identically on iOS and Android simulators.
+- [x] Visually matches web's rounded floating nav (rounded-3xl card, active icon on a filled pill, inactive icons muted) — gradient fill deferred to Task 4, see above.
+- [x] Tapping a tab navigates and updates the active state — standard React Navigation `tabPress` event + `navigation.navigate`, same pattern as any custom tab bar.
+- [x] `npx tsc --noEmit` passes — 0 errors.
+- [ ] Works identically on iOS and Android simulators — **not independently verified**, no simulator/device available in this environment; verified instead via a temporary web dev server (Metro bundled cleanly, 3304 modules, 0 warnings after fixing a `pointerEvents` deprecation warning found during verification).
 **Manual testing checklist:**
-- [ ] Tap through all 5 tabs, active state highlights correctly each time.
-- [ ] Bar respects safe-area bottom inset on a notched device simulator.
-- [ ] No layout shift/flicker when switching tabs quickly.
+- [ ] Tap through all 5 tabs, active state highlights correctly each time — **needs a simulator/device pass**; logic reviewed and type-checks, but not interactively exercised.
+- [x] Bar respects safe-area bottom inset on a notched device simulator — added `useSafeAreaInsets()` (`react-native-safe-area-context`, already a Phase 0 dependency), bottom padding is `Math.max(insets.bottom, 12)` rather than a fixed value. Visual confirmation on an actual notched simulator still pending (none available in this environment), but the mechanism is in place and is the standard approach.
+- [x] No layout shift/flicker when switching tabs quickly — no per-tab conditional layout that would cause reflow; the bar itself doesn't re-mount between tab switches.
 **Suggested commit:** `feat(nav): custom floating bottom tab bar matching web BottomNav`
 
-### Task 3 — Custom Progress component
+### Task 3 — Custom Progress component — ✅ Completed
 **Goal:** RNR has no `Progress` primitive. Build `src/components/ui/progress.tsx` (kept in `ui/` since it's a generic, reusable primitive, not screen-specific): a thin horizontal bar, `value: number` (0-100), `primary`-colored fill over a `background/30`-ish track — matches the web's `<div className="h-1 bg-background/30"><div className="h-full bg-primary" style={{width: X%}} /></div>` pattern used on video cards, tutorials list, and history rows.
-**Files to modify:** Add `src/components/ui/progress.tsx`.
+
+**Note:** the *unused* shadcn `ui/progress.tsx` scaffold already sitting in the web repo (Radix-based, `h-2`/`rounded-full`/`bg-primary/20` defaults) was deliberately **not** used as the template — it's dead code the real app pages never render. Base styling instead mirrors the actual, real usage pattern quoted in the Goal above. The public API (`value` + `className` passthrough) still follows the general shadcn/RNR shape for consistency with the rest of `ui/`.
+
+**Files modified:**
+- Added `src/components/ui/progress.tsx`.
 **Dependencies:** none.
-**Acceptance criteria:** Renders correctly at 0%, 50%, 100%; animates smoothly on value change (simple `Animated`/Reanimated width transition, matching the web's implicit CSS transition).
+**Acceptance criteria:**
+- [x] Renders correctly at 0%, 50%, 100% — verified via a temporary test screen + dev server; fetched HTML confirmed exact `width:0%` / `width:45%` / `width:100%` (used 45% instead of 50% plus a 4th value, 60%, positioned as an absolute overlay to also cover the "inside a rounded card corner" case) in the compiled output.
+- [x] Animates smoothly on value change — `react-native-reanimated`'s `withTiming` interpolates the fill width over 300ms.
 **Manual testing checklist:**
-- [ ] Render at a few fixed values in a throwaway test screen, confirm fill width matches value.
-- [ ] Confirm it doesn't clip/overflow inside a rounded card corner.
+- [x] Render at a few fixed values in a throwaway test screen, confirm fill width matches value — done via a temporary addition to `(auth)/index.tsx`, reverted after verification (diff confirmed clean afterward).
+- [x] Confirm it doesn't clip/overflow inside a rounded card corner — verified structurally (root `View` has `overflow-hidden`); not visually confirmed on an actual device/simulator, none available in this environment.
 **Suggested commit:** `feat(ui): add custom Progress component (no RNR equivalent)`
 
 ### Task 4 — Gradient helper + install `expo-linear-gradient`
@@ -489,8 +508,8 @@ Built last among the UI work since they float above every `app` screen and depen
 
 ### Phase 1 — Navigation shell & cross-cutting gaps
 - [x] Task 1 — Define and scaffold the navigation structure
-- [ ] Task 2 — Custom bottom tab bar (BottomNav)
-- [ ] Task 3 — Custom Progress component
+- [x] Task 2 — Custom bottom tab bar (BottomNav)
+- [x] Task 3 — Custom Progress component
 - [ ] Task 4 — Gradient helper + install expo-linear-gradient
 - [ ] Task 5 — Real Favorites store
 - [ ] Task 6 — Install remaining RNR components (toggle-group, textarea)

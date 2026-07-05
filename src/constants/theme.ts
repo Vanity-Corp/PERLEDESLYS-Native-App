@@ -78,6 +78,16 @@ export const GRADIENTS = {
   roseOverlay: ["transparent", "hsla(354.5, 30.6%, 37.0%, 0.85)"],
 } as const;
 
+// Hex fallbacks for props that need a real resolved color rather than a
+// `hsl(var(--x))` string — e.g. SVG icon `color` props, which NativeWind's
+// className pipeline doesn't reach. Light-mode only for now: no screen has
+// real dark-mode switching wired yet (matches the web app, whose own
+// "Thème sombre" setting is stored but never applied anywhere).
+export const ICON_TINT = {
+  primaryForeground: "#fffafa",
+  mutedForeground: "#6e5f5d",
+} as const;
+
 export const NAV_THEME: Record<"light" | "dark", Theme> = {
   light: {
     ...DefaultTheme,
