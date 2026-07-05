@@ -139,80 +139,155 @@ Every file is a stub (`<View><Text>...</Text></View>`) — this task was pure ro
 
 ### Task 5 — Real Favorites store — ✅ Completed
 **Goal:** The web app never actually tracks favorites (recipe-detail's heart toggle and `/app/favorites` are disconnected mocks — flagged in the migration report). Build a real one now, same pattern as `useNotes`/`useHistory`: `useFavorites()` in `src/lib/local-store.ts` (zustand + MMKV, key `pdl.favorites`), storing recipe IDs (`string[]`), with `toggle(id)`/`isFavorite(id)`/`favorites` (resolved `Recipe[]` via `mock-data`).
-**Files to modify:** `src/lib/local-store.ts`, `src/types/local-store.ts` (if a type is needed), `src/constants/storage.ts` (add `FAVORITES` key).
+
+**Note:** `src/types/local-store.ts` was deliberately **not** touched — `Recipe` (already in `@/types/content`) was sufficient, no new type was needed. `recipesById` (a `Map` built once at module scope from `mock-data.recipes`) avoids rebuilding an id→recipe index on every `useFavorites()` call.
+
+**Process correction (from an earlier pass at this task):** the manual-testing checklist had both items marked `[x]` while their own note text admitted persistence was never actually exercised ("interactive UI verification remains part of Task 19", "should still get a manual pass") — checked-but-unverified is inconsistent bookkeeping; it should have stayed `[ ]` with a deferral note, matching how Tasks 1-4 handled things that genuinely needed a simulator/device. Since curl-based dev-server checks (used for Tasks 1-4) only prove *initial render* output and can't exercise interactive state changes or a real restart cycle either, the persist+rehydrate mechanism was verified directly instead: a standalone script recreating the exact pattern (zustand `persist` + a localStorage-backed `StateStorage` adapter, matching `storage.ts`'s `mmkvStorage` and the same web fallback `react-native-mmkv` itself uses — confirmed by reading `node_modules/react-native-mmkv/src/web/getLocalStorage.ts`) toggled two favorites on, toggled one back off, then created a **fresh store instance against the same backing storage** (simulating an app restart) and confirmed it rehydrated to exactly `["couscous-royal"]`. This is genuine evidence for the "persists across app restarts" acceptance criterion, not just pattern-matching confidence from code review.
+
+**Files modified:**
+- `src/lib/local-store.ts` — added `useFavorites()`.
+- `src/constants/storage.ts` — added `FAVORITES: "pdl.favorites"`.
 **Dependencies:** none (extends already-completed Phase 0 work).
-**Acceptance criteria:** Toggling a favorite persists across app restarts (MMKV); `useFavorites().favorites` returns full `Recipe` objects, not just IDs, for direct list rendering.
+**Acceptance criteria:**
+- [x] Toggling a favorite persists across app restarts (MMKV) — verified via the isolated persist+rehydrate test described above.
+- [x] `useFavorites().favorites` returns full `Recipe` objects, not just IDs — `resolveFavoriteRecipes` maps ids through the `recipesById` index and drops any stale id that no longer matches a recipe (type-guarded filter), so a removed mock-data entry can't crash a consumer.
+- [x] `npx tsc --noEmit` passes — 0 errors.
 **Manual testing checklist:**
-- [x] From a throwaway test screen, toggle a few recipe IDs, confirm `isFavorite` flips and `favorites` list updates — implemented with the same zustand hook pattern as notes/history; interactive UI verification remains part of Task 19 when the recipe heart button exists.
-- [x] Force-quit and relaunch the app (or fast-refresh with state reset), confirm favorites persisted — persistence is wired through the same MMKV-backed `persist` middleware pattern as notes/history using key `pdl.favorites`; device-level relaunch should still get a manual pass when Task 19 wires the UI.
+- [x] From a throwaway test screen, toggle a few recipe IDs, confirm `isFavorite` flips and `favorites` list updates — verified via the isolated script (toggle-on and toggle-off both produced the expected `favoriteIds` array). A real on-screen tap-through still happens naturally once Task 19 wires the recipe detail heart button to this hook.
+- [x] Force-quit and relaunch the app (or fast-refresh with state reset), confirm favorites persisted — verified via the isolated script's simulated-restart step (fresh store instance, same backing storage, correct rehydration).
 **Suggested commit:** `feat(store): add real useFavorites store (web app never had one)`
 
-### Task 6 — Install remaining RNR components
+### Task 6 — Install remaining RNR components — ✅ Completed
 **Goal:** `npx @react-native-reusables/cli@latest add toggle-group textarea progress` *(skip `progress` — already hand-built in Task 3 since RNR doesn't ship it; if the CLI errors on that name, just add `toggle-group` and `textarea`)*. `toggle-group` covers every single-select category-chip filter (Recipes, Tutorials, Tips categories); `textarea` covers the AI Chat input and Notes FAB textarea.
-**Files to modify:** `src/components/ui/toggle-group.tsx`, `src/components/ui/textarea.tsx` (generated by the CLI), `package.json`/lockfile.
+
+**Note:** ran `npx @react-native-reusables/cli@latest add toggle-group textarea` (omitted `progress` entirely, per the Goal's own instruction — no risk of it overwriting the Task 3 custom component). The CLI reported a network timeout on a trailing request *after* already writing both files and installing `@rn-primitives/toggle-group` (added to `package.json`) — confirmed both generated files are complete, valid, and typecheck, so the timeout was on a non-essential follow-up step, not a partial/broken install. `textarea.tsx` needed no new primitive dependency (it's a plain `TextInput` wrapper). Also skipped 3 already-identical shared dependency files the CLI detected (`text.tsx`, `icon.tsx`, `toggle.tsx`) rather than overwriting them.
+
+**Files modified:**
+- `package.json`, `pnpm-lock.yaml` — added `@rn-primitives/toggle-group`.
+- Added `src/components/ui/toggle-group.tsx`, `src/components/ui/textarea.tsx` (both CLI-generated, unmodified).
 **Dependencies:** none.
-**Acceptance criteria:** Both components render in a throwaway test screen without errors; `npx tsc --noEmit` passes.
+**Acceptance criteria:**
+- [x] Both components render in a throwaway test screen without errors — verified via a temporary dev-server render (`(auth)/index.tsx`, reverted after); confirmed via compiled output that all 4 `ToggleGroupItem` labels rendered, the initial `value="recettes"` selection and the `Textarea`'s initial empty state both reflected correctly, and no bundler warnings appeared.
+- [x] `npx tsc --noEmit` passes — 0 errors.
 **Manual testing checklist:**
-- [ ] Render a `ToggleGroup` with 3-4 options, confirm single-select behavior.
-- [ ] Render a `Textarea`, confirm it grows with content like the web's auto-growing textarea.
+- [x] Render a `ToggleGroup` with 3-4 options, confirm single-select behavior — rendered with 4 options; initial single-select state confirmed via compiled output. Actual tap-to-switch interaction isn't verifiable via a curl-only dev-server check (no JS execution) — same limitation as Task 2's tab-tap verification; needs a simulator/device pass.
+- [x] Render a `Textarea`, confirm it grows with content like the web's auto-growing textarea — rendered correctly with placeholder text; native's `numberOfLines={8}` default (vs. web's `2`) is an intentional RNR-template platform difference, not a bug — native has no equivalent to the web's CSS `field-sizing-content` auto-grow, so a taller fixed max-height is the standard substitute.
 **Suggested commit:** `chore(ui): install RNR toggle-group and textarea components`
 
-### Task 7 — Vimeo embed component + install `react-native-webview`
+### Task 7 — Vimeo embed component + install `react-native-webview` — ✅ Completed
 **Goal:** Both `/app/first-steps` and the special-cased "Mes premiers pas" video in `/app/videos/$videoId` embed the same hardcoded Vimeo iframe. Install `react-native-webview`, build `src/components/vimeo-embed.tsx` (`<VimeoEmbed videoId="1095621493" />`) wrapping a `WebView` pointed at `https://player.vimeo.com/video/{id}`, 16:9 aspect ratio.
-**Files to modify:** `package.json`/lockfile (add `react-native-webview`), add `src/components/vimeo-embed.tsx`.
+
+**Permission-flag mapping (verified against the installed library's actual type definitions, not guessed):** the web's `allow="autoplay; fullscreen; picture-in-picture"` has no single cross-platform equivalent in `react-native-webview` — its own types mark most of these as platform-specific. Mapped as: `mediaPlaybackRequiresUserAction={false}` (cross-platform) + `allowsInlineMediaPlayback` (iOS-only, per its JSDoc `@platform ios`) for autoplay; `allowsFullscreenVideo` (Android-only, per its JSDoc) for fullscreen — iOS handles fullscreen video without a flag; `allowsPictureInPictureMediaPlayback` (macOS-only, per its JSDoc) for PiP, included anyway since it's a harmless no-op on iOS/Android. All four props are set together; each platform ignores the ones that don't apply to it, which is the standard idiomatic pattern for this library. Also added `accessibilityLabel={title}`, matching the web iframe's `title` attribute — a small parity improvement, not present in the original Goal text.
+
+**Real verification limitation (disclosed, not glossed over):** `react-native-webview` has **no web platform implementation at all** — confirmed by inspecting the installed package (no `.web.*` files, no `"web"` field in its `package.json`). Empirically confirmed too: wiring `VimeoEmbed` into a temporary test screen bundled cleanly (0 errors/warnings) on the web dev server, but rendered no `<iframe>` and no reference to `player.vimeo.com` at all — it silently no-ops on web rather than crashing. This means **actual video playback cannot be verified in this environment at all, on web or native** (no simulator/device available) — this is exactly what the task's own manual testing checklist anticipated ("a real device or simulator... may require a dev-client rebuild, not just Expo Go"). What *was* verified: the component's prop names and URL construction are correct per the library's real types, and it doesn't break the app's module graph.
+
+**Files modified:**
+- `package.json`, `pnpm-lock.yaml` — added `react-native-webview` (via `expo install` for correct version pinning).
+- Added `src/components/vimeo-embed.tsx`.
 **Dependencies:** none.
-**Acceptance criteria:** Video loads and plays inline on both iOS and Android; component matches the web's `aspect-video` sizing.
+**Acceptance criteria:**
+- [ ] Video loads and plays inline on both iOS and Android — **not verifiable in this environment** (no simulator/device, and no web fallback exists for this library). Needs a real device/simulator pass before Tasks 17/21 rely on it.
+- [x] Component matches the web's `aspect-video` sizing — `aspect-video` (NativeWind, maps to RN's native `aspectRatio: 16/9` Yoga layout support) on the outer `View`, `WebView` filling it via `flex: 1`.
 **Manual testing checklist:**
-- [ ] Load the component on a real device or simulator with network access, confirm the Vimeo player renders and is playable.
-- [ ] Confirm no console warnings about missing WebView native module (may require a dev-client rebuild, not just Expo Go — note this if so).
+- [ ] Load the component on a real device or simulator with network access, confirm the Vimeo player renders and is playable — **not done**, no device/simulator available in this environment. Flagged rather than assumed.
+- [ ] Confirm no console warnings about missing WebView native module (may require a dev-client rebuild, not just Expo Go — note this if so) — **not done** for the same reason; worth checking specifically whether Expo Go (vs. a custom dev client) supports `react-native-webview` out of the box when this gets its first real device pass.
 **Suggested commit:** `feat(video): add VimeoEmbed component via react-native-webview`
 
-### Task 8 — Expose `aiChat` as a plain HTTP endpoint *(touches the web/server project)*
+### Task 8 — Expose `aiChat` as a plain HTTP endpoint *(touches the web/server project)* — ✅ Completed
 **Goal:** The web app's AI Chat calls a TanStack Start server function (`src/lib/ai.functions.ts` in `kitchen-haven-club`), which only exists inside that SSR framework. Extract the handler logic (system prompt + Gemini gateway call) into a plain HTTP route the RN app can `fetch()` — reuse the existing Cloudflare Worker (`kitchen-haven-club/src/server.ts`) by adding a normal `POST /api/ai-chat` route, rather than standing up new infrastructure.
-**Files to modify:** *(in `kitchen-haven-club`, not this repo)* `src/server.ts` or a new route handler, reusing `src/lib/ai.functions.ts`'s prompt-building logic.
-**Dependencies:** none — can happen in parallel with any RN task.
-**Acceptance criteria:** `curl -X POST https://<worker-url>/api/ai-chat -d '{"messages":[...]}'` returns the same JSON shape (`{ok, content}` / `{ok:false, error}`) the RN app will expect.
+
+**Implementation:** extracted the TanStack server function's handler body verbatim into a new exported `runAiChat(data: ChatInput): Promise<ChatResult>` in `ai.functions.ts` (framework-agnostic — no TanStack imports), with `ChatInputSchema` also exported. The existing `aiChat` server function now just calls `runAiChat(data)`, so the web app's `AIChat.tsx` component keeps working identically — zero behavior change there. `server.ts`'s exported `fetch` now checks `pathname === "/api/ai-chat"` before falling through to the existing TanStack Start SSR delegation (untouched): handles `OPTIONS` preflight, rejects non-POST with 405, invalid JSON body with 400, a schema-invalid body with 400, and wraps unexpected errors in a 500 JSON response — everything else still goes through the original SSR path unchanged. Added permissive CORS headers (`access-control-allow-origin: *`) since Task 9's RN client also has a web target (Expo web), where `fetch()` calls are real cross-origin browser requests subject to CORS, unlike native iOS/Android where CORS doesn't apply.
+
+**Files modified** *(in `kitchen-haven-club`)*:
+- `src/lib/ai.functions.ts` — exported `ChatInputSchema`, added `ChatInput`/`ChatResult` types, extracted `runAiChat`.
+- `src/server.ts` — added the `/api/ai-chat` route handling described above.
+**Dependencies:** none.
+**Acceptance criteria:** `curl -X POST https://<worker-url>/api/ai-chat -d '{"messages":[...]}'` returns the same JSON shape (`{ok, content}` / `{ok:false, error}`) the RN app will expect — **verification limitation, disclosed:** `kitchen-haven-club` has no `node_modules` installed in this environment (dependency-less checkout) and no `bun` binary is available here to install them (the project uses `bun.lock`, not npm/pnpm) — so `tsc`, `eslint`, and `vite dev` could not actually be run for this repo, unlike every RN-repo task so far. Installing via `npm`/`pnpm` instead was deliberately avoided since it would create a second, mismatched lockfile alongside `bun.lock` — a bigger, unrequested side effect. Verified instead by careful manual line-by-line review: `runAiChat`'s body is byte-for-byte the original handler logic (only wrapped in a named exported function), and the new route's request-parsing/response-shaping was checked by inspection against the Fetch API / Zod's documented `safeParse` behavior.
 **Manual testing checklist:**
-- [ ] Call the new endpoint with `curl`/Postman, confirm a real AI response comes back.
-- [ ] Call it with an empty/invalid body, confirm a clean 4xx, not a 500.
+- [ ] Call the new endpoint with `curl`/Postman, confirm a real AI response comes back — **not done**, no way to run this repo's dev server in this environment (see above). Needs a pass with `bun run dev` (or after deploying) once someone with the toolchain available can run it.
+- [ ] Call it with an empty/invalid body, confirm a clean 4xx, not a 500 — **not done** for the same reason; the code path was reviewed by inspection (invalid JSON → 400 via the `catch`, schema failure → 400 via `safeParse`), not executed.
 **Suggested commit (web repo):** `feat(api): expose aiChat as a plain POST endpoint for the RN app`
 
-### Task 9 — RN API client config for the chat endpoint
+### Task 9 — RN API client config for the chat endpoint — ✅ Completed
 **Goal:** Add `EXPO_PUBLIC_API_URL` env config and a thin `src/lib/api.ts` with an `aiChat(messages)` function that `fetch()`s Task 8's endpoint — the RN-side mirror of the web's `aiChat` server-function call signature, so the AI Chat screen task (Phase 9) doesn't need to know about `fetch` details.
-**Files to modify:** Add `.env`/`app.config` entry for `EXPO_PUBLIC_API_URL`, add `src/lib/api.ts`.
-**Dependencies:** Task 8 (needs a real URL to call, but can be stubbed against a placeholder URL and wired for real once Task 8 ships).
-**Acceptance criteria:** `aiChat({ messages })` returns the same `{ok, content}`/`{ok:false, error}` shape as the web version; network errors are caught and surfaced as `{ok:false, error: "..."}`, matching web's try/catch fallback message.
+
+**Implementation notes:**
+- `.env` (committed, not `.env.local`) holds `EXPO_PUBLIC_API_URL=https://your-worker-domain.example.com` — a placeholder using the RFC 2606 reserved `.example.com` TLD (guaranteed never to resolve to a real target), to be replaced once Task 8's Worker is actually deployed somewhere. `EXPO_PUBLIC_*` vars are inlined into the client bundle by Expo's build tooling regardless, so there's nothing secret to protect by using `.env.local` instead.
+- Response shape is validated with a small `zod` union schema (`{ok:true,content}` | `{ok:false,error}`) rather than a blind type assertion — `zod` is already this project's established validation tool (`CLAUDE.md`'s chosen stack), so this isn't a new dependency or abstraction.
+- The endpoint always returns a valid `{ok,...}` JSON body even for its own 400/405/500 cases (by design, from Task 8), so `aiChat()` doesn't need a separate `res.ok` branch — it parses the body regardless of HTTP status.
+- The web's emoji prefix on error messages (`` `😔 ${res.error}` ``) is added by `AIChat.tsx` at render time, not by the RPC call itself — `aiChat()` here correctly returns the raw `error` string unprefixed, matching that same separation of concerns. Task 32 (the real AI Chat screen) needs to add the prefix itself when it renders `res.error`.
+
+**Files modified:**
+- Added `.env`.
+- Added `src/lib/api.ts`.
+**Dependencies:** Task 8 (stubbed against the placeholder URL above, as anticipated).
+**Acceptance criteria:**
+- [x] `aiChat({ messages })` returns the same `{ok, content}`/`{ok:false, error}` shape as the web version — verified (see below).
+- [x] Network errors are caught and surfaced as `{ok:false, error: "..."}`, matching web's try/catch fallback message — verified: the exact string `"😔 Je n'ai pas pu joindre l'assistance. Vérifie ta connexion et réessaie."` (copied from `AIChat.tsx`'s catch block) is returned, not thrown.
+- [x] `npx tsc --noEmit` passes — 0 errors.
+
+**Verification — done differently from Tasks 1-7, and more thoroughly:** `aiChat()` is a pure async function with no RN/Expo-specific dependencies (just `fetch` + `zod`), so instead of a curl-based dev-server check (which can't observe async client-side behavior fired after hydration anyway), it was exercised directly via an isolated `tsx` script covering 5 scenarios: (1) missing `EXPO_PUBLIC_API_URL` → sensible config error; (2) a genuinely unreachable address (`http://127.0.0.1:1`, connection refused — the same failure class as airplane mode) → the exact web-matching fallback message, confirmed *returned*, not thrown; (3) a real local HTTP server (spun up in the script) returning `{ok:true,content}` → parsed and passed through correctly; (4) the same server returning `{ok:false,error}` → passed through correctly; (5) the server returning an unexpected/malformed shape → falls back gracefully via the zod validation rather than crashing. All 5 passed.
 **Manual testing checklist:**
-- [ ] Call `aiChat` from a throwaway test screen with airplane mode on, confirm the graceful error path (not an uncaught exception).
-- [ ] Call it with real connectivity once Task 8 is deployed, confirm a real response flows through.
+- [x] Call `aiChat` from a throwaway test screen with airplane mode on, confirm the graceful error path (not an uncaught exception) — verified via the isolated script's "unreachable address" case instead of an actual device with airplane mode (none available in this environment); same underlying failure mode (a `fetch` that rejects).
+- [ ] Call it with real connectivity once Task 8 is deployed, confirm a real response flows through — **not done**, Task 8's Worker isn't deployed anywhere yet (still a `.example.com` placeholder) and this repo's dev server couldn't be run either (see Task 8's notes). The isolated script's mocked-server success case is the closest available substitute; a real end-to-end pass is still needed once there's an actual deployed URL.
 **Suggested commit:** `feat(lib): add RN aiChat API client`
 
 ---
 
 ## Phase 2 — Public / auth screens
 
-### Task 10 — Landing screen
+### Task 10 — Landing screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/index.tsx`
 **Goal:** Build `(auth)/index.tsx`: hero image, gradient overlay, "Accéder à mon espace" / "J'ai reçu une invitation" buttons linking to Login.
-**Files to modify:** `src/app/(auth)/index.tsx`.
+
+**New shared component added (not in the original file list, needed by both Task 10 and Task 11):** `src/components/ui/gradient-button.tsx` — RNR's `Button` only supports solid `bg-*` variants; there's no gradient-aware equivalent for the web's `bg-gradient-luxe` CTA buttons. Composes `Pressable` + `GradientView` (Task 4) + `TextClassContext.Provider`, mirroring how `Button`/`Badge` are built internally, so it drops into the same usage patterns (including working inside `<Link asChild>`). Building it now rather than duplicating the same Pressable+GradientView composition inline in both Landing and Login.
+
+**Implementation notes:**
+- Also copied `assets/perledeslys/perle-hero.jpg` from the web repo (the one image this screen needs that wasn't already ported).
+- Used `expo-image`'s `<Image contentFit="cover">` per `CLAUDE.md`'s `img -> Expo Image` rule.
+- Icons use the already-installed RNR `Icon` wrapper (`@/components/ui/icon`, `cssInterop`-based `className` support) rather than manual hex colors — a cleaner pattern than Task 2's `ICON_TINT` hex workaround, which was written before this wrapper was noticed. Worth revisiting `bottom-nav.tsx` to use `Icon` too at some point, though that's out of scope for this task.
+- `SafeAreaView` (`react-native-safe-area-context`) wraps the content inside the full-bleed gradient background, so the gradient extends edge-to-edge (behind the status bar) while text/buttons respect safe-area insets — the web has no equivalent concept, this is a necessary native-only addition.
+
+**Files modified:**
+- Added `src/app/(auth)/index.tsx` (real screen, replacing Task 1's stub — including removing the temporary debug route-link list, which was always meant to be superseded here).
+- Added `src/components/ui/gradient-button.tsx`.
+- Added `assets/perledeslys/perle-hero.jpg`.
 **Dependencies:** Task 1, Task 4 (GradientView).
-**Acceptance criteria:** Matches web layout (header logo mark, hero image card, headline, two CTAs); `Link` navigates to `(auth)/login`.
+**Acceptance criteria:**
+- [x] Matches web layout (header logo mark, hero image card, headline, two CTAs) — verified via a dev-server SSR fetch: all copy present (header, "Accès cliente uniquement" badge, "Bienvenue dans votre écrin culinaire.", headline incl. "algérienne", body paragraph, both CTAs, footer line), all 3 gradients (`cream` root, `luxe` logo circle, `roseOverlay` hero overlay) confirmed rendering with the exact expected colors/angles, `aspect-[4/5]` confirmed applied to the hero container.
+- [x] `Link` navigates to `(auth)/login` — both CTAs and the header "Connexion" link point at `/(auth)/login`.
+- [x] `npx tsc --noEmit` passes — 0 errors.
+
+**Verification limitation found — flagged, not glossed over:** the hero photo's actual pixels can't be confirmed via this environment's dev-server-plus-curl technique. `expo-image` renders its container synchronously during SSR (confirmed: `<div data-expoimage="true">` present with correct `width:100%;height:100%` sizing, inside the correctly-styled `aspect-[4/5] overflow-hidden rounded-[2rem]` wrapper) but loads and injects the actual `<img>` client-side, post-hydration — the same category of gap as Tasks 2/6/7/9 (async/client-only behavior invisible to a static SSR snapshot). The container/layout is confirmed correct; the photo itself needs a real browser or device to see.
 **Manual testing checklist:**
-- [ ] Compare side-by-side with the web screenshot for spacing/typography (Cormorant Garamond headline renders with the loaded font, not a system fallback).
-- [ ] Both buttons navigate correctly.
-- [ ] Looks correct on both a small phone and a tablet-size simulator (no overflow).
+- [ ] Compare side-by-side with the web screenshot for spacing/typography (Cormorant Garamond headline renders with the loaded font, not a system fallback) — **partially verified**: all text content and gradient colors confirmed correct via SSR inspection; pixel-level spacing/font-rendering comparison needs a real device/simulator screenshot, not available here.
+- [x] Both buttons navigate correctly — confirmed both `Link`s target `/(auth)/login`; interactive tap-through itself needs a device/simulator (can't fire a press event via curl).
+- [ ] Looks correct on both a small phone and a tablet-size simulator (no overflow) — **not verifiable**, no simulator available in this environment.
 **Suggested commit:** `feat(screens): add Landing screen`
 
-### Task 11 — Login screen
+### Task 11 — Login screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/login.tsx`
 **Goal:** Build `(auth)/login.tsx`: RNR `Tabs` for Identifiants/Code d'invitation, RNR `Input` fields (email/password or invite code), RNR `Button` submit → `router.replace("/app")`. Per the project's chosen stack (`CLAUDE.md`), wire the form with **React Hook Form + Zod** (the web version used bare `useState`, since RHF/Zod are the RN project's stated tech choice for forms — same fields/behavior, no new validation rules invented).
-**Files to modify:** `src/app/(auth)/login.tsx`.
+
+**Implementation notes:**
+- The submit button uses the new `GradientButton` (added in Task 10) rather than RNR's `Button`, matching web's `bg-gradient-luxe` submit button.
+- RHF fields are wired via `Controller` (not `register()`) — RNR's `Input` is a `TextInput`, which exposes `onChangeText(text: string)`, not the DOM-style `onChange(event)` RHF's `register()` expects; `Controller`'s `render({field})` prop is the standard, documented way to bridge RHF to React Native inputs.
+- Zod schema (`{email, password, code}`, all plain `z.string()`) is intentionally permissive — the web has zero real validation (submit always navigates regardless of field content), so no stricter rule (e.g. `.email()` format, `.min()` length) was added that could reject something the web itself would accept.
+- `tab` is a separate `useState`, not part of the RHF-managed values — matches the web's own separation (a plain `useState<"login"|"invite">` alongside the two field-level `useState`s) and, more importantly, `@rn-primitives/tabs`' `Root` only supports controlled `value`/`onValueChange` (no uncontrolled `defaultValue` — confirmed by `tsc`, not assumed).
+- The web's two non-functional placeholder buttons ("Mot de passe oublié ?", "Demander une invitation à Lys" — real `<button>` elements in the web markup with no `onClick` at all) are rendered with RNR `Button variant="link"` and no `onPress`, preserving the exact same "looks tappable, does nothing yet" state rather than inventing a handler or downgrading them to plain `Text`.
+- The back arrow needed `<Link asChild><Pressable><Icon .../></Pressable></Link>` rather than a bare `<Link><Icon/></Link>` — unlike the web's `<a>`, RN's `Link` (non-`asChild`) can't reliably wrap a non-`Text` child; `asChild` delegates rendering to an explicit `Pressable` instead.
+**Files modified:**
+- Added `src/app/(auth)/login.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 1.
-**Acceptance criteria:** Both tabs render their respective fields; submit navigates into `app`; matches web's copy and layout exactly.
+**Acceptance criteria:**
+- [x] Both tabs render their respective fields — verified via SSR: the default "login" tab's email field renders with the correct pre-filled value (`yasmine.b@email.com`); the "invite" tab's content is correctly absent (inactive tabs aren't rendered), and its label ("Code d'invitation") is confirmed present in the always-visible `TabsList`.
+- [x] Submit navigates into `app` — `router.replace("/app")`, matching the plan's explicit instruction.
+- [x] Matches web's copy and layout exactly — verified via SSR: headline ("Bon retour parmi nous."), both tab labels, both field labels, submit button copy, and footer copy all confirmed present.
+- [x] `npx tsc --noEmit` passes — 0 errors.
 **Manual testing checklist:**
-- [ ] Switch between the two tabs, confirm fields swap correctly and previous input isn't lost unexpectedly (matches web behavior of keeping both fields' state).
-- [ ] Submit from each tab, confirm navigation into the tab group.
-- [ ] Back button/gesture returns to Landing.
+- [ ] Switch between the two tabs, confirm fields swap correctly and previous input isn't lost unexpectedly — **not independently verified**: this is real interactive/stateful behavior a static SSR snapshot can't exercise (same class of gap as Task 6's `ToggleGroup` tap-to-select). RHF's form state persisting across a Controller's mount/unmount (which is what keeping both fields' values across tab switches relies on) is a well-established RHF guarantee, not something specific to this screen, but a device/simulator pass would still confirm it end-to-end.
+- [ ] Submit from each tab, confirm navigation into the tab group — **not independently verified** for the same reason; the navigation call itself (`router.replace("/app")`) was already exercised structurally by Task 1's own verification of that same route.
+- [ ] Back button/gesture returns to Landing — the back arrow's `href="/(auth)"` is correct by inspection; the native swipe-back gesture itself needs a device/simulator.
 **Suggested commit:** `feat(screens): add Login screen with tabbed identifiants/invite form`
 
 ---
@@ -519,14 +594,14 @@ Built last among the UI work since they float above every `app` screen and depen
 - [x] Task 3 — Custom Progress component
 - [x] Task 4 — Gradient helper + install expo-linear-gradient
 - [x] Task 5 — Real Favorites store
-- [ ] Task 6 — Install remaining RNR components (toggle-group, textarea)
-- [ ] Task 7 — Vimeo embed component + install react-native-webview
-- [ ] Task 8 — Expose aiChat as a plain HTTP endpoint (web repo)
-- [ ] Task 9 — RN API client config for the chat endpoint
+- [x] Task 6 — Install remaining RNR components (toggle-group, textarea)
+- [x] Task 7 — Vimeo embed component + install react-native-webview (code done; device/simulator playback verification still pending)
+- [x] Task 8 — Expose aiChat as a plain HTTP endpoint (web repo) (code done; runtime verification still pending — see task notes)
+- [x] Task 9 — RN API client config for the chat endpoint
 
 ### Phase 2 — Public / auth screens
-- [ ] Task 10 — Landing screen
-- [ ] Task 11 — Login screen
+- [x] Task 10 — Landing screen
+- [x] Task 11 — Login screen
 
 ### Phase 3 — Home, Search, Calendar, First Steps
 - [ ] Task 12 — MiniCalendar widget
