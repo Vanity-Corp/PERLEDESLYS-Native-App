@@ -1,7 +1,16 @@
 import Slider from "@react-native-community/slider";
 import { Image } from "expo-image";
 import { Link, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, Download, Heart, Pause, Play, Share2 } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Clock,
+  Download,
+  Heart,
+  Pause,
+  Play,
+  RotateCcw,
+  Share2,
+} from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -10,17 +19,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VimeoEmbed } from "@/components/vimeo-embed";
-import { formatSeconds } from "@/lib/utils";
+import { formatSeconds, useHistory } from "@/lib/local-store";
 import { FIRST_STEPS_VIDEO_ID, videos } from "@/lib/mock-data";
 import { THEME } from "@/constants/theme";
 
 // Web source: kitchen-haven-club/src/routes/app/videos/$videoId.tsx
 //
-// MVP scope: the simulated player (play/pause, scrubber, clamp/auto-pause)
-// and full page content (metadata, actions, similar videos) are built here.
-// Cross-session history persistence + the "Reprise à X%" resume banner
-// (the web's `useHistory` wiring) are deferred post-MVP — position always
-// starts at 0 on open, matching a first-time viewing rather than resuming.
+// Task 21 built the simulated player (play/pause, scrubber, clamp/auto-pause)
+// and full page content (metadata, actions, similar videos).
+// Task 22 wires the player to `useHistory` for cross-session position
+// persistence and the "Reprise à X%" resume banner.
 function parseDuration(duration: string): number {
   const m = duration.match(/(\d+)\s*min/);
   return m ? parseInt(m[1], 10) * 60 : 600;
@@ -42,7 +50,9 @@ export default function VideoDetailScreen() {
   const isFirstSteps = video.id === FIRST_STEPS_VIDEO_ID;
   const totalSec = parseDuration(video.duration);
 
-  const [position, setPosition] = useState(0);
+  const { get, upsert } = useHistory();
+  const stored = get(video.id);
+  const [position, setPosition] = useState(stored?.positionSec ?? 0);
   const [playing, setPlaying] = useState(false);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -59,6 +69,24 @@ export default function VideoDetailScreen() {
       if (tick.current) clearInterval(tick.current);
     };
   }, [playing, totalSec, isFirstSteps]);
+
+  useEffect(() => {
+    if (position === 0 && !stored) return;
+    upsert({
+      videoId: video.id,
+      title: video.title,
+      image: video.image,
+      category: video.category,
+      duration: video.duration,
+      positionSec: position,
+      totalSec,
+      progress: Math.round((position / totalSec) * 100),
+      updatedAt: Date.now(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position]);
+
+  const progress = Math.round((position / totalSec) * 100);
 
   return (
     <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
@@ -146,6 +174,19 @@ export default function VideoDetailScreen() {
           <Text className="text-xs text-muted-foreground">·</Text>
           <Text className="text-xs text-muted-foreground">HD 1080p</Text>
         </View>
+
+        {stored && stored.positionSec > 5 && !isFirstSteps && (
+          <View className="mt-3 flex-row items-center gap-2 rounded-xl bg-secondary p-3">
+            <Icon as={RotateCcw} size={14} className="text-primary" />
+            <Text className="flex-1 text-xs text-foreground">
+              Reprise à <Text className="font-semibold">{formatSeconds(stored.positionSec)}</Text> (
+              {progress}%)
+            </Text>
+            <Pressable onPress={() => setPosition(0)}>
+              <Text className="text-xs font-medium text-primary">Recommencer</Text>
+            </Pressable>
+          </View>
+        )}
 
         <Text className="mt-4 text-sm leading-relaxed text-muted-foreground">{video.description}</Text>
 

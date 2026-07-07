@@ -564,15 +564,29 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 - [ ] Let a short video "finish," confirm it auto-pauses at 100% — **not independently verified** interactively; the clamp/auto-pause logic is a direct port, type-checked.
 **Suggested commit:** `feat(screens): add Video detail screen`
 
-### Task 22 — Video detail screen — history integration (narrowed) — post-MVP, not built this pass
+### Task 22 — Video detail screen — history integration (narrowed) — ✅ Completed
 **Web source:** same file as Task 21.
-**Goal — narrowed:** Task 21 above now already covers metadata, description, action buttons, and the similar-videos list (originally this task's scope). What remains here is specifically: wire the player to `useHistory` (Phase 0) so position persists across visits, and show the "Reprise à X%" resume banner when reopening a previously-watched video.
-**Files to modify:** `src/app/app/videos/[videoId].tsx`.
+**Goal — narrowed:** Task 21 already covered metadata, description, action buttons, and the similar-videos list (originally this task's scope). What remained here: wire the player to `useHistory` (Phase 0) so position persists across visits, and show the "Reprise à X%" resume banner when reopening a previously-watched video.
+
+**Implementation notes:**
+- Ported verbatim from the web: `const { get, upsert } = useHistory(); const stored = get(video.id);`, the `useState(stored?.positionSec ?? 0)` initial position, the `useEffect` that calls `upsert(...)` on every `position` change (early-returns when `position === 0 && !stored`, so a never-watched video doesn't write a spurious zero-position history entry), and the resume-banner conditional (`stored && stored.positionSec > 5 && !isFirstSteps`).
+- **One deliberate omission, consistent with Task 21's own established reasoning:** the web has a `useEffect(() => setPosition(stored?.positionSec ?? 0), [video.id])` to reset position when navigating between videos while React Router reuses the same mounted component instance. Task 21 already established that Expo Router mounts a fresh screen instance per `Link` navigation to a new `videoId`, so the `useState` initializer alone (now reading `stored?.positionSec ?? 0` instead of a hardcoded `0`) already produces the same result on RN without that extra effect — porting it anyway would be dead code here.
+- `formatSeconds` and `useHistory` are now both imported from `@/lib/local-store` (matching the web's own import line exactly) instead of `formatSeconds` alone from `@/lib/utils` — `local-store.ts` already re-exports `formatSeconds` from `utils.ts` for this exact purpose, so this is not a new dependency.
+- The "Recommencer" button calls `setPosition(0)`; combined with the existing persist effect, this alone writes the reset back to `useHistory` on the next render — no separate "clear history" call needed, matching the web exactly (it relies on the same effect-triggered re-persist).
+**Files modified:**
+- Modified `src/app/app/videos/[videoId].tsx`.
 **Dependencies:** Task 21 (done).
-**Acceptance criteria:** Opening a previously-watched video shows the "Reprise à X%" banner and starts at the saved position; watching updates `useHistory` in real time (visible on the History screen once Task 27 exists).
+**Acceptance criteria:**
+- [x] Opening a previously-watched video shows the "Reprise à X%" banner and starts at the saved position — verified structurally (conditional + `useState` initializer both read from `stored`) and via the isolated store test below; a live on-screen "watch, leave, come back" pass still needs a device/simulator, see below.
+- [x] Watching updates `useHistory` in real time (visible on the History screen once Task 27 exists) — the persist `useEffect` fires on every `position` change, same as web.
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted since Task 14).
+
+**Verification — done two ways, since this is the first task to actually exercise `useHistory`'s `upsert` from a real mounted screen (previously only type-checked, never called):**
+1. SSR fetch of a never-before-seen video (`tm7-demarrage`) confirmed the resume banner correctly does **not** appear on a first visit (empty history store) while the rest of the page still renders — and re-fetching the not-found route (`does-not-exist`) confirmed no regression there either.
+2. Since real position-tracking/resume behavior is client-side, interval-driven state a curl-based SSR snapshot can't reach (same limitation as Task 21's own play/pause/scrubber checks), the `useHistory` store's actual persistence behavior was verified directly, following the same rigor as Task 5's isolated favorites test: a standalone script recreating `upsert`'s exact dedup-by-`videoId`-and-cap-at-50 logic against an in-memory async `StateStorage` (mirroring `storage.ts`'s `asyncStorage`) confirmed that upserting the same `videoId` twice updates in place (keeps only the latest position, doesn't duplicate), and that a **fresh store read against the same backing storage** (simulating an app restart) correctly rehydrated the saved position.
 **Manual testing checklist:**
-- [ ] Watch a video partway, leave the screen, come back — confirm resume banner and correct position.
-- [ ] Tap "Recommencer," confirm position resets to 0.
+- [ ] Watch a video partway, leave the screen, come back — confirm resume banner and correct position — **not independently verified interactively**; the underlying persist/rehydrate mechanism was verified in isolation (see above), same class of gap as every prior interactive-state check.
+- [ ] Tap "Recommencer," confirm position resets to 0 — **not independently verified interactively**; `setPosition(0)` is a direct, type-checked call feeding the same already-verified persist effect.
 **Suggested commit:** `feat(screens): wire Video detail screen to watch history`
 
 ---
@@ -803,7 +817,7 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 ### Phase 5 — Tutorials & Video Detail
 - [x] Task 20 — Tutorials list screen — MVP
 - [x] Task 21 — Video detail screen — MVP (scope expanded to full screen, see task notes)
-- [ ] Task 22 — Video detail screen — history integration (narrowed to just persistence/resume banner) — post-MVP
+- [x] Task 22 — Video detail screen — history integration (persist/resume banner wired; live on-device watch-and-resume pass still needed, see task notes)
 
 ### Phase 6 — Lives
 - [x] Task 23 — Lives screen — MVP (primary tab)
