@@ -377,17 +377,28 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 - [ ] Confirm horizontal scrollers don't fight the outer vertical `ScrollView`'s gesture — **not verified interactively**; no custom gesture handlers were added that would cause this, but only a real device/simulator can confirm feel.
 **Suggested commit:** `feat(screens): add Dashboard (home) screen`
 
-### Task 14 — Search screen — post-MVP, not built this pass
+### Task 14 — Search screen — ✅ Completed (first post-MVP task)
 **Web source:** `kitchen-haven-club/src/routes/app/search/index.tsx`
-**Web source:** `kitchen-haven-club/src/routes/app/search/index.tsx`
-**Goal:** Build `app/search.tsx`: search `Input`, result-type `Tabs` (Tout/Recettes/Vidéos/Articles/FAQ) with counts, accent-insensitive client-side filtering (port the web's `norm()` helper as-is), empty/no-query and no-results states.
-**Files to modify:** `src/app/app/search.tsx`.
-**Dependencies:** Task 1.
-**Acceptance criteria:** Filtering logic matches web exactly (same `norm()` behavior, same fields searched per content type); tapping a result navigates correctly.
+**Goal:** Build `app/search.tsx`: search `Input`, result-type tabs (Tout/Recettes/Vidéos/Articles/FAQ) with counts, accent-insensitive client-side filtering (port the web's `norm()` helper as-is), empty/no-query and no-results states.
+
+**Implementation notes:**
+- Used RNR `ToggleGroup`/`ToggleGroupItem` (Task 6) for the result-type switcher instead of RNR `Tabs` — the web's own markup here is a horizontally-scrolling row of independent pill buttons (`shrink-0 ... rounded-full`), not a fixed-width segmented switcher, which is exactly the same shape Task 18/20 already established `ToggleGroup` for (category filters), not `Tabs` (used for the two-way Identifiants/Invite and À venir/Replays switchers elsewhere). Same documented simplification as Task 18: the web's selected pill uses `bg-gradient-luxe`; here it falls back to `ToggleGroupItem`'s built-in flat `bg-accent` for the same structural reason (no gradient-through-root support), not re-flagged per-task after Task 18 already covered the reasoning.
+- `norm()` is ported with identical behavior (NFD-normalize + strip combining diacritics) but implemented via `new RegExp("[\\u0300-\\u036f]", "g")` instead of a literal `/[̀-ͯ]/` regex — purely a source-encoding precaution in this editing environment, not a behavior change; same Unicode range, same result.
+- The FAQ result rows link to `/app/profile/faq` (not the web's flat `/app/faq`) — same nested-under-Profile route restructuring from Task 1, already applied consistently by Task 13's Dashboard and Task 24's Profile hub.
+- Search `Input` uses `autoFocus`, matching the web's `<input autoFocus>` — reasonable to keep since RNR's `Input` (a `TextInput`) supports the same prop name/behavior natively.
+- Article rows stay non-interactive `View`s (no `Link`/`Pressable`), matching the web exactly — the web's article search results are plain `<div>`s with no `onClick`/href, same as Task 24's purchased-product rows precedent.
+**Files modified:**
+- Rewrote `src/app/app/search.tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** Task 1, Task 6 (ToggleGroup).
+**Acceptance criteria:**
+- [x] Filtering logic matches web exactly (same `norm()` behavior, same fields searched per content type) — identical predicate/field lists ported per content type (recipes: title/category/description/ingredient labels; videos: title/category/description; articles: title/category/excerpt; FAQ: q/a).
+- [x] `npx tsc --noEmit` passes — 0 new errors (2 pre-existing, unrelated errors in the environment — `global.css`/`animated-icon.module.css` side-effect imports — are present regardless of this change).
+- [x] Tapping a result navigates correctly — recipe/video results use the same typed-route `Link` pattern already verified in Tasks 18/20; FAQ results link to the verified `/app/profile/faq` stub.
 **Manual testing checklist:**
-- [ ] Search an accented term (e.g. "poulet" vs "poulét") and confirm both match.
-- [ ] Confirm tab counts update live as you type.
-- [ ] Confirm empty state and no-results state both render correctly.
+- [x] Confirm empty state (no query) renders with all 5 suggestion chips — verified via SSR: header, "Que cherches-tu ?", and all 5 suggestion chips (poulet/couscous/ramadan/nettoyage/varoma) present in the fetched HTML.
+- [ ] Search an accented term (e.g. "poulet" vs "poulét") and confirm both match — **not independently verified interactively**; `norm()` is a byte-for-byte port of the web's own logic (same regex range), same class of gap as every prior live-filter check (Tasks 18/20).
+- [ ] Confirm tab counts update live as you type — **not independently verified**; needs a device/simulator to exercise typing, same limitation as every prior text-input interaction check.
+- [ ] Tap a suggestion chip, confirm it populates the search field — **not independently verified**; `onPress={() => setQ(s)}` is a direct, type-checked call.
 **Suggested commit:** `feat(screens): add Search screen`
 
 ### Task 15 — Calendar screen — month view + navigation — post-MVP, not built this pass
@@ -754,7 +765,7 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 ### Phase 3 — Home, Search, Calendar, First Steps
 - [x] Task 12 — MiniCalendar widget (highlight/dots not visually confirmed — timezone-dependent web bug faithfully reproduced, see task notes)
 - [x] Task 13 — Dashboard (home) screen — MVP
-- [ ] Task 14 — Search screen — post-MVP
+- [x] Task 14 — Search screen (accent-insensitive filter/tab-count live-typing not visually confirmed — needs a device/simulator, see task notes)
 - [ ] Task 15 — Calendar screen — month view + navigation — post-MVP
 - [ ] Task 16 — Calendar screen — week/day/year views — post-MVP
 - [x] Task 17 — First Steps screen — MVP
