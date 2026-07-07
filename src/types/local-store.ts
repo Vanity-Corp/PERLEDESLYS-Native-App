@@ -8,8 +8,14 @@ export type Note = {
   contextHref: string; // expo-router path, ex: "/videos/premiers-pas-tm7"
 };
 
-export type HistoryEntry = {
-  videoId: string;
+// The web's `useHistory` only ever tracked videos (see kitchen-haven-club's
+// local-store.ts) — recipe view-history has no web counterpart. Extended
+// here as a discriminated union so both kinds share one list (sorted
+// together, most-recent-first) while keeping their kind-specific fields
+// (a recipe has no playback position/progress to resume).
+export type VideoHistoryEntry = {
+  kind: "video";
+  id: string;
   title: string;
   image: ImageSourcePropType;
   category: string;
@@ -19,6 +25,18 @@ export type HistoryEntry = {
   totalSec: number;
   updatedAt: number;
 };
+
+export type RecipeHistoryEntry = {
+  kind: "recipe";
+  id: string;
+  title: string;
+  image: ImageSourcePropType;
+  category: string;
+  time: string; // affichage, ex: "35 min"
+  updatedAt: number;
+};
+
+export type HistoryEntry = VideoHistoryEntry | RecipeHistoryEntry;
 
 export type UserSettings = {
   name: string;

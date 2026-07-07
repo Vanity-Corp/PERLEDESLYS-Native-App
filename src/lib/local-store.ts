@@ -3,9 +3,9 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { STORAGE_KEYS } from "@/constants/storage";
 import { asyncStorage } from "@/lib/storage";
-import { recipes, user } from "@/lib/mock-data";
+import { recipes, user, videos } from "@/lib/mock-data";
 import { generateId } from "@/lib/utils";
-import type { Recipe } from "@/types/content";
+import type { Recipe, Video } from "@/types/content";
 import type { HistoryEntry, Note, UserSettings } from "@/types/local-store";
 
 /**
@@ -49,13 +49,16 @@ export function useNotes() {
   return { notes, add, remove };
 }
 
-/* ---------- Historique de visionnage ---------- */
+/* ---------- Historique (vidéos + recettes consultées) ---------- */
 
+// Entries are de-duped/looked-up by (id, kind) together, not just id — a
+// video and a recipe could in principle share an id string (same reasoning
+// already applied to `useFavorites` when it was extended to cover videos).
 type HistoryState = {
   history: HistoryEntry[];
   upsert: (entry: HistoryEntry) => void;
   clear: () => void;
-  remove: (videoId: string) => void;
+  remove: (id: string, kind: HistoryEntry["kind"]) => void;
 };
 
 const useHistoryStore = create<HistoryState>()(
@@ -64,14 +67,16 @@ const useHistoryStore = create<HistoryState>()(
       history: [],
       upsert: (entry) =>
         set((state) => ({
-          history: [entry, ...state.history.filter((h) => h.videoId !== entry.videoId)].slice(
-            0,
-            50,
-          ),
+          history: [
+            entry,
+            ...state.history.filter((h) => !(h.id === entry.id && h.kind === entry.kind)),
+          ].slice(0, 50),
         })),
       clear: () => set({ history: [] }),
-      remove: (videoId) =>
-        set((state) => ({ history: state.history.filter((h) => h.videoId !== videoId) })),
+      remove: (id, kind) =>
+        set((state) => ({
+          history: state.history.filter((h) => !(h.id === id && h.kind === kind)),
+        })),
     }),
     { name: STORAGE_KEYS.HISTORY, storage: createJSONStorage(() => asyncStorage) },
   ),
@@ -82,47 +87,71 @@ export function useHistory() {
   const upsert = useHistoryStore((s) => s.upsert);
   const clear = useHistoryStore((s) => s.clear);
   const remove = useHistoryStore((s) => s.remove);
-  const get = (videoId: string) => history.find((h) => h.videoId === videoId);
+  // Narrows by the passed `kind` literal so callers get back the specific
+  // entry shape (e.g. a video's `positionSec`) instead of the full union.
+  function get<K extends HistoryEntry["kind"]>(
+    id: string,
+    kind: K,
+  ): Extract<HistoryEntry, { kind: K }> | undefined {
+    return history.find((h) => h.id === id && h.kind === kind) as
+      | Extract<HistoryEntry, { kind: K }>
+      | undefined;
+  }
   return { history, upsert, get, clear, remove };
 }
 
 /* ---------- Favoris ---------- */
 
+// Recipes and videos are separate id spaces, so a favorite needs its `kind`
+// alongside its `id` — a flat `string[]` (the original single-kind shape)
+// couldn't tell which collection to resolve an id against once videos were
+// added too.
+type FavoriteKind = "recipe" | "video";
+type FavoriteEntry = { id: string; kind: FavoriteKind };
+
 type FavoritesState = {
-  favoriteIds: string[];
-  toggle: (id: string) => void;
+  favoriteEntries: FavoriteEntry[];
+  toggle: (id: string, kind: FavoriteKind) => void;
 };
 
 const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set) => ({
-      favoriteIds: [],
-      toggle: (id) =>
-        set((state) => ({
-          favoriteIds: state.favoriteIds.includes(id)
-            ? state.favoriteIds.filter((favoriteId) => favoriteId !== id)
-            : [id, ...state.favoriteIds],
-        })),
+      favoriteEntries: [],
+      toggle: (id, kind) =>
+        set((state) => {
+          const isFav = state.favoriteEntries.some((f) => f.id === id && f.kind === kind);
+          return {
+            favoriteEntries: isFav
+              ? state.favoriteEntries.filter((f) => !(f.id === id && f.kind === kind))
+              : [{ id, kind }, ...state.favoriteEntries],
+          };
+        }),
     }),
     { name: STORAGE_KEYS.FAVORITES, storage: createJSONStorage(() => asyncStorage) },
   ),
 );
 
 const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-
-function resolveFavoriteRecipes(favoriteIds: string[]): Recipe[] {
-  return favoriteIds
-    .map((id) => recipesById.get(id))
-    .filter((recipe): recipe is Recipe => Boolean(recipe));
-}
+const videosById = new Map(videos.map((video) => [video.id, video]));
 
 export function useFavorites() {
-  const favoriteIds = useFavoritesStore((s) => s.favoriteIds);
+  const favoriteEntries = useFavoritesStore((s) => s.favoriteEntries);
   const toggle = useFavoritesStore((s) => s.toggle);
-  const isFavorite = (id: string) => favoriteIds.includes(id);
-  const favorites = resolveFavoriteRecipes(favoriteIds);
+  const isFavorite = (id: string, kind: FavoriteKind) =>
+    favoriteEntries.some((f) => f.id === id && f.kind === kind);
 
-  return { favorites, toggle, isFavorite };
+  const favoriteRecipes = favoriteEntries
+    .filter((f) => f.kind === "recipe")
+    .map((f) => recipesById.get(f.id))
+    .filter((recipe): recipe is Recipe => Boolean(recipe));
+
+  const favoriteVideos = favoriteEntries
+    .filter((f) => f.kind === "video")
+    .map((f) => videosById.get(f.id))
+    .filter((video): video is Video => Boolean(video));
+
+  return { favoriteRecipes, favoriteVideos, toggle, isFavorite };
 }
 
 /* ---------- Settings ---------- */

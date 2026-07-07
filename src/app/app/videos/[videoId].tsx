@@ -16,10 +16,11 @@ import type { ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VimeoEmbed } from "@/components/vimeo-embed";
-import { formatSeconds, useHistory } from "@/lib/local-store";
+import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
 import { FIRST_STEPS_VIDEO_ID, videos } from "@/lib/mock-data";
 import { THEME } from "@/constants/theme";
 
@@ -29,6 +30,15 @@ import { THEME } from "@/constants/theme";
 // and full page content (metadata, actions, similar videos).
 // Task 22 wires the player to `useHistory` for cross-session position
 // persistence and the "Reprise à X%" resume banner.
+// The web's "Favoris" action button has no onClick at all (a disconnected
+// mock, same as its Recipe Detail heart used to be) — wired here to the real
+// `useFavorites` store (now extended to cover both recipes and videos, see
+// `local-store.ts`), matching the precedent Task 19 already set.
+// The floating note button (bottom-right, like the web's global NotesFAB
+// look) has no web counterpart scoped to a single screen — the web's
+// note-taking is a route-detecting global overlay (Task 31, not built).
+// Added at the user's direct request to scope note-taking to single-item
+// content pages (recipe/video/tips) while keeping the floating-button look.
 function parseDuration(duration: string): number {
   const m = duration.match(/(\d+)\s*min/);
   return m ? parseInt(m[1], 10) * 60 : 600;
@@ -51,7 +61,9 @@ export default function VideoDetailScreen() {
   const totalSec = parseDuration(video.duration);
 
   const { get, upsert } = useHistory();
-  const stored = get(video.id);
+  const stored = get(video.id, "video");
+  const { isFavorite, toggle } = useFavorites();
+  const favVideo = isFavorite(video.id, "video");
   const [position, setPosition] = useState(stored?.positionSec ?? 0);
   const [playing, setPlaying] = useState(false);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,7 +85,8 @@ export default function VideoDetailScreen() {
   useEffect(() => {
     if (position === 0 && !stored) return;
     upsert({
-      videoId: video.id,
+      kind: "video",
+      id: video.id,
       title: video.title,
       image: video.image,
       category: video.category,
@@ -89,7 +102,8 @@ export default function VideoDetailScreen() {
   const progress = Math.round((position / totalSec) * 100);
 
   return (
-    <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
+    <View className="flex-1 bg-background">
+    <ScrollView showsVerticalScrollIndicator={false}>
       {/* Player */}
       {isFirstSteps ? (
         <View className="relative aspect-video bg-foreground">
@@ -192,7 +206,18 @@ export default function VideoDetailScreen() {
 
         <View className="mt-5 flex-row gap-2">
           <ActionBtn icon={<Icon as={Download} size={16} className="text-primary" />} label="Guide PDF" />
-          <ActionBtn icon={<Icon as={Heart} size={16} className="text-primary" />} label="Favoris" />
+          <ActionBtn
+            icon={
+              <Icon
+                as={Heart}
+                size={16}
+                className="text-primary"
+                fill={favVideo ? "currentColor" : "none"}
+              />
+            }
+            label="Favoris"
+            onPress={() => toggle(video.id, "video")}
+          />
           <ActionBtn icon={<Icon as={Share2} size={16} className="text-primary" />} label="Partager" />
         </View>
 
@@ -228,13 +253,27 @@ export default function VideoDetailScreen() {
         </View>
       </View>
     </ScrollView>
+    <AddNoteButton
+      contextLabel={`Vidéo : ${video.title}`}
+      contextHref={`/app/videos/${video.id}`}
+    />
+    </View>
   );
 }
 
-function ActionBtn({ icon, label }: { icon: ReactNode; label: string }) {
+function ActionBtn({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: ReactNode;
+  label: string;
+  onPress?: () => void;
+}) {
   return (
     <Pressable
       role="button"
+      onPress={onPress}
       className="flex-1 items-center gap-1 rounded-2xl border border-border bg-card py-3"
     >
       {icon}

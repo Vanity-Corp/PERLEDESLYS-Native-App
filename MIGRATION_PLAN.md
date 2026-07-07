@@ -638,52 +638,112 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 - [ ] Tap logout, confirm it returns to the auth stack — **not independently verified**; `router.replace("/(auth)")` is the same call already exercised structurally by Task 1's own route verification.
 **Suggested commit:** `feat(screens): add Profile hub screen`
 
-### Task 25 — Settings screen — post-MVP, not built this pass (explicitly named in the user's "optional settings" exclusion)
+### Task 25 — Settings screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/settings/index.tsx`
 **Goal:** Build `app/profile/settings.tsx`: personal-info fields, preference `Switch` toggles, "save" flow. Wired with **React Hook Form + Zod** (per `CLAUDE.md`'s chosen stack; web used bare `useState` — same fields/behavior) against the real `useSettings` store from Phase 0.
-**Files to modify:** `src/app/app/profile/settings.tsx`.
+
+**Implementation notes:**
+- `useSettings()` here takes no argument, unlike the web's `useSettings(initialObject)` — already a documented difference in `local-store.ts` itself ("zustand stores are created once at module load... defaults are fixed here"), not a new decision made in this task.
+- RHF's `defaultValues: settings` snapshots the persisted settings once on mount — this alone reproduces the web's draft/commit-on-save behavior with no extra bookkeeping: an unsaved edit lives only in RHF's in-memory form state, so navigating away unmounts the screen and discards it; navigating back re-mounts and re-reads the last **saved** `settings` value. No separate `draft` `useState` (unlike the web) is needed since RHF's form state already *is* the draft, the same reasoning Task 11 (Login) already established for RHF-managed screens.
+- Same `Controller`-based bridging from RHF to RNR's `TextInput`-backed `Input` as Login (`onChangeText`/`onBlur` via `field`), and the same pattern extended to `Switch` (`checked`/`onCheckedChange` via `field.value`/`field.onChange` — `@rn-primitives/switch`'s prop names, confirmed via its type definitions, not guessed).
+- Zod schema (`{name, firstName, email, phone}` as plain `z.string()`, `{notifications, darkTheme, newsletter}` as plain `z.boolean()`) is intentionally permissive, matching Login's already-established reasoning: the web has no real field validation, so no stricter rule was added.
+- Email/phone `Input`s get `keyboardType="email-address"`/`"phone-pad"` — a reasonable native-only addition (the web's `type="email"` has no visual effect beyond the keyboard on native, so this is the direct RN equivalent, not new behavior).
+- "Changer mon mot de passe" is non-functional in the web version too (a real `<button>` with no `onClick`) — kept as `Pressable role="button"` with no `onPress`, matching the established "looks tappable, does nothing yet" precedent (Login, Recipe Detail, First Steps, Lives).
+- The "Enregistré ✓" transient confirmation (`setSaved(true)` + `setTimeout(() => setSaved(false), 1500)`) is ported verbatim, including the same 1500ms duration.
+**Files modified:**
+- Rewrote `src/app/app/profile/settings.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 1 (Phase 0's `useSettings` already exists).
-**Acceptance criteria:** Editing a field and saving persists via `useSettings` (AsyncStorage — see the "Real-device bug" note after Task 5 for why this isn't MMKV); a draft edited-but-not-saved change is discarded on leaving the screen, matching web's draft/commit-on-save behavior.
+**Acceptance criteria:**
+- [x] Editing a field and saving persists via `useSettings` (AsyncStorage) — verified two ways: SSR confirmed all 4 text fields and all 3 switches render the real persisted `DEFAULT_SETTINGS` values (name/firstName/email/phone from `mock-data.user`, `notifications=true`/`darkTheme=false`/`newsletter=true` — confirmed via each `Switch`'s `aria-checked` in the compiled output, in the correct order); a standalone script then verified the settings store's actual save/persist/rehydrate mechanism directly (edited `phone` + `darkTheme`, wrote through the same `zustand persist` + async `StateStorage` shape as `storage.ts`, then read back via a **fresh store read against the same backing storage**, simulating an app restart — the edited fields updated and untouched fields, e.g. `email`, stayed intact). This is the first task to actually exercise `useSettings`'s write path (`setSettings`) from a real screen.
+- [x] A draft edited-but-not-saved change is discarded on leaving the screen — holds structurally by construction: RHF's form state is local to the mounted component and only ever committed to the persisted store inside `onSave`, see implementation notes above.
+- [x] `npx tsc --noEmit` passes — 0 new errors (full project typecheck is now clean except the same 2 pre-existing, unrelated environment errors noted since Task 14).
 **Manual testing checklist:**
-- [ ] Edit a field, save, navigate away and back — confirm it persisted.
-- [ ] Edit a field, navigate away *without* saving, come back — confirm the unsaved edit was discarded.
-- [ ] Toggle each switch, confirm it persists after save.
+- [ ] Edit a field, save, navigate away and back — confirm it persisted — **not independently verified interactively**; the underlying persist/rehydrate mechanism was verified in isolation (see above), same class of gap as every prior interactive-state check (Tasks 5/19/22).
+- [ ] Edit a field, navigate away *without* saving, come back — confirm the unsaved edit was discarded — **not independently verified interactively**; holds by construction (RHF's defaultValues re-snapshot the persisted value on every fresh mount), not exercised on a live remount cycle.
+- [ ] Toggle each switch, confirm it persists after save — **not independently verified interactively**; same underlying save path as the text fields, exercised in isolation instead.
 **Suggested commit:** `feat(screens): add Settings screen`
 
-### Task 26 — Favorites screen — post-MVP, not built this pass
+### Task 26 — Favorites screen — ✅ Completed
+*(Note: extended shortly after to also cover videos, at the user's direct request — see "Post-Task-26 extension" below. The notes below describe the screen as first shipped, recipes-only.)*
 **Web source:** `kitchen-haven-club/src/routes/app/favorites/index.tsx`
 **Goal:** Build `app/profile/favorites.tsx` reading from the real `useFavorites` store (Task 5) instead of web's hardcoded `recipes.slice(0, 6)` mock.
-**Files to modify:** `src/app/app/profile/favorites.tsx`.
+
+**Implementation notes:**
+- The web's heart button on each card has no `onClick` at all (a disconnected mock, same as the rest of this screen) — here it's wired to the real `toggle(r.id)` instead of kept inert, matching the precedent Task 19 already set for Recipe Detail's heart button ("strictly better than the web's disconnected mock, per the task's own goal"). Un-favoriting from this list removes the card immediately since `favorites` is a live selector off the same store.
+- **Bug caught and fixed during implementation, same category as Task 19's:** the first draft nested the heart-toggle `Pressable` directly inside the card's navigation `Pressable` (`<Link asChild><Pressable>...<Pressable onPress={toggle}>...</Pressable></Pressable></Link>`) — a nested-touchable conflict, exactly what Task 19 already caught and fixed once for the ingredient checklist row. Fixed the same way conceptually but structurally rather than via `pointerEvents="none"` (that fix suited a purely-visual `Checkbox`; here the heart itself needs its own independent tap target): the heart button is now a sibling of the navigation `Pressable`, absolutely positioned over the card via a shared `relative` wrapper `View`, not a descendant of it.
+- Count text (`"{n} recette{s} enregistrée{s}"`) is real pluralization based on the actual (dynamic, possibly 0 or 1) favorites count — the web's version is dynamic too (`favs.length`, not hardcoded), but was always exactly 6 in practice since its source was a fixed-size mock slice, so singular/plural never came up there. Handling 0/1 correctly here is filling in a case the web mock genuinely never had to handle, per this task's own acceptance-criteria wording — not a copy-editing redesign.
+- Empty state (new, since the web mock could never actually be empty): an icon + "Aucun favori pour le moment" + a `GradientButton` linking to `/app/recipes`, styled consistently with the app's other empty-state cards (Search's "Aucun résultat", Recipes list's "Aucune recette ne correspond").
+**Files modified:**
+- Rewrote `src/app/app/profile/favorites.tsx` (real screen, replacing Task 1's stub).
 **Dependencies:** Task 5, Task 19 (so there's a way to actually add favorites before this screen is meaningfully testable).
-**Acceptance criteria:** List reflects real favorited recipes; empty state when none favorited (a case the web mock never had to handle — add a reasonable "no favorites yet" message consistent with the app's tone, not a redesign).
+**Acceptance criteria:**
+- [x] List reflects real favorited recipes — `favorites` (resolved `Recipe[]`, via the same `resolveFavoriteRecipes` already verified in Task 5) is mapped directly; type-checked against the real `Recipe` fields used (`image`/`title`/`time`/`id`).
+- [x] Empty state when none favorited — verified via SSR (every fresh page load starts with an empty store): "Aucun favori pour le moment", the helper copy, and the "Découvrir les recettes" CTA (→ `/app/recipes`) all rendered correctly, alongside a correctly-pluralized "0 recettes enregistrées" count.
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted since Task 14).
 **Manual testing checklist:**
-- [ ] Favorite a couple of recipes from the detail screen, confirm they appear here.
-- [ ] Un-favorite one, confirm it disappears from this list.
-- [ ] With zero favorites, confirm the empty state renders instead of a blank screen.
+- [ ] Favorite a couple of recipes from the detail screen, confirm they appear here — **not independently verified interactively**; the underlying store read/write was already verified in isolation (Task 5) and is reused unmodified here.
+- [ ] Un-favorite one, confirm it disappears from this list — **not independently verified interactively**; same underlying `toggle()` call already exercised on Recipe Detail (Task 19), just a different call site.
+- [x] With zero favorites, confirm the empty state renders instead of a blank screen — verified via SSR, see above.
 **Suggested commit:** `feat(screens): add Favorites screen backed by real favorites store`
 
-### Task 27 — History screen — post-MVP, not built this pass
+### Task 27 — History screen — ✅ Completed
+*(Note: extended shortly after to also cover viewed recipes, at the user's direct request — see "Post-Task-27 extension" below. The notes below describe the screen as first shipped, videos-only.)*
 **Web source:** `kitchen-haven-club/src/routes/app/history/index.tsx`
 **Goal:** Build `app/profile/history.tsx` reading `useHistory` (Phase 0): list with resume position, remove-one and clear-all actions, empty state.
-**Files to modify:** `src/app/app/profile/history.tsx`.
-**Dependencies:** Task 22 (needs Video Detail actually writing history for this screen to show real data).
-**Acceptance criteria:** Matches web row layout; remove/clear actions update the list immediately.
+
+**Implementation notes:**
+- The video-card thumbnail's bottom progress strip (`h-1 bg-background/30` track + `h-full bg-primary` fill) is exactly the pattern Task 3's own goal text already named "history rows" as a target usage for the custom `Progress` component — so this task is the first to actually use it there, no new component needed.
+- The thumbnail overlay (`GradientView tone="overlay"` + centered `Play` icon) is the same treatment already established for video thumbnails elsewhere (Video Detail's similar-videos list, Favorites' video cards) — reused as-is, not a new pattern.
+- "Vider" (clear-all) is conditionally rendered (`history.length > 0`) in the header, matching web exactly; "Retirer de l'historique" (remove-one) is a full-width row below each card's `Link`, structurally a **sibling** of the navigation `Pressable`, not nested inside it — same nested-touchable avoidance already established (Tasks 19/26), even though here the two elements don't actually overlap visually (unlike those cases), so the same defensive structure was used anyway rather than assuming this particular layout is safe.
+**Files modified:**
+- Rewrote `src/app/app/profile/history.tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** Task 22 (Video Detail now actually writes history, so this screen has real data to show once exercised on a device).
+**Acceptance criteria:**
+- [x] Matches web row layout — verified via SSR for the empty state (icon, "Aucun visionnage encore", description, correctly-absent "Vider" button since `history.length === 0` on a fresh store); the populated-row layout was verified by construction (direct, type-checked port of the web's card structure) and via the isolated logic check below, since a populated list can't be produced through a stateless curl-based SSR snapshot (same limitation as Task 22's own history checks).
+- [x] Remove/clear actions update the list immediately — both call the same `useHistoryStore` mutations already verified in isolation (see below); "immediately" holds structurally since `history` is a live zustand selector, not a snapshot.
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted since Task 14).
+
+**Verification:** SSR-checked the empty state (see above). A standalone script then exercised `upsert`/`remove`/`clear` against realistic entries (mirroring Task 22's own isolated-store rigor): two videos upserted (most-recent-first order confirmed), `remove()` on one left exactly the other, and `clear()` emptied the list — all matching the exact mutation logic already live in `local-store.ts`.
 **Manual testing checklist:**
-- [ ] Watch a couple of videos (Task 22), confirm they show up here in most-recent-first order.
-- [ ] Remove one, confirm it disappears; clear all, confirm empty state appears.
+- [ ] Watch a couple of videos (Task 22), confirm they show up here in most-recent-first order — **not independently verified interactively**; the underlying `upsert` ordering was verified in isolation (see above) and in Task 22's own dedup test.
+- [ ] Remove one, confirm it disappears; clear all, confirm empty state appears — **not independently verified interactively**; both mutations verified in isolation, same class of gap as every prior interactive-state check.
 **Suggested commit:** `feat(screens): add History screen`
 
-### Task 28 — Notes screen — post-MVP, not built this pass
+### Task 28 — Notes screen — ✅ Completed (with a scoped, non-global note-creation mechanism — see below)
 **Web source:** `kitchen-haven-club/src/routes/app/notes/index.tsx`
 **Goal:** Build `app/profile/notes.tsx` reading `useNotes` (Phase 0): list with context link, delete action, empty state.
-**Files to modify:** `src/app/app/profile/notes.tsx`.
-**Dependencies:** Task 1 (fully testable once Notes FAB, Phase 9, can actually create notes — but the list/delete UI can be built and tested against manually-seeded store data before then).
-**Acceptance criteria:** Context link (`contextHref`) navigates to the right screen when tapped.
+
+**Scope decision, per explicit user direction:** the plan's original dependency note assumed note-*creation* would come from the global Notes FAB (Task 31 — a floating button mounted on every `app` screen, detecting context from the current route, mirroring the web's `NotesFAB.tsx`). The user asked instead for note-taking scoped to single-item content pages only: recipe detail, video detail, and (once built) tips detail — not a global, route-detecting overlay. Rather than wait on Task 31, this pass adds a small reusable `src/components/add-note-button.tsx` (a `Dialog`-based trigger with a fixed `contextLabel`/`contextHref`, no route detection needed since each page already knows its own context) and wires it into the two content pages that exist today:
+- `app/recipes/[recipeId].tsx`: a 4th header icon button (`StickyNote`, alongside the existing back/heart/share icons) — `contextLabel: "Recette : {title}"`, `contextHref: "/app/recipes/{id}"`.
+- `app/videos/[videoId].tsx`: a 4th `ActionBtn` tile ("Note", alongside Guide PDF/Favoris/Partager) — `contextLabel: "Vidéo : {title}"`, `contextHref: "/app/videos/{id}"`.
+- Tips detail doesn't exist yet (Task 30, still post-MVP) — deferred until that screen is built, per the user's own "and later tips" phrasing.
+
+This means Task 31 (Notes FAB) as originally scoped — a global floating button — is now superseded by this approach; if it's revisited later it would need to be reconciled with (or dropped in favor of) this per-page mechanism rather than layered on top of it.
+
+**Implementation notes:**
+- **Revised after initial delivery, per explicit user follow-up feedback:** the first cut of `AddNoteButton` rendered as a small trigger inline in each screen's existing chrome (a header icon on Recipe Detail, a 4th `ActionBtn` tile on Video Detail) with a small centered `DialogContent`. The user asked for it to instead look like the web's own `NotesFAB` — a floating circular button pinned to the bottom-right of the screen — and for the note dialog to take up nearly the full screen rather than a small centered box, and for the trigger icon to be `StickyNotePlus` (an explicit "add" icon) rather than the plain `StickyNote` glyph. `AddNoteButton` was rewritten accordingly: it now renders its own `Pressable` FAB (`absolute bottom-6 right-5`, `h-14 w-14`, `rounded-full bg-primary`) and drives the `Dialog`'s `open` state directly (no `DialogTrigger`/`trigger` prop needed anymore, since the button *is* the trigger), and `DialogContent` is overridden to `h-[92%] w-[94%] max-w-none flex-1`, with the `Textarea` set to `flex-1` so it fills the available vertical space instead of a small fixed-height box.
+- Both call sites (`app/recipes/[recipeId].tsx`, `app/videos/[videoId].tsx`) had their root `ScrollView` wrapped in an outer `View className="flex-1"`, with `<AddNoteButton>` rendered as a sibling *after* the `ScrollView`, not inside its scrollable content — otherwise the "floating" button would scroll away with the page instead of staying pinned to the viewport, the same reasoning that makes a `position: absolute` overlay require a non-scrolling ancestor. Recipe Detail's earlier header icon and Video Detail's 4th `ActionBtn` tile were both removed now that the FAB replaces them.
+- This is still scoped per-page (recipe/video now, tips later), not global — the "floating look" and "global route-detecting mount" are separable concerns; the user asked to restore the former without reinstating the latter (i.e. this is not a reversal of the Task 28 scope decision to skip Task 31's global FAB, just a visual-parity request for the per-page trigger).
+- The empty-state copy on the Notes list screen ("Touchez le bouton flottant en bas à droite...") was adapted, not ported verbatim — the web's copy points at a global FAB positioned identically on every screen, whereas this app's floating buttons only exist on recipe/video detail pages; pointing new users at "l'icône note sur une recette ou une vidéo" was a deliberate, disclosed wording change to stay accurate rather than reusing the web's now-closer-but-still-not-identical phrasing.
+- Everything else (the note-count pluralization quirk — `notes.length > 1 ? "s" : ""`, so "0 note"/"1 note"/"2 notes" — date formatting via `toLocaleDateString("fr-FR", {...})`, the card layout, delete button, context link) is a direct, unmodified port of the web's own logic.
+- The context link's `href={n.contextHref as never}` cast is the same pattern already established for arbitrary runtime string hrefs (Dashboard's `Section` component, Task 13).
+- **Verification limitation, disclosed:** `@rn-primitives/dialog`'s `Content` isn't mounted into the DOM at all while `open={false}` (confirmed: no `"Nouvelle note"` text anywhere in a fresh SSR fetch of either screen) — the standard Radix-style lazy-mount behavior. This means the dialog's near-full-screen sizing, the floating button's exact visual position/shadow, and the open/close interaction itself are **not verifiable via this environment's curl-based SSR technique at all**, unlike most other UI on these two screens — only a real device/simulator/browser click can confirm the dialog actually opens and sizes correctly. What *is* verified: both screens still render (200, no bundler errors) with the FAB's positioning classes present in the static markup, and `tsc` confirms the component's props/logic are correctly typed.
+**Files modified:**
+- Rewrote `src/app/app/profile/notes.tsx` (real screen, replacing Task 1's stub).
+- Added `src/components/add-note-button.tsx`.
+- Modified `src/app/app/recipes/[recipeId].tsx` and `src/app/app/videos/[videoId].tsx` to add the note-trigger button described above.
+**Dependencies:** Task 1; the note-creation mechanism now ships in this same pass rather than waiting on Task 31.
+**Acceptance criteria:**
+- [x] Context link (`contextHref`) navigates to the right screen when tapped — same `as never` cast pattern already verified elsewhere; type-checked.
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted since Task 14).
+- [x] Notes screen matches web layout/copy except the deliberately-adapted empty state — verified via SSR: header, "0 note" (correct singular per the web's own pluralization quirk), and the adapted empty-state copy all rendered correctly; Recipe Detail and Video Detail both still render correctly with their floating note buttons (regression check, re-verified again after the FAB redesign below).
+
+**Verification:** SSR-checked all three touched screens (Notes empty state, Recipe Detail, Video Detail) — all 200, no bundler errors. Since this is the first task to exercise `useNotes`'s write path (`add`/`remove`) from real screens, a standalone script verified the store logic directly (same rigor as prior store-touching tasks): two notes added in most-recent-first order, persisted and rehydrated via a simulated-restart read against the same backing storage, then one removed — all matching the exact mutation logic already live in `local-store.ts`.
 **Manual testing checklist:**
-- [ ] Seed a note via a throwaway debug call to `useNotes().add(...)`, confirm it renders with correct date formatting.
-- [ ] Tap its context link, confirm it navigates correctly.
-- [ ] Delete it, confirm the list updates and empty state appears when none remain.
-**Suggested commit:** `feat(screens): add Notes screen`
+- [ ] Open the note dialog from a recipe and from a video, save a note from each, confirm both appear here in most-recent-first order with the correct context label — **not independently verified interactively**; the underlying `add` ordering was verified in isolation (see above).
+- [ ] Tap a note's context link, confirm it navigates to the right recipe/video — **not independently verified interactively**; the `href` cast is type-checked and reuses an already-proven pattern.
+- [ ] Delete a note, confirm the list updates and the empty state reappears once none remain — **not independently verified interactively**; `remove` verified in isolation, same class of gap as every prior interactive-state check.
+**Suggested commit:** `feat(screens): add Notes screen + scoped per-page note-creation (recipe/video, tips later)`
 
 ### Task 29 — FAQ screen — post-MVP, not built this pass
 **Web source:** `kitchen-haven-club/src/routes/app/faq/index.tsx`
@@ -713,17 +773,12 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 
 Built last among the UI work since they float above every `app` screen and depend on the backend endpoint (Phase 1, Tasks 8-9) and the notes store (already done in Phase 0).
 
-### Task 31 — Notes FAB — post-MVP, not built this pass (an "advanced dialog")
+### Task 31 — Notes FAB — superseded, not built (see Task 28's scope decision)
 **Web source:** `kitchen-haven-club/src/components/NotesFAB.tsx`
-**Goal:** Build `src/components/notes-fab.tsx`: floating button (hidden on the Notes screen itself), RNR `Dialog` styled as a bottom sheet (slide-up, rounded top corners) containing context label + RNR `Textarea` + save/view-notes actions, calling `useNotes().add()`. Context detection (which screen the user is on, for the "Contexte : ..." label) is reimplemented against Expo Router's current route instead of the web's `location.pathname` string-matching, but produces the same labels.
-**Files to modify:** Add `src/components/notes-fab.tsx`. Modify `src/app/app/_layout.tsx` to mount it once, globally, alongside the tab navigator.
-**Dependencies:** Task 6 (Textarea), Phase 0 (`useNotes`).
-**Acceptance criteria:** FAB appears on every `app` screen except Notes; context label matches what the web version would show for the equivalent screen; saved notes appear immediately on the Notes screen (Task 28).
-**Manual testing checklist:**
-- [ ] Open the FAB from several different screens (a recipe detail, a video detail, the dashboard), confirm the context label is correct each time.
-- [ ] Save a note, navigate to Notes screen, confirm it's there with the right context link.
-- [ ] Confirm the FAB is hidden specifically on the Notes screen.
-**Suggested commit:** `feat(overlays): add Notes FAB (bottom-sheet Dialog)`
+**Original goal:** Build `src/components/notes-fab.tsx`: floating button (hidden on the Notes screen itself), RNR `Dialog` styled as a bottom sheet (slide-up, rounded top corners) containing context label + RNR `Textarea` + save/view-notes actions, calling `useNotes().add()`. Context detection (which screen the user is on, for the "Contexte : ..." label) is reimplemented against Expo Router's current route instead of the web's `location.pathname` string-matching, but produces the same labels.
+
+**Status:** superseded by Task 28's own scope decision. The user explicitly asked for note-taking scoped to single-item content pages (recipe/video/tips) rather than a global, route-detecting overlay — `src/components/add-note-button.tsx` (built as part of Task 28) already covers that need for Recipe Detail and Video Detail, with a fixed `contextLabel`/`contextHref` per call site instead of route-based detection. If a global FAB is still wanted later, it would need to be reconciled with this per-page mechanism (e.g. dropped in favor of it, or kept only for screens that aren't a single-item content page) rather than built as originally spec'd on top of it.
+**Suggested commit:** *(n/a — not built; see Task 28)*
 
 ### Task 32 — AI Chat — post-MVP, not built this pass (an "advanced dialog")
 **Web source:** `kitchen-haven-club/src/components/AIChat.tsx`
@@ -781,6 +836,43 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 
 ---
 
+## Post-Task-26 extension — favorites now cover videos too (2026-07-07)
+
+Requested by the user directly (no corresponding plan task, no web equivalent — the web never had a real favorites feature at all, per Task 5's own notes): extend favoriting beyond recipes to videos, so the Favorites screen (Task 26) shows two categories.
+
+**Store shape change (`local-store.ts`):** the original `useFavorites` store held a flat `favoriteIds: string[]` — fine for a single collection, but recipes and videos are separate id spaces, so a flat list can't tell which collection to resolve an id against once a second kind exists. Replaced with `favoriteEntries: { id: string; kind: "recipe" | "video" }[]`, and `toggle`/`isFavorite` both now take a required `kind` argument (no default, to avoid a silently-wrong lookup). `useFavorites()` now returns `favoriteRecipes`/`favoriteVideos` (resolved via the existing `recipesById`-style map pattern, now duplicated for `videosById`) instead of a single `favorites` array. This is a breaking change to the persisted `pdl.favorites` AsyncStorage key's shape — acceptable here since the app has no real users yet (mock/dev data only, same reasoning as the earlier MMKV→AsyncStorage swap); old persisted data under the old key shape is simply ignored on rehydrate (zustand's default partial-merge leaves `favoriteEntries` at its `[]` default when the persisted blob doesn't have that key), not migrated.
+**Call sites updated:**
+- `app/recipes/[recipeId].tsx`: `isFavorite(recipe.id)`/`toggle(recipe.id)` → `isFavorite(recipe.id, "recipe")`/`toggle(recipe.id, "recipe")`.
+- `app/videos/[videoId].tsx`: the "Favoris" `ActionBtn` (one of 3 action tiles — Guide PDF / Favoris / Partager) had no `onPress` at all, matching the web's own disconnected mock (same category Recipe Detail's heart was in before Task 19). Wired to `toggle(video.id, "video")`, with the same icon-fill toggle (`fill={favVideo ? "currentColor" : "none"}`) already established for Recipe Detail's heart — Guide PDF and Partager remain intentionally non-functional, unchanged.
+- `app/profile/favorites.tsx` (Task 26): rebuilt with two conditionally-rendered sections ("Recettes (n)"/"Vidéos (n)", each hidden when empty, mirroring the Search screen's per-section-count-conditional pattern from Task 14) instead of one flat recipe grid; the combined empty state (both counts zero) now mentions both "une recette ou une vidéo". Video cards reuse the `aspect-video` + overlay-play-icon treatment already established for video thumbnails elsewhere (Tutorials list, Dashboard, Video Detail's similar-videos list) rather than the recipe grid's `aspect-square` cards. Each card's heart toggle remains a structural sibling of its navigation `Pressable` (not nested inside it), the same nested-touchable-avoidance Task 26 already established.
+**Verification:**
+- `npx tsc --noEmit`: clean project-wide (same 2 pre-existing, unrelated environment errors noted since Task 14).
+- Grepped for any remaining `.favorites` (old flat-array property name) reference across `src/` — none found, confirming no stale call site was missed.
+- SSR-verified: the combined empty state renders correctly (fresh store, both counts zero) with the updated "recette ou une vidéo" copy; Video Detail's action row still renders all 3 buttons (Guide PDF/Favoris/Partager) with no bundler errors; Recipe Detail still renders correctly (regression check on the updated call site).
+- Isolated script re-verified the toggle logic specifically for the new kind-scoping, including the edge case of a video and a recipe happening to share the same id string — confirmed favoriting/un-favoriting one kind never affects the other kind's entry for the same id.
+- **Not independently verified interactively** (same standing limitation as every prior interactive-state check): actually favoriting a video from Video Detail and watching it appear under the Favorites screen's "Vidéos" section needs a device/simulator pass.
+
+---
+
+## Post-Task-27 extension — history now covers viewed recipes too (2026-07-07)
+
+Requested by the user directly (no corresponding plan task, no web equivalent — the web's `useHistory` only ever tracked videos, confirmed by reading `kitchen-haven-club/src/lib/local-store.ts` itself). Extends Task 27's History screen to also show recently-viewed recipes, the same kind of cross-cutting extension as the earlier favorites-now-cover-videos change.
+
+**Type change (`types/local-store.ts`):** `HistoryEntry` was a single video-shaped object (`videoId`, `duration`, `positionSec`, `totalSec`, `progress`). Replaced with a discriminated union — `VideoHistoryEntry` (`kind: "video"`, unchanged fields, just `videoId` renamed to `id`) and a new `RecipeHistoryEntry` (`kind: "recipe"`, `id`, `title`, `image`, `category`, `time` — no position/progress, since a recipe has nothing to "resume").
+**Store change (`local-store.ts`):** `useHistoryStore`'s dedup/lookup/remove all now match on `(id, kind)` together, not just `id` — same reasoning as the favorites extension (a video and a recipe could in principle share an id string). `get()` is now generic: `get<K extends HistoryEntry["kind"]>(id, kind): Extract<HistoryEntry, {kind: K}> | undefined`, so a caller passing `"video"` gets a properly-narrowed `VideoHistoryEntry` back (with `positionSec` etc. visible to `tsc`) instead of the full union — this is what lets Video Detail's existing `stored?.positionSec` reads keep type-checking with no `as` cast.
+**Call sites updated:**
+- `app/videos/[videoId].tsx`: `get(video.id)` → `get(video.id, "video")`; the `upsert({videoId: video.id, ...})` call → `upsert({kind: "video", id: video.id, ...})`.
+- `app/recipes/[recipeId].tsx` (new): added a `useEffect` (placed before the existing `if (!recipe) return` early return, guarded internally with its own `if (!recipe) return` — matching how `useFavorites()` was already called unconditionally before that same early return) that calls `upsert({kind: "recipe", id: recipe.id, title, image, category, time, updatedAt: Date.now()})` once per recipe view. Dependency array is `[recipe?.id]`, so it fires once on mount, not on every re-render (e.g. toggling the favorite heart or an ingredient checkbox doesn't re-log a view) — the same "fresh screen instance per navigation" reasoning Task 21 already established makes a mount-only effect equivalent to "once per view" here.
+- `app/profile/history.tsx` (Task 27): replaced the single video-shaped row markup with a `HistoryRow` component that branches on `h.kind` — video rows keep the `Play`-icon overlay + progress-bar + "Reprendre à X / Y" text; new recipe rows use a `BookOpen`-icon overlay (no progress bar, nothing to resume) and show the recipe's `time` instead. Both link to their respective detail routes and share the same remove-row and card chrome. The header subtitle and empty-state copy were adjusted from video-specific wording ("Reprenez où vous vous étiez arrêtée" / "Aucun visionnage encore") to cover both kinds ("Vos vidéos et recettes récentes" / "Aucune activité récente") — a deliberate copy change since this feature itself has no web wording to preserve.
+**Verification:**
+- `npx tsc --noEmit`: clean project-wide (same 2 pre-existing, unrelated environment errors noted since Task 14).
+- Grepped for any remaining `.videoId` (old flat field name) reference across `src/` — none found.
+- SSR-checked all three touched screens (History's empty state with the new copy, Video Detail, Recipe Detail) — all 200, no bundler errors.
+- Isolated script re-verified the store logic for the new shape: mixed video+recipe entries sort correctly most-recent-first as one combined list, and a recipe/video sharing the same id string don't collide on upsert or remove (same edge case already checked for favorites).
+- **Not independently verified interactively** (same standing limitation as every prior interactive-state check): opening a recipe and then seeing it appear under History on a real device/simulator.
+
+---
+
 ## Migration checklist
 
 ### Phase 0 — Foundation
@@ -824,15 +916,15 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 
 ### Phase 7 — Profile cluster
 - [x] Task 24 — Profile hub screen — MVP (primary tab)
-- [ ] Task 25 — Settings screen — post-MVP
-- [ ] Task 26 — Favorites screen — post-MVP
-- [ ] Task 27 — History screen — post-MVP
-- [ ] Task 28 — Notes screen — post-MVP
+- [x] Task 25 — Settings screen (interactive save/discard flow not device-verified, see task notes)
+- [x] Task 26 — Favorites screen (interactive favorite/unfavorite-and-see-it-update not device-verified, see task notes)
+- [x] Task 27 — History screen (interactive watch-then-appear/remove/clear not device-verified, see task notes)
+- [x] Task 28 — Notes screen + scoped per-page note-creation (recipe/video now, tips later — interactive save/delete flow not device-verified, see task notes)
 - [ ] Task 29 — FAQ screen — post-MVP
 - [ ] Task 30 — Tips screen — post-MVP
 
 ### Phase 8 — Global floating overlays
-- [ ] Task 31 — Notes FAB — post-MVP
+- [x] Task 31 — Notes FAB — superseded by Task 28's scoped per-page `AddNoteButton` (not built as a global FAB, by design)
 - [ ] Task 32 — AI Chat — post-MVP
 
 ### Phase 9 — QA
