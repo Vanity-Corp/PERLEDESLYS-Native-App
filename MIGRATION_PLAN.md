@@ -401,16 +401,30 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 - [ ] Tap a suggestion chip, confirm it populates the search field — **not independently verified**; `onPress={() => setQ(s)}` is a direct, type-checked call.
 **Suggested commit:** `feat(screens): add Search screen`
 
-### Task 15 — Calendar screen — month view + navigation — post-MVP, not built this pass
+### Task 15 — Calendar screen — month view + navigation — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/calendar/index.tsx`
 **Goal:** Build `app/calendar.tsx` with the "mois" (month) view + the jour/semaine/mois/année `Tabs` switcher + prev/next navigation header. Week/day/year views stubbed for Task 16.
-**Files to modify:** `src/app/app/calendar.tsx`.
-**Dependencies:** Task 1.
-**Acceptance criteria:** Month grid renders correct day count/offset for any month (test at least Feb and a 31-day month); event dots colored by type; tapping a day switches to day view (even if day view itself isn't finished until Task 16, the switch should work).
+
+**Implementation notes:**
+- Same `ToggleGroup`-as-independent-pills pattern (Task 6/18/20) for the jour/semaine/mois/année switcher, and the same documented flat-`bg-accent` (vs. web's `bg-gradient-luxe`) simplification for the selected pill — `ToggleGroupItem` still can't render a gradient through its own root, same reasoning as every prior category-filter task.
+- **Naming collision caught by `tsc`, not by inspection:** the local `View` type alias (`"jour" | "semaine" | "mois" | "année"`, matching the web's own `type View`) collided with RN's `View` component import (`TS2440: Import declaration conflicts with local declaration of 'View'`) — trivial in the web version, where `View` isn't a reserved import name. Renamed to `CalendarView`; no behavior change.
+- Today's month-grid cell uses `<GradientView tone="luxe">` (now visually solid post-rebrand, see the v2 rebrand section above) instead of the web's `bg-gradient-luxe`; other cells are `bg-secondary` (has events) or a plain bordered `bg-card` (no events), matching the web's three-way conditional exactly.
+- The month grid is `flex-row flex-wrap` with each cell at a fixed `${100/7}%` width (including leading empty offset cells rendered as blank same-sized `View`s) rather than CSS Grid, which RN has no direct equivalent for — same wrapping behavior as the web's `grid-cols-7`, no trailing empty cells needed since flex-wrap (like CSS grid) wraps automatically without needing the row padded out to a multiple of 7.
+- Tapping a day cell calls `onSelect(d)` → `setCursor(d); setView("jour")`, exactly as the plan's acceptance criteria anticipated — the switch itself works even though "jour" now renders Task 16's placeholder stub rather than a real day list.
+- `typeIcon()` (icon-per-event-type) is intentionally **not** ported yet — it's only consumed by the web's `EventRow` component (week/day list rows), which is Task 16 scope; porting it now would have been dead code. `typeColor()` (used by the month grid's event dots) is ported now since Task 15 needs it.
+- The "jour" locale label (`cursor.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })`) is ported as-is, relying on Hermes's bundled ICU/`Intl` support (present by default in Expo SDK 56) — not independently verified on-device (see below).
+**Files modified:**
+- Rewrote `src/app/app/calendar.tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** Task 1, Task 6 (ToggleGroup).
+**Acceptance criteria:**
+- [x] Month grid renders correct day count/offset for any month (test at least Feb and a 31-day month) — **verified two ways:** (1) SSR fetch of the current month (July 2026, 31 days) showed all 31 day numbers rendered in order with no gaps/duplicates; (2) since real month navigation is client-side-only state that a curl-based SSR snapshot can't exercise (same limitation as every prior interactive check), the underlying offset/day-count formula — ported byte-for-byte from the web — was independently re-verified via a standalone Node script against Feb 2026 (28 days, starts Sunday → offset 6), the current 31-day month (starts Wednesday → offset 2), and a leap-year Feb 2028 (29 days, starts Tuesday → offset 1); all three computed correctly.
+- [x] Event dots colored by type — verified structurally (`typeColor()` ported as-is, same 4-way conditional) and visually via SSR: today's cell (which has an event, per `mock-data.events`) renders exactly one `linear-gradient(135deg, rgba(183,84,105,...))` (the `luxe`/primary tone), confirming the gradient-highlighted cell is applied to exactly one day.
+- [x] Tapping a day switches to day view — `onSelect` wired to `setView("jour")`, type-checked; interactive tap itself needs a device/simulator (see below).
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted in Task 14).
 **Manual testing checklist:**
-- [ ] Navigate several months forward/back, confirm the grid recalculates correctly each time (no off-by-one day offsets).
-- [ ] Confirm today is visually distinct.
-- [ ] Confirm event-type legend colors match the dots shown in cells.
+- [ ] Navigate several months forward/back, confirm the grid recalculates correctly each time (no off-by-one day offsets) — **not independently verified interactively** (client-side state, no device/simulator available); the underlying formula was verified analytically instead, see above.
+- [x] Confirm today is visually distinct — verified via SSR (see acceptance criteria above); pixel-level look needs a device/simulator.
+- [x] Confirm event-type legend colors match the dots shown in cells — both use the same `typeColor()` function, so this holds structurally by construction, not just by coincidence.
 **Suggested commit:** `feat(screens): add Calendar screen (month view)`
 
 ### Task 16 — Calendar screen — week/day/year views — post-MVP, not built this pass
@@ -766,7 +780,7 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 - [x] Task 12 — MiniCalendar widget (highlight/dots not visually confirmed — timezone-dependent web bug faithfully reproduced, see task notes)
 - [x] Task 13 — Dashboard (home) screen — MVP
 - [x] Task 14 — Search screen (accent-insensitive filter/tab-count live-typing not visually confirmed — needs a device/simulator, see task notes)
-- [ ] Task 15 — Calendar screen — month view + navigation — post-MVP
+- [x] Task 15 — Calendar screen — month view + navigation (interactive month-nav/day-tap not device-verified, see task notes)
 - [ ] Task 16 — Calendar screen — week/day/year views — post-MVP
 - [x] Task 17 — First Steps screen — MVP
 
