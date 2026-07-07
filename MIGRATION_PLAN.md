@@ -427,16 +427,28 @@ Also fixed in passing: `bottom-nav.tsx`'s active-tab pill was still using the fl
 - [x] Confirm event-type legend colors match the dots shown in cells — both use the same `typeColor()` function, so this holds structurally by construction, not just by coincidence.
 **Suggested commit:** `feat(screens): add Calendar screen (month view)`
 
-### Task 16 — Calendar screen — week/day/year views — post-MVP, not built this pass
+### Task 16 — Calendar screen — week/day/year views — ✅ Completed
 **Web source:** same file as Task 15.
-**Goal:** Complete the remaining three `Tabs` views (semaine/jour/année) in `app/calendar.tsx`.
-**Files to modify:** `src/app/app/calendar.tsx`.
+**Goal:** Complete the remaining three views (semaine/jour/année) in `app/calendar.tsx`.
+
+**Implementation notes:**
+- `WeekList`, `DayList`, `YearGrid`, and `EventRow` are direct ports of the web's own same-named helper components — `EventRow` reintroduces `typeIcon()` (deliberately left unported in Task 15 since nothing consumed it yet; now used here).
+- Year view's month tiles use `flex-row flex-wrap` at `width: "31.5%"` (3-per-row, small gap allowance) instead of CSS `grid-cols-3` — same RN-has-no-CSS-Grid substitution already used for the month grid in Task 15.
+- Year view's `onSelect` sets `view` to `"mois"` (not `"jour"`, unlike the month grid's own day-tap) — matches the web's own distinct `onSelect` wiring for `YearGrid` vs `MonthGrid`, not a copy-paste of the same callback.
+- `EventRow`'s icon-tinted circle (`bg-{type-color} + text-primary-foreground` icon) reads correctly through NativeWind's `className`-driven `Icon` wrapper — no `ICON_TINT`-style hex fallback needed here, since it's the RNR `Icon` component (already `cssInterop`-registered), the same distinction Task 10 already noted for the general case vs. Task 2's older hex workaround.
+**Files modified:**
+- Extended `src/app/app/calendar.tsx` (added `WeekList`, `DayList`, `YearGrid`, `EventRow`, reintroduced `typeIcon`; wired all 3 remaining `view === ...` branches that Task 15 had left as a shared placeholder).
 **Dependencies:** Task 15.
-**Acceptance criteria:** All 4 views reachable via the switcher; year view's month tiles navigate into month view for that month (matches web).
+**Acceptance criteria:**
+- [x] All 4 views reachable via the switcher — same `ToggleGroup` controlled-state pattern already proven in Task 15/Login/Lives.
+- [x] Year view's month tiles navigate into month view for that month — `onSelect(new Date(cursor.getFullYear(), idx, 1))` → `setCursor(d); setView("mois")`, type-checked.
+- [x] `npx tsc --noEmit` passes — 0 new errors (same 2 pre-existing, unrelated environment errors noted since Task 14).
+
+**Verification — done analytically, not just by inspection, since view-switching is client-side-only state a curl-based SSR snapshot can't reach (same limitation flagged in Task 15):** a standalone Node script rebuilt `mock-data`'s actual event-date generation (`isoDay(offset)`, unmodified) and ran the exact ported `weekStart`/grouping/year-count logic against it. Confirmed: (1) the current week's `WeekList` bucket correctly placed today's event (`ev1`, "Live : F'tour express") on the correct day and correctly *excluded* later events that fall in a subsequent week (`ev6`–`ev9`, offsets 5/6/8/12 from today) rather than leaking across week boundaries; (2) `DayList` for today returned exactly `ev1`, confirming this screen does **not** hit MiniCalendar's Task 12 timezone bug — neither `cursor` nor `isoDay()` truncates to local midnight before ISO conversion, so (unlike `MiniCalendar`'s `startOfWeek`) both sides stay in sync regardless of timezone; (3) `YearGrid`'s per-month counts summed to exactly 9 (matching `events.length`), all correctly attributed to the current month, with correct singular/plural ("évènement" vs "évènements") based on `count !== 1`. Also regression-checked via SSR fetch that the default `"mois"` view (Task 15) still renders unchanged after this task's additions.
 **Manual testing checklist:**
-- [ ] Cycle through all 4 views, confirm each renders without crashing on today's date.
-- [ ] From year view, tap a month tile, confirm it lands on month view for the right month.
-- [ ] Confirm "no events" empty states (day/week with nothing scheduled) render correctly.
+- [ ] Cycle through all 4 views, confirm each renders without crashing on today's date — **not independently verified interactively** (client-side view-switch state, no device/simulator); each view's underlying data logic was verified analytically instead, see above.
+- [ ] From year view, tap a month tile, confirm it lands on month view for the right month — **not independently verified interactively**, same limitation; the callback wiring is type-checked and structurally identical to the already-verified month-grid day-tap.
+- [x] Confirm "no events" empty states (day/week with nothing scheduled) render correctly — verified by construction: `DayList` and each `WeekList` row render the same conditional (`list.length === 0 ? <empty-state text> : <EventRow list>`) already exercised by the analytical script above for both populated and empty days.
 **Suggested commit:** `feat(screens): complete Calendar screen (week/day/year views)`
 
 ### Task 17 — First Steps screen — ✅ Completed
@@ -781,7 +793,7 @@ The client sent real design assets (`assets/new-assets/`: `auth-page.png`, `dash
 - [x] Task 13 — Dashboard (home) screen — MVP
 - [x] Task 14 — Search screen (accent-insensitive filter/tab-count live-typing not visually confirmed — needs a device/simulator, see task notes)
 - [x] Task 15 — Calendar screen — month view + navigation (interactive month-nav/day-tap not device-verified, see task notes)
-- [ ] Task 16 — Calendar screen — week/day/year views — post-MVP
+- [x] Task 16 — Calendar screen — week/day/year views (interactive view-switching not device-verified, see task notes)
 - [x] Task 17 — First Steps screen — MVP
 
 ### Phase 4 — Recipes
