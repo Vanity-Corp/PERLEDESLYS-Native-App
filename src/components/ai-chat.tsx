@@ -20,7 +20,7 @@ import {
   View,
 } from "react-native";
 
-import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
+import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
@@ -202,12 +202,28 @@ export function AIChat() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogPortal>
-          <DialogOverlay className="items-stretch justify-end p-0">
-            <DialogPrimitive.Content className="mx-auto h-[85%] w-full max-w-md overflow-hidden rounded-t-3xl bg-background sm:rounded-3xl">
-              <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-                className="flex-1"
-              >
+          {/* Self-contained overlay — deliberately NOT the shared DialogOverlay.
+              On iOS that wraps content in react-native-screens' FullWindowOverlay
+              (a separate native window), and KeyboardAvoidingView cannot measure
+              the keyboard from inside it, so the input stayed hidden behind the
+              keyboard. Here the KeyboardAvoidingView wraps the sheet directly in
+              the app's own window: on iOS `behavior="padding"` lifts the sheet
+              above the keyboard; on Android it's left to the OS's default
+              adjustResize (Expo's default) so adding padding wouldn't double up. */}
+          <View
+            className="absolute bottom-0 left-0 right-0 top-0"
+            style={{ pointerEvents: "box-none" }}
+          >
+            <Pressable
+              className="absolute bottom-0 left-0 right-0 top-0 bg-black/50"
+              onPress={() => setOpen(false)}
+            />
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              className="flex-1 justify-end"
+              style={{ pointerEvents: "box-none" }}
+            >
+              <DialogPrimitive.Content className="mx-auto h-[85%] w-full max-w-md overflow-hidden rounded-t-3xl bg-background sm:rounded-3xl">
                 {/* Header */}
                 <GradientView
                   tone="luxe"
@@ -387,9 +403,9 @@ export function AIChat() {
                     </GradientView>
                   </Pressable>
                 </View>
-              </KeyboardAvoidingView>
-            </DialogPrimitive.Content>
-          </DialogOverlay>
+              </DialogPrimitive.Content>
+            </KeyboardAvoidingView>
+          </View>
         </DialogPortal>
       </Dialog>
     </>
