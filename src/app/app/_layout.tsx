@@ -1,5 +1,7 @@
 import { Tabs } from "expo-router";
+import { View } from "react-native";
 
+import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
 
 // Custom `tabBar` (Task 2, src/components/bottom-nav.tsx) matching the
@@ -18,17 +20,24 @@ import { BottomNav } from "@/components/bottom-nav";
 // every /app/* page with no exceptions) without adding extra tab icons.
 // BottomNav filters its own rendered list to the 5 real tabs regardless.
 export default function AppLayout() {
+  // AIChat is a global floating overlay mounted above the tab navigator (the
+  // web mounts <AIChat /> globally in MobileShell too). Wrapping <Tabs> in a
+  // flex-1 View lets the FAB's `absolute` positioning measure against the full
+  // screen and float over every /app/* screen.
   return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <BottomNav {...props} />}>
-      <Tabs.Screen name="index" options={{ title: "Accueil" }} />
-      <Tabs.Screen name="recipes" options={{ title: "Recettes" }} />
-      <Tabs.Screen name="tutorials" options={{ title: "Vidéos" }} />
-      <Tabs.Screen name="lives" options={{ title: "Lives" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profil" }} />
+    <View style={{ flex: 1 }}>
+      <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <BottomNav {...props} />}>
+        <Tabs.Screen name="index" options={{ title: "Accueil" }} />
+        <Tabs.Screen name="recipes" options={{ title: "Recettes" }} />
+        <Tabs.Screen name="tutorials" options={{ title: "Vidéos" }} />
+        <Tabs.Screen name="lives" options={{ title: "Lives" }} />
+        <Tabs.Screen name="profile" options={{ title: "Profil" }} />
 
-      <Tabs.Screen name="search" options={{ href: null, title: "Recherche" }} />
-      <Tabs.Screen name="calendar" options={{ href: null, title: "Calendrier" }} />
-      <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
-    </Tabs>
+        <Tabs.Screen name="search" options={{ href: null, title: "Recherche" }} />
+        <Tabs.Screen name="calendar" options={{ href: null, title: "Calendrier" }} />
+        <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
+      </Tabs>
+      <AIChat />
+    </View>
   );
 }

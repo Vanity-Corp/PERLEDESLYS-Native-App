@@ -745,26 +745,42 @@ This means Task 31 (Notes FAB) as originally scoped — a global floating button
 - [ ] Delete a note, confirm the list updates and the empty state reappears once none remain — **not independently verified interactively**; `remove` verified in isolation, same class of gap as every prior interactive-state check.
 **Suggested commit:** `feat(screens): add Notes screen + scoped per-page note-creation (recipe/video, tips later)`
 
-### Task 29 — FAQ screen — post-MVP, not built this pass
+### Task 29 — FAQ screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/faq/index.tsx`
 **Goal:** Build `app/profile/faq.tsx` using RNR `Accordion` (direct upgrade from the web's hand-rolled accordion), `mailto:` link via `Linking.openURL`.
-**Files to modify:** `src/app/app/profile/faq.tsx`.
-**Dependencies:** none beyond Phase 0 RNR install.
-**Acceptance criteria:** All FAQ items from `mock-data.faqItems` present; only one open at a time (matches web).
+
+**Implementation notes:**
+- The web hand-rolls its accordion with a `useState<number | null>(0)` (single-open, first item open by default). Per the plan this is a **direct upgrade to RNR's `Accordion`** with `type="single" collapsible defaultValue="0"` — same single-open behavior, first item open, but with RNR's built-in expand/collapse animation instead of a bare `{isOpen && ...}` toggle. Each `AccordionItem`'s `value` is the item index as a string.
+- Each item is styled as its own rounded card (`rounded-2xl border border-border bg-card`, `mb-2`), matching the web's per-item card look (the web uses `space-y-2` between separate cards) rather than RNR's default single-border-divided list.
+- **One known RNR-default deviation, flagged inline:** RNR's `AccordionTrigger` hardcodes a `text-muted-foreground` chevron; the web's chevron is `text-primary`. Matching it exactly would mean editing the shared `ui/accordion.tsx` primitive, so the RNR default is kept as the "direct upgrade" the plan calls for — a minor tint difference, not a structural one.
+- The hero help card uses `<GradientView tone="luxe">` (solid post-rebrand) with `text-primary-foreground` copy, matching the web's `bg-gradient-luxe` card. `font-italiana` on the quote line, same as web.
+- The contact-email row is a `Pressable` calling `Linking.openURL("mailto:contact@perledelys.fr")` — the direct RN equivalent of the web's `<a href="mailto:...">` (same pattern Recipe Detail's Cookidoo CTA already established).
+**Files modified:**
+- Rewrote `src/app/app/profile/faq.tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** none beyond Phase 0 RNR install (`accordion` already installed in Phase 0).
+**Acceptance criteria:** All FAQ items from `mock-data.faqItems` present; only one open at a time (matches web). — Structurally satisfied: `faqItems.map(...)` renders every item; `type="single"` enforces single-open. **Verification limitation, disclosed:** this session ran against a dependency-less checkout (no `node_modules`), so unlike Tasks 1-28 neither `tsc --noEmit` nor a dev-server SSR check was run this pass — the screen was built strictly against already-verified patterns (SafeAreaView header from Settings/Recipes, `GradientView`/`Icon`/`Linking` all proven elsewhere). A `tsc` + on-device pass is still needed.
 **Manual testing checklist:**
-- [ ] Open several items in sequence, confirm previous one closes (single-open behavior).
-- [ ] Tap the contact email row, confirm it opens the mail composer.
+- [ ] Open several items in sequence, confirm previous one closes (single-open behavior) — **not verified this session** (no toolchain available); `type="single"` is the standard RNR mechanism for it.
+- [ ] Tap the contact email row, confirm it opens the mail composer — **not verified this session**; `Linking.openURL("mailto:...")` needs a device.
 **Suggested commit:** `feat(screens): add FAQ screen using RNR Accordion`
 
-### Task 30 — Tips screen — post-MVP, not built this pass
+### Task 30 — Tips screen — ✅ Completed
 **Web source:** `kitchen-haven-club/src/routes/app/tips/index.tsx`
 **Goal:** Build `app/profile/tips.tsx`: hero quote card, category `ToggleGroup`, article list rows.
-**Files to modify:** `src/app/app/profile/tips.tsx`.
-**Dependencies:** Task 6.
-**Acceptance criteria:** Category filter matches web's category list exactly.
+
+**Implementation notes:**
+- Category switcher uses the same **`ToggleGroup`-as-independent-pills** pattern (and the same flat-`bg-accent` selected-state simplification vs. the web's `bg-gradient-luxe`) already established by the Recipes list (Task 18) and Tutorials (Task 20) — the exact same `ToggleGroupItem` className (`rounded-full border border-border bg-card px-4 py-2`) inside a horizontal `ScrollView`, guarding `onValueChange` against the empty-string deselect case. Categories: `Tout / Ramadan / Organisation / Entretien / Astuces / Techniques / Inspiration`, matching the web's `cats` array exactly.
+- **Copy change, disclosed:** the web's "Le carnet de Lys" (subtitle) and "Le mot de Lys" (hero eyebrow) refer to the founder, **renamed "Ghania" in the v2 rebrand** — updated to "Le carnet de Ghania" / "Le mot de Ghania" for consistency with every other rebranded screen (Landing, Login, Dashboard, First Steps, etc.), rather than left as the stale pre-rebrand "Lys".
+- Hero quote card is `<GradientView tone="luxe">` with a decorative oversized `Sparkles` icon absolutely positioned at `-top-4 -right-4 opacity-10` (clipped by the card's `overflow-hidden`), the `font-italiana` quote, and `text-primary-foreground` throughout — matching the web's `bg-gradient-luxe` hero.
+- **Article rows are non-interactive `View`s (no `Link`/`Pressable`)** — matching the web, whose article rows are plain `<div>`s with no `onClick`. There is no tips-detail route to navigate to (the web has none either), so nothing to link to. This is also why Task 28's deferred "tips detail `AddNoteButton`" has nothing to attach to — the tips screen is a list only.
+- Article thumbnails use `expo-image` `<Image contentFit="cover">` inside a fixed `h-24 w-24 rounded-xl overflow-hidden` wrapper (same wrapper pattern as the Recipes grid); `line-clamp-2` → `numberOfLines={2}` on title and excerpt.
+**Files modified:**
+- Rewrote `src/app/app/profile/tips.tsx` (real screen, replacing Task 1's stub).
+**Dependencies:** Task 6 (ToggleGroup).
+**Acceptance criteria:** Category filter matches web's category list exactly — same 7 labels, same `cat === "Tout" || a.category === cat` predicate, ported as-is. **Verification limitation, disclosed:** same as Task 29 — dependency-less checkout this session, so no `tsc`/SSR run; built against already-verified patterns (Recipes/Tutorials ToggleGroup, expo-image wrapper). `tsc` + on-device pass still needed.
 **Manual testing checklist:**
-- [ ] Filter through each category, confirm correct article subset.
-- [ ] Confirm the hero quote card renders with the italic script styling (Italiana font).
+- [ ] Filter through each category, confirm correct article subset — **not verified this session** (no toolchain); predicate is a direct port of the web's own filter.
+- [ ] Confirm the hero quote card renders with the italic script styling (Italiana font) — **not verified this session**; `font-italiana` is the same already-loaded font used on FAQ/other screens.
 **Suggested commit:** `feat(screens): add Tips screen`
 
 ---
@@ -780,16 +796,28 @@ Built last among the UI work since they float above every `app` screen and depen
 **Status:** superseded by Task 28's own scope decision. The user explicitly asked for note-taking scoped to single-item content pages (recipe/video/tips) rather than a global, route-detecting overlay — `src/components/add-note-button.tsx` (built as part of Task 28) already covers that need for Recipe Detail and Video Detail, with a fixed `contextLabel`/`contextHref` per call site instead of route-based detection. If a global FAB is still wanted later, it would need to be reconciled with this per-page mechanism (e.g. dropped in favor of it, or kept only for screens that aren't a single-item content page) rather than built as originally spec'd on top of it.
 **Suggested commit:** *(n/a — not built; see Task 28)*
 
-### Task 32 — AI Chat — post-MVP, not built this pass (an "advanced dialog")
+### Task 32 — AI Chat — ✅ Completed
 **Web source:** `kitchen-haven-club/src/components/AIChat.tsx`
 **Goal:** Build `src/components/ai-chat.tsx`: floating sparkle button, RNR `Dialog`-as-bottom-sheet chat window, message list (user/assistant bubbles), lightweight markdown rendering (port `FormattedMessage`'s line-based parser as-is), recipe/video reference chips parsed from `[RECETTE id:...]`/`[VIDEO id:...]` tags, RNR `Textarea` input, calls `aiChat()` from Task 9.
-**Files to modify:** Add `src/components/ai-chat.tsx`. Modify `src/app/app/_layout.tsx` to mount it globally.
-**Dependencies:** Task 6, Task 9, Phase 0.
-**Acceptance criteria:** Sending a message shows a loading state, then either the assistant's reply (with working recipe/video reference chips) or the matching French error copy on failure — same three error cases as web (no API key / rate-limited / network failure).
+
+**Implementation notes:**
+- **Composed from the RNR dialog *primitives* directly** (`Dialog` = `DialogPrimitive.Root`, `DialogPortal`, the exported styled `DialogOverlay`, and `DialogPrimitive.Content`) rather than the `DialogContent` wrapper used by `AddNoteButton`. The wrapper hardcodes `p-6` padding and its own absolute top-right `X` close button — both wrong for an edge-to-edge chat sheet with its own gradient header and header-mounted close button. Using the lower-level primitives gives full layout control with no duplicate `X`, while still being "RNR Dialog" per the plan. `DialogOverlay` is overridden to `items-stretch justify-end p-0` for the bottom-sheet placement; the content sheet is `h-[85%] w-full rounded-t-3xl` (matching web's `h-[85vh] rounded-t-3xl`).
+- `parseReferences`, `cleanContent`, and the `FormattedMessage` line parser are **ported verbatim** from the web — only the DOM output (`<div>`/`<span>`/`<strong>`) becomes RN `View`/`Text`. Inline `**bold**` rendering relies on RN's rule that a nested `<Text>` inherits size/color from its parent `<Text>`, so each line's wrapping `Text` carries the `text-[13.5px] text-foreground` and the bold/plain spans inherit — the same visual result as the web's mixed `<strong>`/`<span>`.
+- **Loading spinners use RN `ActivityIndicator`** (in the "L'assistante réfléchit…" bubble and inside the send button while loading) instead of the web's `<Loader2 className="animate-spin">` — `animate-spin` has no reliable NativeWind-native equivalent, and `ActivityIndicator` is the idiomatic RN spinner. Documented inline.
+- Reference chips are `<Link asChild><Pressable onPress={() => setOpen(false)}>` — the `Link` handles typed-route navigation (`/app/recipes/[recipeId]` or `/app/videos/[videoId]`, same typed-route pattern as Recipes/Tutorials lists) while the `onPress` closes the sheet, mirroring the web's `onClick={() => setOpen(false)}` on its `<Link>`.
+- User-message bubbles and the assistant/user avatars use `<GradientView tone="luxe">` (solid post-rebrand) for the web's `bg-gradient-luxe`; the FAB uses `tone="gold"` for the web's `bg-gradient-gold`, with the `IA` badge overlaid top-right.
+- The input row is wrapped with `KeyboardAvoidingView` (`behavior="padding"` on iOS) so the keyboard doesn't cover the `Textarea`/send button — a native-only concern the web (fixed-position textarea) doesn't have.
+- **Copy change, disclosed:** "Perle, l'IA de Lys" → "Perle, l'IA de Ghania" and the greeting's "l'assistante IA de Lys" → "de Ghania", per the v2 founder rename, consistent with every other screen.
+- Mounted globally by wrapping `app/_layout.tsx`'s `<Tabs>` in a `flex-1` `<View>` and rendering `<AIChat />` as a sibling after it, so the FAB's `absolute bottom-44 right-4` positioning (matching web's `fixed bottom-44 right-4`) floats over every `/app/*` screen — the web mounts `<AIChat />` globally in `MobileShell` the same way. `bottom-44` sits it above both the in-flow bottom nav and the per-page Notes FAB (`bottom-6`), matching the web's own stacking.
+**Files modified:**
+- Added `src/components/ai-chat.tsx`.
+- Modified `src/app/app/_layout.tsx` (wrapped `<Tabs>` in a `flex-1` `View`, mounted `<AIChat />` globally).
+**Dependencies:** Task 6 (Textarea), Task 9 (`aiChat` client), Phase 0.
+**Acceptance criteria:** Sending a message shows a loading state, then either the assistant's reply (with working recipe/video reference chips) or the matching French error copy on failure. — Structurally satisfied: `loading` drives the spinner bubble + disabled send button; `send()` is a verbatim port of the web's try/catch, and `aiChat()` (Task 9, already verified in isolation across 5 scenarios) returns the same `{ok,...}` union whose error string gets the `😔 ` prefix at render time. **Verification limitation, disclosed:** dependency-less checkout this session — no `tsc`/SSR run, and the endpoint is still the `.example.com` placeholder (Task 8 never deployed), so a real round-trip can't be exercised regardless. Built against already-verified patterns (Dialog primitives from `AddNoteButton`, `GradientView`/`Icon`/typed-route `Link`, `aiChat()` from Task 9). `tsc` + on-device pass (and a real deployed endpoint) still needed.
 **Manual testing checklist:**
-- [ ] Send a real message (with Task 8/9 live), confirm a real AI reply renders with correct markdown formatting.
-- [ ] Ask about a recipe that exists in `mock-data`, confirm a tappable reference chip appears and navigates correctly.
-- [ ] Trigger the network-failure path (airplane mode), confirm the French fallback error message shows instead of a crash.
+- [ ] Send a real message (with Task 8/9 live), confirm a real AI reply renders with correct markdown formatting — **not verified this session** (no toolchain, endpoint not deployed); `FormattedMessage` is a verbatim port.
+- [ ] Ask about a recipe that exists in `mock-data`, confirm a tappable reference chip appears and navigates correctly — **not verified this session**; `parseReferences` is verbatim and the chip `Link` reuses the already-proven typed-route pattern.
+- [ ] Trigger the network-failure path (airplane mode), confirm the French fallback error message shows instead of a crash — **not verified this session**; the exact fallback copy path was already exercised by Task 9's isolated "unreachable address" test.
 **Suggested commit:** `feat(overlays): add AI Chat (bottom-sheet Dialog + backend integration)`
 
 ---
@@ -920,12 +948,12 @@ Requested by the user directly (no corresponding plan task, no web equivalent �
 - [x] Task 26 — Favorites screen (interactive favorite/unfavorite-and-see-it-update not device-verified, see task notes)
 - [x] Task 27 — History screen (interactive watch-then-appear/remove/clear not device-verified, see task notes)
 - [x] Task 28 — Notes screen + scoped per-page note-creation (recipe/video now, tips later — interactive save/delete flow not device-verified, see task notes)
-- [ ] Task 29 — FAQ screen — post-MVP
-- [ ] Task 30 — Tips screen — post-MVP
+- [x] Task 29 — FAQ screen (RNR Accordion, single-open; not tsc/device-verified this session — dependency-less checkout, see task notes)
+- [x] Task 30 — Tips screen (ToggleGroup category filter; "Lys"→"Ghania" copy rename; not tsc/device-verified this session, see task notes)
 
 ### Phase 8 — Global floating overlays
 - [x] Task 31 — Notes FAB — superseded by Task 28's scoped per-page `AddNoteButton` (not built as a global FAB, by design)
-- [ ] Task 32 — AI Chat — post-MVP
+- [x] Task 32 — AI Chat (global floating overlay, RNR Dialog primitives, verbatim parser port; not tsc/device-verified this session + endpoint still undeployed, see task notes)
 
 ### Phase 9 — QA
 - [ ] Task 33 — Full-app manual regression pass — post-MVP
