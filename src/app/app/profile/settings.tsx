@@ -10,7 +10,6 @@ import { z } from "zod";
 
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Icon } from "@/components/ui/icon";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/lib/local-store";
@@ -21,11 +20,9 @@ import { useSettings } from "@/lib/local-store";
 // content. React Hook Form + Zod here is purely for form STATE management
 // (this project's chosen stack, per CLAUDE.md), not new validation rules —
 // same permissive-schema reasoning already established by Login (Task 11).
+// Preferences only — personal fields removed with the privacy change
+// (WIRING_PLAN B1/A2). Accounts are username-only; nothing personal is stored.
 const settingsSchema = z.object({
-  name: z.string(),
-  firstName: z.string(),
-  email: z.string(),
-  phone: z.string(),
   notifications: z.boolean(),
   darkTheme: z.boolean(),
   newsletter: z.boolean(),
@@ -58,61 +55,6 @@ export default function SettingsScreen() {
           <Text className="font-display text-2xl font-medium tracking-tight text-foreground">
             Paramètres
           </Text>
-        </View>
-
-        <SectionTitle>Informations personnelles</SectionTitle>
-        <View className="mx-5 gap-3 rounded-2xl border border-border bg-card p-4">
-          <Controller
-            control={control}
-            name="firstName"
-            render={({ field }) => (
-              <Field
-                label="Prénom"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="name"
-            render={({ field }) => (
-              <Field
-                label="Nom complet"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="email"
-            render={({ field }) => (
-              <Field
-                label="Email"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field }) => (
-              <Field
-                label="Téléphone"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                keyboardType="phone-pad"
-              />
-            )}
-          />
         </View>
 
         <SectionTitle>Préférences</SectionTitle>
@@ -181,38 +123,6 @@ function SectionTitle({ children }: { children: ReactNode }) {
     <Text className="mb-2 mt-7 px-5 text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
       {children}
     </Text>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChangeText,
-  onBlur,
-  keyboardType,
-  autoCapitalize,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  onBlur: () => void;
-  keyboardType?: "default" | "email-address" | "phone-pad";
-  autoCapitalize?: "none" | "sentences";
-}) {
-  return (
-    <View>
-      <Text className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </Text>
-      <Input
-        value={value}
-        onChangeText={onChangeText}
-        onBlur={onBlur}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        className="mt-1 rounded-xl px-3 py-2.5 h-fit"
-      />
-    </View>
   );
 }
 

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { AtSign, KeyRound, Mail, User } from "lucide-react-native";
+import { AtSign, KeyRound, User } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
@@ -14,7 +14,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError, type UserStatus } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 
 // Real auth wired to the PERLEDESLYS backend (see BACKEND_PLAN.md Phase 3).
@@ -30,10 +30,9 @@ const loginSchema = z.object({
 });
 type LoginValues = z.infer<typeof loginSchema>;
 
+// Sign-up is username + password only (privacy — WIRING_PLAN B1). No name or
+// email is collected; the activation code is entered on the next screen.
 const registerSchema = z.object({
-  firstName: z.string().min(1, "Prénom requis."),
-  lastName: z.string().min(1, "Nom requis."),
-  email: z.string().email("Email invalide."),
   username: z.string().min(3, "Au moins 3 caractères."),
   password: z.string().min(6, "Au moins 6 caractères."),
 });
@@ -54,10 +53,13 @@ export default function LoginScreen() {
   });
   const registerForm = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { firstName: "", lastName: "", email: "", username: "", password: "" },
+    defaultValues: { username: "", password: "" },
   });
 
-  const routeByStatus = (status: "PENDING" | "ACTIVE") => {
+  // ACTIVE → app. PENDING (and SUSPENDED) → activation screen; the app layout
+  // guard also enforces this, and the backend blocks a suspended account from
+  // reactivating via the code.
+  const routeByStatus = (status: UserStatus) => {
     router.replace(status === "ACTIVE" ? "/app" : "/(auth)/activate");
   };
 
@@ -79,9 +81,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const user = await register({
-        firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
-        email: values.email.trim(),
         username: values.username.trim(),
         password: values.password,
       });
@@ -167,55 +166,8 @@ export default function LoginScreen() {
               </FieldRow>
             </TabsContent>
 
-            {/* S'inscrire */}
+            {/* S'inscrire — username + password only (privacy) */}
             <TabsContent value="register" className="mt-5 gap-3">
-              <FieldRow icon={User}>
-                <Controller
-                  control={registerForm.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <Input
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="Prénom"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
-                    />
-                  )}
-                />
-              </FieldRow>
-              <FieldRow icon={User}>
-                <Controller
-                  control={registerForm.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <Input
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="Nom"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
-                    />
-                  )}
-                />
-              </FieldRow>
-              <FieldRow icon={Mail}>
-                <Controller
-                  control={registerForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <Input
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      onBlur={field.onBlur}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      placeholder="Email"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
-                    />
-                  )}
-                />
-              </FieldRow>
               <FieldRow icon={AtSign}>
                 <Controller
                   control={registerForm.control}

@@ -38,11 +38,10 @@ export type RecipeHistoryEntry = {
 
 export type HistoryEntry = VideoHistoryEntry | RecipeHistoryEntry;
 
+// Preferences only (device-local). Personal fields (name/email/phone) were
+// removed with the privacy change (WIRING_PLAN B1/A2) — accounts are
+// username-only and no PII is stored.
 export type UserSettings = {
-  name: string;
-  firstName: string;
-  email: string;
-  phone: string;
   notifications: boolean;
   darkTheme: boolean;
   newsletter: boolean;

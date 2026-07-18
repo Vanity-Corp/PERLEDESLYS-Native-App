@@ -11,17 +11,20 @@ import { z } from "zod";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export type UserStatus = "PENDING" | "ACTIVE";
+export type UserStatus = "PENDING" | "ACTIVE" | "SUSPENDED";
 
 const authUserSchema = z.object({
   id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string(),
+  // Accounts are username-only now (privacy — WIRING_PLAN B1). name/email are
+  // optional/nullable: absent for app sign-ups, present only for legacy/admin.
+  firstName: z.string().nullable().optional(),
+  lastName: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
   username: z.string(),
   role: z.enum(["MEMBER", "ADMIN"]),
-  status: z.enum(["PENDING", "ACTIVE"]),
+  status: z.enum(["PENDING", "ACTIVE", "SUSPENDED"]),
   isActivated: z.boolean(),
+  createdAt: z.string().optional(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
 
@@ -45,9 +48,6 @@ export class ApiError extends Error {
 }
 
 export interface RegisterInput {
-  firstName: string;
-  lastName: string;
-  email: string;
   username: string;
   password: string;
 }

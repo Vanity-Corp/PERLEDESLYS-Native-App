@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import {
@@ -9,11 +8,9 @@ import {
   Heart,
   HelpCircle,
   History as HistoryIcon,
-  KeyRound,
   LogOut,
   Mail,
   Settings as SettingsIcon,
-  ShoppingBag,
   StickyNote,
 } from "lucide-react-native";
 import type { ReactNode } from "react";
@@ -23,12 +20,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-store";
-import { user } from "@/lib/mock-data";
+
+const MONTHS = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
 
 // Web source: kitchen-haven-club/src/routes/app/profile/index.tsx
+// Accounts are username-only (privacy — WIRING_PLAN B1/A1), so the profile shows
+// the real authenticated user: username + join date + activation status. The
+// old mock avatar / Thermomix products / invitation code were dropped (no data).
 export default function ProfileScreen() {
   const router = useRouter();
   const logout = useAuth((s) => s.logout);
+  const user = useAuth((s) => s.user);
+
+  const memberSince = (() => {
+    if (!user?.createdAt) return null;
+    const d = new Date(user.createdAt);
+    return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  })();
+  const initials = (user?.username ?? "?").slice(0, 2).toUpperCase();
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -46,25 +58,19 @@ export default function ProfileScreen() {
 
         {/* User card */}
         <GradientView tone="luxe" className="mx-5 mt-4 flex-row items-center gap-4 rounded-3xl p-5">
-          <Image
-            source={{ uri: user.avatar }}
-            contentFit="cover"
-            style={{ width: 64, height: 64, borderRadius: 32 }}
-            accessibilityLabel={user.name}
-          />
+          <View
+            className="items-center justify-center rounded-full bg-primary-foreground/20"
+            style={{ width: 64, height: 64 }}
+          >
+            <Text className="font-italiana text-2xl text-primary-foreground">{initials}</Text>
+          </View>
           <View className="min-w-0 flex-1">
             <Text className="font-italiana text-xl leading-tight tracking-wide text-primary-foreground">
-              {user.name}
+              @{user?.username ?? ""}
             </Text>
             <Text className="mt-0.5 text-[11px] text-primary-foreground opacity-90">
-              Cliente Perle des Lys · depuis {user.memberSince}
+              Cliente Perle des Lys{memberSince ? ` · depuis ${memberSince}` : ""}
             </Text>
-            <View className="mt-1 flex-row items-center gap-1">
-              <Icon as={KeyRound} size={12} className="text-primary-foreground opacity-80" />
-              <Text className="text-[10px] text-primary-foreground opacity-80">
-                Code privé · {user.invitation}
-              </Text>
-            </View>
           </View>
         </GradientView>
 
@@ -84,7 +90,7 @@ export default function ProfileScreen() {
 
         <SectionTitle>Mon compte</SectionTitle>
         <View className="mx-5 divide-y divide-border rounded-2xl border border-border bg-card">
-          <Row href="/app/profile/settings" icon={SettingsIcon} label="Paramètres" value="Nom, email, préférences" />
+          <Row href="/app/profile/settings" icon={SettingsIcon} label="Paramètres" value="Mes préférences" />
           <Row href="/app/calendar" icon={CalendarDays} label="Calendrier" value="Lives & ateliers" />
           <Row
             href="/app/profile/history"
@@ -93,29 +99,6 @@ export default function ProfileScreen() {
             value="Reprendre où vous étiez"
           />
           <Row href="/app/profile/notes" icon={StickyNote} label="Mes notes" value="Vos prises de notes" />
-        </View>
-
-        {/* Purchases */}
-        <SectionTitle>Mon Thermomix</SectionTitle>
-        <View className="mx-5 gap-3">
-          {user.products.map((p) => (
-            <View key={p.id} className="flex-row items-center gap-3 rounded-2xl border border-border bg-card p-3">
-              <Image
-                source={p.image}
-                contentFit="cover"
-                style={{ width: 64, height: 64, borderRadius: 12 }}
-                accessibilityLabel={p.name}
-              />
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-foreground">{p.name}</Text>
-                <View className="mt-0.5 flex-row items-center gap-1">
-                  <Icon as={ShoppingBag} size={12} className="text-muted-foreground" />
-                  <Text className="text-[11px] text-muted-foreground">Acheté le {p.purchasedAt}</Text>
-                </View>
-              </View>
-              <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
-            </View>
-          ))}
         </View>
 
         <SectionTitle>Support</SectionTitle>

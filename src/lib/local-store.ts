@@ -5,7 +5,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { asyncStorage } from "@/lib/storage";
 import { useRecipes, useVideos } from "@/lib/content-queries";
-import { user } from "@/lib/mock-data";
 import { generateId } from "@/lib/utils";
 import type { Recipe, Video } from "@/types/content";
 import type { HistoryEntry, Note, UserSettings } from "@/types/local-store";
@@ -173,10 +172,6 @@ export function useFavorites() {
 // zustand stores are created once at module load, so — unlike the web hook,
 // which took an `initial` argument per call — defaults are fixed here.
 const DEFAULT_SETTINGS: UserSettings = {
-  name: user.name,
-  firstName: user.firstName,
-  email: user.email,
-  phone: user.phone,
   notifications: true,
   darkTheme: false,
   newsletter: true,
