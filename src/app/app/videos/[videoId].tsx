@@ -5,19 +5,21 @@ import {
   Clock,
   Download,
   Heart,
+  Maximize2,
   Play,
   RotateCcw,
   Share2,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VimeoEmbed } from "@/components/vimeo-embed";
+import { vimeoWatchUrl } from "@/components/vimeo-embed.shared";
 import { useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
 import type { Video } from "@/types/content";
@@ -77,6 +79,7 @@ function VideoDetail({ video }: { video: Video }) {
   // to local history. "Recommencer" remounts the player at 0 (playerKey bump).
   const [startAt, setStartAt] = useState(stored?.positionSec ?? 0);
   const [playerKey, setPlayerKey] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const [showResume, setShowResume] = useState((stored?.positionSec ?? 0) > 5);
   const progressRef = useRef({
     sec: stored?.positionSec ?? 0,
@@ -118,6 +121,7 @@ function VideoDetail({ video }: { video: Video }) {
     progressRef.current = { sec: 0, dur: progressRef.current.dur };
     setStartAt(0);
     setShowResume(false);
+    setPlaying(true);
     setPlayerKey((k) => k + 1);
   };
 
@@ -125,32 +129,85 @@ function VideoDetail({ video }: { video: Video }) {
     stored && stored.totalSec > 0
       ? Math.round((stored.positionSec / stored.totalSec) * 100)
       : 0;
+  const watchUrl = vimeoWatchUrl(video.vimeoUrl);
 
   return (
     <View className="flex-1 bg-background">
     <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Player — real Vimeo embed for every video; seeks to the stored resume
-          position and reports progress back for "resume" (WIRING_PLAN B4). */}
-      <View className="relative">
-        <VimeoEmbed
-          key={playerKey}
-          vimeoUrl={video.vimeoUrl}
-          title={video.title}
-          startAt={startAt}
-          onProgress={onProgress}
-        />
-        <SafeAreaView
-          className="absolute inset-x-0 top-0"
-          edges={["top"]}
-          pointerEvents="box-none"
-        >
-          <Link href="/app/tutorials" asChild>
-            <Pressable className="ml-5 mt-5 h-10 w-10 items-center justify-center rounded-full bg-background/95">
-              <Icon as={ArrowLeft} size={20} className="text-foreground" />
+      {/* Player. Keeps the poster + custom luxe play button (the original
+          wrapper design); tapping play reveals the real Vimeo embed, which
+          seeks to the stored resume position and reports progress (B4). */}
+      {playing ? (
+        <View className="relative">
+          <VimeoEmbed
+            key={playerKey}
+            vimeoUrl={video.vimeoUrl}
+            title={video.title}
+            startAt={startAt}
+            autoplay
+            onProgress={onProgress}
+          />
+          <SafeAreaView
+            className="absolute inset-x-0 top-0"
+            edges={["top"]}
+            pointerEvents="box-none"
+          >
+            <Link href="/app/tutorials" asChild>
+              <Pressable className="ml-5 mt-5 h-10 w-10 items-center justify-center rounded-full bg-background/95">
+                <Icon as={ArrowLeft} size={20} className="text-foreground" />
+              </Pressable>
+            </Link>
+          </SafeAreaView>
+        </View>
+      ) : (
+        <View className="relative aspect-video bg-foreground">
+          <Image
+            source={video.image}
+            contentFit="cover"
+            style={{ width: "100%", height: "100%", opacity: 0.8 }}
+            accessibilityLabel={video.title}
+          />
+          <GradientView tone="overlay" className="absolute inset-0" />
+          <SafeAreaView className="absolute inset-x-0 top-0" edges={["top"]}>
+            <View className="flex-row items-center justify-between px-5 pt-5">
+              <Link href="/app/tutorials" asChild>
+                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-background/95">
+                  <Icon as={ArrowLeft} size={20} className="text-foreground" />
+                </Pressable>
+              </Link>
+              <View className="rounded-full bg-background/95 px-3 py-1.5">
+                <Text className="text-[10px] font-medium text-foreground">Lecteur privé</Text>
+              </View>
+            </View>
+          </SafeAreaView>
+          <View className="absolute inset-0 items-center justify-center">
+            <Pressable
+              onPress={() => setPlaying(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Lire la vidéo"
+              className="h-16 w-16 items-center justify-center rounded-full"
+            >
+              <GradientView tone="luxe" className="h-16 w-16 items-center justify-center rounded-full">
+                <Icon as={Play} size={28} className="text-primary-foreground" fill="currentColor" />
+              </GradientView>
             </Pressable>
-          </Link>
-        </SafeAreaView>
-      </View>
+          </View>
+        </View>
+      )}
+
+      {/* Fullscreen is unreliable inside the in-app player, so offer a reliable
+          path: open the video on Vimeo (WIRING_PLAN B4, issue #3). */}
+      {watchUrl && (
+        <Pressable
+          onPress={() => Linking.openURL(watchUrl)}
+          className="mx-5 mt-4 flex-row items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3"
+        >
+          <Icon as={Maximize2} size={16} className="text-primary" />
+          <Text className="text-sm font-medium text-foreground">
+            Regarder la vidéo en plein écran sur Vimeo
+          </Text>
+        </Pressable>
+      )}
 
       <View className="px-5 pb-8 pt-5">
         <Text className="text-[10px] font-medium uppercase tracking-[0.25em] text-primary">

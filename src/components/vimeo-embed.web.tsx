@@ -17,6 +17,7 @@ type VimeoEmbedProps = ViewProps & {
   videoId?: string;
   title?: string;
   startAt?: number;
+  autoplay?: boolean;
   onProgress?: (seconds: number, duration: number) => void;
   onEnded?: () => void;
 };
@@ -26,6 +27,7 @@ function VimeoEmbed({
   videoId,
   title,
   startAt = 0,
+  autoplay = false,
   onProgress,
   onEnded,
   className,
@@ -57,7 +59,7 @@ function VimeoEmbed({
       {ref && (
         <iframe
           title={title ?? "Vimeo"}
-          srcDoc={buildPlayerHtml(ref, startAt)}
+          srcDoc={buildPlayerHtml(ref, startAt, autoplay)}
           style={{ border: 0, width: "100%", height: "100%" }}
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen

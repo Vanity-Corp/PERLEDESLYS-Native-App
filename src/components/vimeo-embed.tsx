@@ -21,6 +21,7 @@ type VimeoEmbedProps = ViewProps & {
   videoId?: string;
   title?: string;
   startAt?: number;
+  autoplay?: boolean;
   onProgress?: (seconds: number, duration: number) => void;
   onEnded?: () => void;
 };
@@ -30,6 +31,7 @@ function VimeoEmbed({
   videoId,
   title,
   startAt = 0,
+  autoplay = false,
   onProgress,
   onEnded,
   className,
@@ -59,7 +61,7 @@ function VimeoEmbed({
       {ref && (
         <WebView
           source={{
-            html: buildPlayerHtml(ref, startAt),
+            html: buildPlayerHtml(ref, startAt, autoplay),
             baseUrl: "https://player.vimeo.com",
           }}
           originWhitelist={["*"]}

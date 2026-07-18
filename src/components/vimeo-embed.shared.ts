@@ -36,19 +36,30 @@ export type VimeoMessage =
   | { type: "ended" }
   | { type: "error"; message: string };
 
+// A user-facing Vimeo watch URL (for the "plein écran sur Vimeo" link).
+export function vimeoWatchUrl(input?: string | null): string | null {
+  const ref = parseVimeo(input);
+  if (!ref) return null;
+  return `https://vimeo.com/${ref.id}${ref.hash ? `/${ref.hash}` : ""}`;
+}
+
 // HTML that loads the Vimeo Player SDK, seeks to `startAt`, and posts
 // timeupdate/ended events. `post()` works both inside a native WebView
 // (window.ReactNativeWebView) and a web <iframe srcDoc> (window.parent).
-export function buildPlayerHtml(ref: VimeoRef, startAt = 0): string {
+//
+// Framing: the SDK injects an <iframe> into #p; we force it to absolutely fill
+// the container (no `responsive` padding-box, which left gaps/offset). The video
+// keeps its own aspect ratio inside (letterboxed if it isn't 16:9).
+export function buildPlayerHtml(ref: VimeoRef, startAt = 0, autoplay = false): string {
   const opts = JSON.stringify({
     id: Number(ref.id),
     ...(ref.hash ? { h: ref.hash } : {}),
-    responsive: true,
-    autoplay: false,
+    autoplay,
     playsinline: true,
+    dnt: true,
   });
   const start = Math.max(0, Math.floor(startAt));
-  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>html,body{margin:0;background:#000;height:100%;overflow:hidden}#p,iframe{width:100%;height:100%}</style></head><body><div id="p"></div><script src="https://player.vimeo.com/api/player.js"></script><script>
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%;background:#000;overflow:hidden}#p{position:absolute;inset:0}#p iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;border:0}</style></head><body><div id="p"></div><script src="https://player.vimeo.com/api/player.js"></script><script>
 (function(){
   function post(m){try{var s=JSON.stringify(m);if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(s);}else if(window.parent){window.parent.postMessage(s,'*');}}catch(e){}}
   try{
