@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
+import { EventReminders } from "@/components/event-reminders";
 import { useAuth } from "@/lib/auth-store";
 
 // Custom `tabBar` (Task 2, src/components/bottom-nav.tsx) matching the
@@ -47,6 +48,7 @@ export default function AppLayout() {
         <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
       </Tabs>
       <AIChat />
+      <EventReminders />
     </View>
   );
 }

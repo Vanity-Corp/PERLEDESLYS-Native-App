@@ -384,7 +384,7 @@ function YearGrid({
 }
 
 function EventRow({ e, big }: { e: AppEvent; big?: boolean }) {
-  return (
+  const content = (
     <View
       className={`flex-row items-start gap-2 ${
         big ? "rounded-2xl border border-border bg-card p-4" : ""
@@ -404,4 +404,17 @@ function EventRow({ e, big }: { e: AppEvent; big?: boolean }) {
       </View>
     </View>
   );
+
+  // Live-linked events (created from a Live) open the live/replay player.
+  if (e.liveId) {
+    return (
+      <Link
+        href={{ pathname: "/app/lives/[liveId]", params: { liveId: e.liveId } }}
+        asChild
+      >
+        <Pressable>{content}</Pressable>
+      </Link>
+    );
+  }
+  return content;
 }

@@ -60,7 +60,9 @@ export type AppEvent = {
   date: string; // ISO yyyy-mm-dd
   time: string;
   type: "live" | "atelier" | "publication" | "rappel";
-  description?: string;
+  description?: string | null;
+  remindMinutesBefore?: number | null;
+  liveId?: string | null; // set when auto-created from a Live (deep-link target)
 };
 
 export type UserProduct = {
