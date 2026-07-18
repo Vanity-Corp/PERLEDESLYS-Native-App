@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { Icon } from "@/components/ui/icon";
 import { GradientView } from "@/components/ui/gradient-view";
-import { faqItems } from "@/lib/mock-data";
+import { useFaq } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/faq/index.tsx
 //
@@ -25,6 +25,7 @@ import { faqItems } from "@/lib/mock-data";
 // exactly would mean editing the shared `ui/accordion.tsx` primitive, so the
 // RNR default is kept as the "direct upgrade" the plan calls for.
 export default function FaqScreen() {
+  const faqItems = useFaq();
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>

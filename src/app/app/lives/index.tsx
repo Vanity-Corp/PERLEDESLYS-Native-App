@@ -8,10 +8,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { lives } from "@/lib/mock-data";
+import { useLives } from "@/lib/content-queries";
+import type { Live } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/lives/index.tsx
 export default function LivesScreen() {
+  const lives = useLives();
   const [tab, setTab] = useState<"upcoming" | "replays">("upcoming");
   const upcoming = lives.filter((l) => l.status === "À venir");
   const replays = lives.filter((l) => l.status === "Replay");
@@ -115,7 +117,7 @@ export default function LivesScreen() {
   );
 }
 
-function LiveRow({ live }: { live: (typeof lives)[number] }) {
+function LiveRow({ live }: { live: Live }) {
   return (
     <View className="mx-5 flex-row gap-3 rounded-2xl border border-border bg-card p-3">
       <View className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">

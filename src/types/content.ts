@@ -1,9 +1,16 @@
 import type { ImageSourcePropType } from "react-native";
 
+// An image reference that works for BOTH a bundled asset (require(...) →
+// ImageSourcePropType, used by mock-data) and a remote URL string (returned by
+// the backend content API — Phase 5c). expo-image's `source` prop accepts both,
+// so widening the content types this way lets the app consume real API content
+// with no component changes.
+export type ImageRef = ImageSourcePropType | string;
+
 export type Recipe = {
   id: string;
   title: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   time: string;
   difficulty: "Facile" | "Moyen" | "Avancé";
   category: string;
@@ -18,7 +25,7 @@ export type Recipe = {
 export type Video = {
   id: string;
   title: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   duration: string;
   category: string;
   description: string;
@@ -29,7 +36,7 @@ export type Article = {
   id: string;
   title: string;
   excerpt: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   readTime: string;
   category: string;
 };
@@ -39,7 +46,7 @@ export type Live = {
   title: string;
   date: string;
   time: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   status: "À venir" | "En direct" | "Replay";
   description: string;
   platform: string;
@@ -58,7 +65,7 @@ export type UserProduct = {
   id: string;
   name: string;
   purchasedAt: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
 };
 
 export type AppUser = {
@@ -76,7 +83,7 @@ export type FounderInfo = {
   name: string;
   fullName: string;
   bio: string;
-  avatar: ImageSourcePropType;
+  avatar: ImageRef;
 };
 
 export type FaqItem = {

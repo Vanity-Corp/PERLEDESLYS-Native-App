@@ -1,4 +1,4 @@
-import type { ImageSourcePropType } from "react-native";
+import type { ImageRef } from "@/types/content";
 
 export type Note = {
   id: string;
@@ -17,7 +17,7 @@ export type VideoHistoryEntry = {
   kind: "video";
   id: string;
   title: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   category: string;
   duration: string; // affichage
   progress: number; // 0-100
@@ -30,7 +30,7 @@ export type RecipeHistoryEntry = {
   kind: "recipe";
   id: string;
   title: string;
-  image: ImageSourcePropType;
+  image: ImageRef;
   category: string;
   time: string; // affichage, ex: "35 min"
   updatedAt: number;

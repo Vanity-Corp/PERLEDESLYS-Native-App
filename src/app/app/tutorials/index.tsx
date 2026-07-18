@@ -9,12 +9,13 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { videos } from "@/lib/mock-data";
+import { useVideos } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tutorials/index.tsx
 const TABS = ["Tout", "Mes premiers pas", "Premier démarrage", "Tutoriel TM7", "Recette vidéo", "Astuces"];
 
 export default function TutorialsScreen() {
+  const videos = useVideos();
   const [tab, setTab] = useState("Tout");
   const filtered = videos.filter((v) => tab === "Tout" || v.category === tab);
 

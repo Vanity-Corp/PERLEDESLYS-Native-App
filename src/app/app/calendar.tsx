@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { events } from "@/lib/mock-data";
+import { useEvents } from "@/lib/content-queries";
 import type { AppEvent } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/calendar/index.tsx
@@ -75,6 +75,7 @@ function weekStart(d: Date) {
 }
 
 export default function CalendarScreen() {
+  const events = useEvents();
   const [view, setView] = useState<CalendarView>("mois");
   const [cursor, setCursor] = useState(new Date());
 

@@ -6,7 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { VimeoEmbed } from "@/components/vimeo-embed";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { FIRST_STEPS_VIDEO_ID, videos, welcomeMessage } from "@/lib/mock-data";
+import { useVideo, useWelcomeMessage } from "@/lib/content-queries";
+import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/first-steps/index.tsx
 const NEXT_STEPS = [
@@ -17,7 +18,16 @@ const NEXT_STEPS = [
 ];
 
 export default function FirstStepsScreen() {
-  const video = videos.find((v) => v.id === FIRST_STEPS_VIDEO_ID)!;
+  // The "first steps" video is a fixed, hardcoded Vimeo embed; its text
+  // metadata comes from the content API when present, with fallbacks so the
+  // screen never depends on that specific record existing.
+  const { data: video } = useVideo(FIRST_STEPS_VIDEO_ID);
+  const welcomeMessage = useWelcomeMessage();
+  const title = video?.title ?? "Mes premiers pas";
+  const duration = video?.duration ?? "";
+  const description =
+    video?.description ??
+    "La vidéo de mise en service de votre Thermomix TM7.";
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -39,19 +49,19 @@ export default function FirstStepsScreen() {
         </View>
 
         <View className="mx-5 mt-4 overflow-hidden rounded-3xl">
-          <VimeoEmbed videoId="1095621493" title={video.title} />
+          <VimeoEmbed videoId="1095621493" title={title} />
         </View>
 
         <View className="px-5 mt-4">
           <View className="flex-row items-center gap-2">
             <Icon as={Clock} size={12} className="text-muted-foreground" />
-            <Text className="text-[11px] text-muted-foreground">{video.duration}</Text>
+            <Text className="text-[11px] text-muted-foreground">{duration}</Text>
             <Text className="text-[11px] text-muted-foreground">·</Text>
             <Icon as={Lock} size={12} className="text-muted-foreground" />
             <Text className="text-[11px] text-muted-foreground">Vidéo privée intégrée</Text>
           </View>
-          <Text className="mt-2 font-display text-xl leading-tight text-foreground">{video.title}</Text>
-          <Text className="mt-2 text-sm leading-relaxed text-muted-foreground">{video.description}</Text>
+          <Text className="mt-2 font-display text-xl leading-tight text-foreground">{title}</Text>
+          <Text className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</Text>
         </View>
 
         {/* Message de Ghania */}

@@ -25,7 +25,8 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
 import { aiChat } from "@/lib/api";
-import { recipes, videos } from "@/lib/mock-data";
+import { useRecipes, useVideos } from "@/lib/content-queries";
+import type { Recipe, Video } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/components/AIChat.tsx
 //
@@ -52,7 +53,7 @@ const SUGGESTIONS = [
   "Convertis cette recette au Thermomix : …",
 ];
 
-function parseReferences(text: string) {
+function parseReferences(text: string, recipes: Recipe[], videos: Video[]) {
   // Find [RECETTE id:xxx] / [VIDEO id:xxx]
   const refs: { type: "recipe" | "video"; id: string; title: string }[] = [];
   const re = /\[(RECETTE|VIDEO)\s+id:([a-z0-9-]+)\]/gi;
@@ -135,6 +136,8 @@ function FormattedMessage({ content }: { content: string }) {
 }
 
 export function AIChat() {
+  const recipes = useRecipes();
+  const videos = useVideos();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
     {
@@ -256,7 +259,9 @@ export function AIChat() {
                 >
                   {messages.map((m, i) => {
                     const refs =
-                      m.role === "assistant" ? parseReferences(m.content) : [];
+                      m.role === "assistant"
+                        ? parseReferences(m.content, recipes, videos)
+                        : [];
                     const clean =
                       m.role === "assistant"
                         ? cleanContent(m.content)

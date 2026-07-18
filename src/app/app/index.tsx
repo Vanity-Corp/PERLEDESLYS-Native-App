@@ -21,10 +21,21 @@ import { MiniCalendar } from "@/components/mini-calendar";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
-import { articles, founderInfo, lives, recipes, videos } from "@/lib/mock-data";
+import {
+  useArticles,
+  useFounder,
+  useLives,
+  useRecipes,
+  useVideos,
+} from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
+  const articles = useArticles();
+  const founderInfo = useFounder();
+  const lives = useLives();
+  const recipes = useRecipes();
+  const videos = useVideos();
   const continueWatching = videos.filter((v) => v.progress).slice(0, 3);
   const newRecipes = recipes.filter((r) => r.isNew);
   const popularRecipes = recipes.slice(0, 6);

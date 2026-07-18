@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { STORAGE_KEYS } from "@/constants/storage";
 import { asyncStorage } from "@/lib/storage";
-import { recipes, user, videos } from "@/lib/mock-data";
+import { useRecipes, useVideos } from "@/lib/content-queries";
+import { user } from "@/lib/mock-data";
 import { generateId } from "@/lib/utils";
 import type { Recipe, Video } from "@/types/content";
 import type { HistoryEntry, Note, UserSettings } from "@/types/local-store";
@@ -132,14 +134,26 @@ const useFavoritesStore = create<FavoritesState>()(
   ),
 );
 
-const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-const videosById = new Map(videos.map((video) => [video.id, video]));
-
 export function useFavorites() {
   const favoriteEntries = useFavoritesStore((s) => s.favoriteEntries);
   const toggle = useFavoritesStore((s) => s.toggle);
   const isFavorite = (id: string, kind: FavoriteKind) =>
     favoriteEntries.some((f) => f.id === id && f.kind === kind);
+
+  // Favorites are stored as (id, kind) and resolved against the live content
+  // from the API (Phase 5c) instead of the old module-level mock maps. These
+  // list queries are shared/deduped by TanStack Query, so pulling them here is
+  // cheap even though many components call useFavorites just for toggle.
+  const recipes = useRecipes();
+  const videos = useVideos();
+  const recipesById = useMemo(
+    () => new Map(recipes.map((recipe) => [recipe.id, recipe])),
+    [recipes],
+  );
+  const videosById = useMemo(
+    () => new Map(videos.map((video) => [video.id, video])),
+    [videos],
+  );
 
   const favoriteRecipes = favoriteEntries
     .filter((f) => f.kind === "recipe")

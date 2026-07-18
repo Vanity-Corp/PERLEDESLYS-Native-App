@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { articles } from "@/lib/mock-data";
+import { useArticles } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tips/index.tsx
 //
@@ -35,6 +35,7 @@ const CATS = [
 ];
 
 export default function TipsScreen() {
+  const articles = useArticles();
   const [cat, setCat] = useState("Tout");
   const list = articles.filter((a) => cat === "Tout" || a.category === cat);
 

@@ -12,7 +12,7 @@ import { Pressable, View } from "react-native";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { events } from "@/lib/mock-data";
+import { useEvents } from "@/lib/content-queries";
 import { cn } from "@/lib/utils";
 import type { AppEvent } from "@/types/content";
 
@@ -46,6 +46,7 @@ function typeIcon(t: AppEvent["type"]) {
 }
 
 function MiniCalendar() {
+  const events = useEvents();
   const today = new Date();
   const start = startOfWeek(today);
   const week = Array.from({ length: 7 }, (_, i) => {

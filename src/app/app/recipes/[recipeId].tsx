@@ -12,15 +12,15 @@ import {
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AddNoteButton } from "@/components/add-note-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { useRecipe } from "@/lib/content-queries";
 import { useFavorites, useHistory } from "@/lib/local-store";
-import { recipes } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/$recipeId.tsx
 //
@@ -30,7 +30,7 @@ import { recipes } from "@/lib/mock-data";
 // (Task 27) shows recently-viewed recipes alongside recently-watched videos.
 export default function RecipeDetailScreen() {
   const { recipeId } = useLocalSearchParams<{ recipeId: string }>();
-  const recipe = recipes.find((r) => r.id === recipeId);
+  const { data: recipe, isLoading } = useRecipe(recipeId);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const { isFavorite, toggle } = useFavorites();
   const { upsert } = useHistory();
@@ -52,6 +52,14 @@ export default function RecipeDetailScreen() {
     // Task 21 already established for the video player's position state).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipe?.id]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
 
   if (!recipe) {
     return (

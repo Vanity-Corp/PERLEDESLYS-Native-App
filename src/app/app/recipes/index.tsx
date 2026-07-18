@@ -9,7 +9,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { recipes } from "@/lib/mock-data";
+import { useRecipes } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/index.tsx
 const CATEGORIES = [
@@ -26,6 +26,7 @@ const CATEGORIES = [
 ];
 
 export default function RecipesScreen() {
+  const recipes = useRecipes();
   const [active, setActive] = useState("Tout");
   const [q, setQ] = useState("");
   const filtered = recipes.filter(

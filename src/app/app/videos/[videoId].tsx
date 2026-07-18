@@ -13,16 +13,18 @@ import {
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VimeoEmbed } from "@/components/vimeo-embed";
+import { useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
-import { FIRST_STEPS_VIDEO_ID, videos } from "@/lib/mock-data";
+import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 import { THEME } from "@/constants/theme";
+import type { Video } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/videos/$videoId.tsx
 //
@@ -46,7 +48,15 @@ function parseDuration(duration: string): number {
 
 export default function VideoDetailScreen() {
   const { videoId } = useLocalSearchParams<{ videoId: string }>();
-  const video = videos.find((v) => v.id === videoId);
+  const { data: video, isLoading } = useVideo(videoId);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
 
   if (!video) {
     return (
@@ -56,6 +66,14 @@ export default function VideoDetailScreen() {
     );
   }
 
+  return <VideoDetail video={video} />;
+}
+
+// Split out so the player only mounts once the video is loaded — its position
+// state initialises from stored history at mount, which requires the video to
+// be present (async fetch would otherwise init to 0 and lose the resume point).
+function VideoDetail({ video }: { video: Video }) {
+  const videos = useVideos();
   const similar = videos.filter((v) => v.id !== video.id).slice(0, 4);
   const isFirstSteps = video.id === FIRST_STEPS_VIDEO_ID;
   const totalSec = parseDuration(video.duration);

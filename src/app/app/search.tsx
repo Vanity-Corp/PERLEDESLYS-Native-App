@@ -17,7 +17,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { articles, faqItems, recipes, videos } from "@/lib/mock-data";
+import {
+  useArticles,
+  useFaq,
+  useRecipes,
+  useVideos,
+} from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/search/index.tsx
 const SUGGESTIONS = ["poulet", "couscous", "ramadan", "nettoyage", "varoma"];
@@ -32,6 +37,10 @@ function norm(s: string) {
 }
 
 export default function SearchScreen() {
+  const recipes = useRecipes();
+  const videos = useVideos();
+  const articles = useArticles();
+  const faqItems = useFaq();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<Tab>("all");
 
@@ -52,7 +61,7 @@ export default function SearchScreen() {
       ),
       faq: faqItems.filter((f) => [f.q, f.a].map(norm).some((t) => t.includes(needle))),
     };
-  }, [q]);
+  }, [q, recipes, videos, articles, faqItems]);
 
   const total =
     results.recipes.length + results.videos.length + results.articles.length + results.faq.length;
