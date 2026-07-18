@@ -70,14 +70,20 @@ export default function LivesScreen() {
                   </View>
                 </View>
                 <View className="mt-4 flex-row gap-2">
-                  {/* Non-functional in the web version too (no onClick there) */}
-                  <Pressable
-                    role="button"
-                    className="flex-row items-center gap-1.5 rounded-full bg-background px-4 py-2"
+                  {/* B4: opens the live/replay player (Vimeo). "Me rappeler"
+                      stays inert until reminders land (B2). */}
+                  <Link
+                    href={{ pathname: "/app/lives/[liveId]", params: { liveId: next.id } }}
+                    asChild
                   >
-                    <Icon as={PlayCircle} size={16} className="text-foreground" />
-                    <Text className="text-xs font-semibold text-foreground">Rejoindre le live</Text>
-                  </Pressable>
+                    <Pressable
+                      role="button"
+                      className="flex-row items-center gap-1.5 rounded-full bg-background px-4 py-2"
+                    >
+                      <Icon as={PlayCircle} size={16} className="text-foreground" />
+                      <Text className="text-xs font-semibold text-foreground">Rejoindre le live</Text>
+                    </Pressable>
+                  </Link>
                   <Pressable
                     role="button"
                     className="flex-row items-center gap-1.5 rounded-full border border-background/30 bg-background/20 px-4 py-2"
@@ -119,7 +125,11 @@ export default function LivesScreen() {
 
 function LiveRow({ live }: { live: Live }) {
   return (
-    <View className="mx-5 flex-row gap-3 rounded-2xl border border-border bg-card p-3">
+    <Link
+      href={{ pathname: "/app/lives/[liveId]", params: { liveId: live.id } }}
+      asChild
+    >
+      <Pressable className="mx-5 flex-row gap-3 rounded-2xl border border-border bg-card p-3">
       <View className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
         <Image
           source={live.image}
@@ -162,6 +172,7 @@ function LiveRow({ live }: { live: Live }) {
           <Text className="text-[10px] text-muted-foreground">{live.time}</Text>
         </View>
       </View>
-    </View>
+      </Pressable>
+    </Link>
   );
 }

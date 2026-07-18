@@ -1,4 +1,3 @@
-import Slider from "@react-native-community/slider";
 import { Image } from "expo-image";
 import { Link, useLocalSearchParams } from "expo-router";
 import {
@@ -6,12 +5,11 @@ import {
   Clock,
   Download,
   Heart,
-  Pause,
   Play,
   RotateCcw,
   Share2,
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,8 +20,6 @@ import { Icon } from "@/components/ui/icon";
 import { VimeoEmbed } from "@/components/vimeo-embed";
 import { useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
-import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
-import { THEME } from "@/constants/theme";
 import type { Video } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/videos/$videoId.tsx
@@ -41,11 +37,6 @@ import type { Video } from "@/types/content";
 // note-taking is a route-detecting global overlay (Task 31, not built).
 // Added at the user's direct request to scope note-taking to single-item
 // content pages (recipe/video/tips) while keeping the floating-button look.
-function parseDuration(duration: string): number {
-  const m = duration.match(/(\d+)\s*min/);
-  return m ? parseInt(m[1], 10) * 60 : 600;
-}
-
 export default function VideoDetailScreen() {
   const { videoId } = useLocalSearchParams<{ videoId: string }>();
   const { data: video, isLoading } = useVideo(videoId);
@@ -75,33 +66,26 @@ export default function VideoDetailScreen() {
 function VideoDetail({ video }: { video: Video }) {
   const videos = useVideos();
   const similar = videos.filter((v) => v.id !== video.id).slice(0, 4);
-  const isFirstSteps = video.id === FIRST_STEPS_VIDEO_ID;
-  const totalSec = parseDuration(video.duration);
 
   const { get, upsert } = useHistory();
   const stored = get(video.id, "video");
   const { isFavorite, toggle } = useFavorites();
   const favVideo = isFavorite(video.id, "video");
-  const [position, setPosition] = useState(stored?.positionSec ?? 0);
-  const [playing, setPlaying] = useState(false);
-  const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (!playing || isFirstSteps) return;
-    tick.current = setInterval(() => {
-      setPosition((p) => {
-        const next = Math.min(p + 1, totalSec);
-        if (next >= totalSec) setPlaying(false);
-        return next;
-      });
-    }, 1000);
-    return () => {
-      if (tick.current) clearInterval(tick.current);
-    };
-  }, [playing, totalSec, isFirstSteps]);
+  // Resume: the Vimeo player seeks to `startAt` on mount (the stored position);
+  // it reports playback progress via onProgress, which we persist (throttled)
+  // to local history. "Recommencer" remounts the player at 0 (playerKey bump).
+  const [startAt, setStartAt] = useState(stored?.positionSec ?? 0);
+  const [playerKey, setPlayerKey] = useState(0);
+  const [showResume, setShowResume] = useState((stored?.positionSec ?? 0) > 5);
+  const progressRef = useRef({
+    sec: stored?.positionSec ?? 0,
+    dur: stored?.totalSec ?? 0,
+  });
 
-  useEffect(() => {
-    if (position === 0 && !stored) return;
+  const persist = useCallback(() => {
+    const { sec, dur } = progressRef.current;
+    if (sec <= 0 || dur <= 0) return;
     upsert({
       kind: "video",
       id: video.id,
@@ -109,87 +93,64 @@ function VideoDetail({ video }: { video: Video }) {
       image: video.image,
       category: video.category,
       duration: video.duration,
-      positionSec: position,
-      totalSec,
-      progress: Math.round((position / totalSec) * 100),
+      positionSec: Math.round(sec),
+      totalSec: Math.round(dur),
+      progress: Math.round((sec / dur) * 100),
       updatedAt: Date.now(),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [position]);
+  }, [video.id]);
 
-  const progress = Math.round((position / totalSec) * 100);
+  // Save periodically while watching + once on unmount.
+  useEffect(() => {
+    const iv = setInterval(persist, 5000);
+    return () => {
+      clearInterval(iv);
+      persist();
+    };
+  }, [persist]);
+
+  const onProgress = (sec: number, dur: number) => {
+    progressRef.current = { sec, dur };
+  };
+
+  const restart = () => {
+    progressRef.current = { sec: 0, dur: progressRef.current.dur };
+    setStartAt(0);
+    setShowResume(false);
+    setPlayerKey((k) => k + 1);
+  };
+
+  const resumePct =
+    stored && stored.totalSec > 0
+      ? Math.round((stored.positionSec / stored.totalSec) * 100)
+      : 0;
 
   return (
     <View className="flex-1 bg-background">
     <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Player */}
-      {isFirstSteps ? (
-        <View className="relative aspect-video bg-foreground">
-          <VimeoEmbed videoId="1095621493" title={video.title} />
-          <SafeAreaView className="absolute inset-x-0 top-0" edges={["top"]}>
-            <Link href="/app/tutorials" asChild>
-              <Pressable className="ml-5 mt-5 h-10 w-10 items-center justify-center rounded-full bg-background/95">
-                <Icon as={ArrowLeft} size={20} className="text-foreground" />
-              </Pressable>
-            </Link>
-          </SafeAreaView>
-        </View>
-      ) : (
-        <View className="relative aspect-video bg-foreground">
-          <Image
-            source={video.image}
-            contentFit="cover"
-            style={{ width: "100%", height: "100%", opacity: 0.8 }}
-            accessibilityLabel={video.title}
-          />
-          <GradientView tone="overlay" className="absolute inset-0" />
-          <SafeAreaView className="absolute inset-x-0 top-0" edges={["top"]}>
-            <View className="flex-row items-center justify-between px-5 pt-5">
-              <Link href="/app/tutorials" asChild>
-                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-background/95">
-                  <Icon as={ArrowLeft} size={20} className="text-foreground" />
-                </Pressable>
-              </Link>
-              <View className="rounded-full bg-background/95 px-3 py-1.5">
-                <Text className="text-[10px] font-medium text-foreground">Lecteur privé</Text>
-              </View>
-            </View>
-          </SafeAreaView>
-          <View className="absolute inset-0 items-center justify-center">
-            <Pressable
-              onPress={() => setPlaying((p) => !p)}
-              className="h-16 w-16 items-center justify-center rounded-full"
-            >
-              <GradientView tone="luxe" className="h-16 w-16 items-center justify-center rounded-full">
-                <Icon
-                  as={playing ? Pause : Play}
-                  size={28}
-                  className="text-primary-foreground"
-                  fill="currentColor"
-                />
-              </GradientView>
+      {/* Player — real Vimeo embed for every video; seeks to the stored resume
+          position and reports progress back for "resume" (WIRING_PLAN B4). */}
+      <View className="relative">
+        <VimeoEmbed
+          key={playerKey}
+          vimeoUrl={video.vimeoUrl}
+          title={video.title}
+          startAt={startAt}
+          onProgress={onProgress}
+        />
+        <SafeAreaView
+          className="absolute inset-x-0 top-0"
+          edges={["top"]}
+          pointerEvents="box-none"
+        >
+          <Link href="/app/tutorials" asChild>
+            <Pressable className="ml-5 mt-5 h-10 w-10 items-center justify-center rounded-full bg-background/95">
+              <Icon as={ArrowLeft} size={20} className="text-foreground" />
             </Pressable>
-          </View>
-          <View className="absolute bottom-3 left-4 right-4">
-            <Slider
-              minimumValue={0}
-              maximumValue={totalSec}
-              value={position}
-              onValueChange={(v) => setPosition(Math.round(v))}
-              minimumTrackTintColor={THEME.light.primary}
-              maximumTrackTintColor="rgba(255,255,255,0.3)"
-              thumbTintColor={THEME.light.primary}
-              accessibilityLabel="Position"
-            />
-            <View className="mt-1 flex-row justify-between">
-              <Text className="text-[10px] font-medium text-primary-foreground">
-                {formatSeconds(position)}
-              </Text>
-              <Text className="text-[10px] font-medium text-primary-foreground">{video.duration}</Text>
-            </View>
-          </View>
-        </View>
-      )}
+          </Link>
+        </SafeAreaView>
+      </View>
 
       <View className="px-5 pb-8 pt-5">
         <Text className="text-[10px] font-medium uppercase tracking-[0.25em] text-primary">
@@ -207,14 +168,14 @@ function VideoDetail({ video }: { video: Video }) {
           <Text className="text-xs text-muted-foreground">HD 1080p</Text>
         </View>
 
-        {stored && stored.positionSec > 5 && !isFirstSteps && (
+        {showResume && stored && (
           <View className="mt-3 flex-row items-center gap-2 rounded-xl bg-secondary p-3">
             <Icon as={RotateCcw} size={14} className="text-primary" />
             <Text className="flex-1 text-xs text-foreground">
               Reprise à <Text className="font-semibold">{formatSeconds(stored.positionSec)}</Text> (
-              {progress}%)
+              {resumePct}%)
             </Text>
-            <Pressable onPress={() => setPosition(0)}>
+            <Pressable onPress={restart}>
               <Text className="text-xs font-medium text-primary">Recommencer</Text>
             </Pressable>
           </View>

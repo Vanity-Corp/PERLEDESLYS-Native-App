@@ -29,6 +29,7 @@ export type Video = {
   duration: string;
   category: string;
   description: string;
+  vimeoUrl?: string | null;
   progress?: number;
 };
 
@@ -50,6 +51,7 @@ export type Live = {
   status: "À venir" | "En direct" | "Replay";
   description: string;
   platform: string;
+  vimeoUrl?: string | null;
 };
 
 export type AppEvent = {
