@@ -170,6 +170,7 @@ export default function DashboardScreen() {
         </Section>
 
         {/* Featured recipe */}
+        {featured && (
         <Section title="Recette signature" href="/app/recipes">
           <View className="px-5">
             <Link
@@ -243,6 +244,7 @@ export default function DashboardScreen() {
             </Link>
           </View>
         </Section>
+        )}
 
         {/* Continue watching */}
         {continueWatching.length > 0 && (
