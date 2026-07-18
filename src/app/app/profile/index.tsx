@@ -22,11 +22,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { useAuth } from "@/lib/auth-store";
 import { user } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/profile/index.tsx
 export default function ProfileScreen() {
   const router = useRouter();
+  const logout = useAuth((s) => s.logout);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -123,7 +125,10 @@ export default function ProfileScreen() {
         </View>
 
         <Pressable
-          onPress={() => router.replace("/(auth)")}
+          onPress={() => {
+            logout();
+            router.replace("/(auth)");
+          }}
           className="mx-5 mt-7 flex-row items-center justify-center gap-2 rounded-2xl border border-border bg-card py-4"
         >
           <Icon as={LogOut} size={16} className="text-destructive" />

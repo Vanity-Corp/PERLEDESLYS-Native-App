@@ -1,8 +1,10 @@
 import { Image } from "expo-image";
-import { Link } from "expo-router";
+import { Link, Redirect } from "expo-router";
 import { Heart, Sparkles } from "lucide-react-native";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useAuth } from "@/lib/auth-store";
 
 import PerleDesLysText from "@/assets/perledeslys/Logo-rose.svg";
 import PerleDesLysWordmark from "@/assets/perledeslys/perle-des-lys-log-no-text.svg";
@@ -21,6 +23,14 @@ import { Icon } from "@/components/ui/icon";
 // `perle-des-lys-log-with-text.svg` at different sizes rather than two
 // separate assets, since the source file is a single combined lockup.
 export default function LandingScreen() {
+  // Boot redirect (BACKEND_PLAN.md Phase 3): send an already-logged-in user
+  // straight past the landing page — ACTIVE → app, PENDING → activation. Wait
+  // for the persisted auth store to rehydrate before deciding.
+  const { token, user, hydrated } = useAuth();
+  if (hydrated && token) {
+    return <Redirect href={user?.status === "ACTIVE" ? "/app" : "/(auth)/activate"} />;
+  }
+
   return (
     <GradientView tone="cream" className="flex-1">
       <SafeAreaView className="flex-1" edges={["bottom"]}>

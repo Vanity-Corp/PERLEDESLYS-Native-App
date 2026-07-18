@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { KeyRound, User } from "lucide-react-native";
+import { AtSign, KeyRound, Mail, User } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -13,52 +13,94 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApiError } from "@/lib/auth-api";
+import { useAuth } from "@/lib/auth-store";
 
-// Web source: kitchen-haven-club/src/routes/login.tsx
+// Real auth wired to the PERLEDESLYS backend (see BACKEND_PLAN.md Phase 3).
+// The v2-rebrand visuals (ogee arch, cream gradient, tab switcher, gradient
+// CTA) are preserved from the previous cosmetic version — only the submit
+// handlers changed from `router.replace("/app")` to real login/register.
 //
-// Rebuilt per the client's v2 rebrand mockup (assets/new-assets/auth-page.png):
-// the small logo-circle header + "Bon retour parmi nous." headline are
-// replaced by a big ogee-arch graphic with the welcome-back copy set inside
-// its lower opening; tabs are relabeled Se connecter/S'inscrire (kept as
-// the same internal "login"/"invite" values — no mockup exists for the
-// S'inscrire tab's own content, so it reuses the invite-code fields that
-// already existed here, which fits an invite-only club's idea of "signing
-// up" reasonably well).
-//
-// The web version has no real validation either — submit always navigates
-// regardless of field content. React Hook Form + Zod here is purely for
-// form STATE management (this project's chosen stack, per CLAUDE.md), not
-// new validation rules — the schema is intentionally permissive so nothing
-// that would pass on the web can fail here.
+// "Se connecter" → login(identifier, password): ACTIVE → /app, PENDING →
+// activation screen. "S'inscrire" → register(...) → always PENDING → activation.
 const loginSchema = z.object({
-  email: z.string(),
-  password: z.string(),
-  code: z.string(),
+  identifier: z.string().min(1, "Identifiant requis."),
+  password: z.string().min(1, "Mot de passe requis."),
 });
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginValues = z.infer<typeof loginSchema>;
+
+const registerSchema = z.object({
+  firstName: z.string().min(1, "Prénom requis."),
+  lastName: z.string().min(1, "Nom requis."),
+  email: z.string().email("Email invalide."),
+  username: z.string().min(3, "Au moins 3 caractères."),
+  password: z.string().min(6, "Au moins 6 caractères."),
+});
+type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [tab, setTab] = useState<"login" | "invite">("login");
-  const { control, handleSubmit } = useForm<LoginFormValues>({
+  const login = useAuth((s) => s.login);
+  const register = useAuth((s) => s.register);
+
+  const [tab, setTab] = useState<"login" | "register">("login");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "yasmine.b@email.com",
-      password: "••••••••",
-      code: "PDL-7821-LYS",
-    },
+    defaultValues: { identifier: "", password: "" },
+  });
+  const registerForm = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { firstName: "", lastName: "", email: "", username: "", password: "" },
   });
 
-  const onSubmit = handleSubmit(() => {
-    router.replace("/app");
+  const routeByStatus = (status: "PENDING" | "ACTIVE") => {
+    router.replace(status === "ACTIVE" ? "/app" : "/(auth)/activate");
+  };
+
+  const onLogin = loginForm.handleSubmit(async (values) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const user = await login(values.identifier.trim(), values.password);
+      routeByStatus(user.status);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Une erreur est survenue.");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  const onRegister = registerForm.handleSubmit(async (values) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const user = await register({
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email: values.email.trim(),
+        username: values.username.trim(),
+        password: values.password,
+      });
+      routeByStatus(user.status); // always PENDING → activation
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Une erreur est survenue.");
+    } finally {
+      setLoading(false);
+    }
   });
 
   return (
     <GradientView tone="cream" className="flex-1">
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <View className="flex-1 px-6 pb-10 pt-6">
+        <ScrollView
+          contentContainerClassName="px-6 pb-10 pt-6"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View className="relative items-center">
             <OgeeArch width={280} height={241} />
             <View className="absolute bottom-6 items-center px-8">
@@ -70,20 +112,17 @@ export default function LoginScreen() {
 
           <Tabs
             value={tab}
-            onValueChange={(value) => setTab(value as "login" | "invite")}
+            onValueChange={(value) => {
+              setTab(value as "login" | "register");
+              setError(null);
+            }}
             className="mt-4"
           >
-            <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1 h-fit">
-              <TabsTrigger
-                value="login"
-                className="flex-1 rounded-xl py-2.5 h-fit"
-              >
+            <TabsList className="h-fit w-full flex-row rounded-2xl bg-secondary/60 p-1">
+              <TabsTrigger value="login" className="h-fit flex-1 rounded-xl py-2.5">
                 <Text className="text-xs font-medium">Se connecter</Text>
               </TabsTrigger>
-              <TabsTrigger
-                value="invite"
-                className="flex-1 rounded-xl py-2.5 h-fit"
-              >
+              <TabsTrigger value="register" className="h-fit flex-1 rounded-xl py-2.5">
                 <Text className="text-xs font-medium">S'inscrire</Text>
               </TabsTrigger>
             </TabsList>
@@ -92,16 +131,12 @@ export default function LoginScreen() {
               Cette application est réservée uniquement à mes clientes
             </Text>
 
+            {/* Se connecter */}
             <TabsContent value="login" className="mt-5 gap-4">
-              <View className="justify-center h-fit">
-                <Icon
-                  as={User}
-                  size={16}
-                  className="absolute left-4 z-10 text-muted-foreground"
-                />
+              <FieldRow icon={User}>
                 <Controller
-                  control={control}
-                  name="email"
+                  control={loginForm.control}
+                  name="identifier"
                   render={({ field }) => (
                     <Input
                       value={field.value}
@@ -109,20 +144,14 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       autoCapitalize="none"
                       placeholder="IDENTIFIANT"
-                      className="rounded-full py-3.5 pl-11 pr-4  h-fit uppercase tracking-wide"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
                     />
                   )}
                 />
-              </View>
-
-              <View className="justify-center">
-                <Icon
-                  as={KeyRound}
-                  size={16}
-                  className="absolute left-4 z-10  text-muted-foreground"
-                />
+              </FieldRow>
+              <FieldRow icon={KeyRound}>
                 <Controller
-                  control={control}
+                  control={loginForm.control}
                   name="password"
                   render={({ field }) => (
                     <Input
@@ -131,58 +160,143 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       secureTextEntry
                       placeholder="MOT DE PASSE"
-                      className="rounded-full py-3.5 pl-11 pr-4  h-fit uppercase tracking-wide"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
                     />
                   )}
                 />
-              </View>
+              </FieldRow>
             </TabsContent>
 
-            <TabsContent value="invite" className="mt-5 gap-1.5">
-              <Label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Code d'invitation privée
-              </Label>
-              <View className="justify-center">
-                <Icon
-                  as={KeyRound}
-                  size={16}
-                  className="absolute left-4 z-10 text-muted-foreground"
-                />
+            {/* S'inscrire */}
+            <TabsContent value="register" className="mt-5 gap-3">
+              <FieldRow icon={User}>
                 <Controller
-                  control={control}
-                  name="code"
+                  control={registerForm.control}
+                  name="firstName"
                   render={({ field }) => (
                     <Input
                       value={field.value}
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
-                      autoCapitalize="characters"
-                      className="rounded-full py-3.5  h-fit pl-11 pr-4 font-medium tracking-widest"
+                      placeholder="Prénom"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
                     />
                   )}
                 />
-              </View>
-              <Text className="text-[11px] text-muted-foreground">
-                Le code unique que Ghania vous a transmis personnellement.
-              </Text>
+              </FieldRow>
+              <FieldRow icon={User}>
+                <Controller
+                  control={registerForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Nom"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                    />
+                  )}
+                />
+              </FieldRow>
+              <FieldRow icon={Mail}>
+                <Controller
+                  control={registerForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      placeholder="Email"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                    />
+                  )}
+                />
+              </FieldRow>
+              <FieldRow icon={AtSign}>
+                <Controller
+                  control={registerForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      autoCapitalize="none"
+                      placeholder="Nom d'utilisateur"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                    />
+                  )}
+                />
+              </FieldRow>
+              <FieldRow icon={KeyRound}>
+                <Controller
+                  control={registerForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      secureTextEntry
+                      placeholder="Mot de passe"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                    />
+                  )}
+                />
+              </FieldRow>
             </TabsContent>
           </Tabs>
 
-          <GradientButton tone="luxe" onPress={onSubmit} className="mt-8">
-            <Text className="font-medium text-primary-foreground">
-              {tab === "login" ? "Se connecter" : "S'inscrire"}
-            </Text>
+          {error && (
+            <Text className="mt-4 text-center text-sm text-destructive">{error}</Text>
+          )}
+
+          <GradientButton
+            tone="luxe"
+            onPress={tab === "login" ? onLogin : onRegister}
+            disabled={loading}
+            className="mt-8"
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text className="font-medium text-primary-foreground">
+                {tab === "login" ? "Se connecter" : "Créer mon compte"}
+              </Text>
+            )}
           </GradientButton>
 
-          <View className="mt-auto items-center pt-8">
-            <Button variant="link" size="sm">
-              <Text className="text-xs font-medium text-muted-foreground">
-                Mot de passe oublié ?
-              </Text>
-            </Button>
-          </View>
-        </View>
+          {tab === "login" && (
+            <View className="mt-auto items-center pt-8">
+              <Button variant="link" size="sm">
+                <Text className="text-xs font-medium text-muted-foreground">
+                  Mot de passe oublié ?
+                </Text>
+              </Button>
+            </View>
+          )}
+        </ScrollView>
       </SafeAreaView>
     </GradientView>
+  );
+}
+
+// Shared input row: leading icon overlaid on a pill-shaped Input.
+function FieldRow({
+  icon,
+  children,
+}: {
+  icon: React.ComponentProps<typeof Icon>["as"];
+  children: React.ReactNode;
+}) {
+  return (
+    <View className="justify-center">
+      <Icon as={icon} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+      {children}
+    </View>
   );
 }

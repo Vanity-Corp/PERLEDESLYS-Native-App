@@ -1,8 +1,9 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
 
 import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
+import { useAuth } from "@/lib/auth-store";
 
 // Custom `tabBar` (Task 2, src/components/bottom-nav.tsx) matching the
 // web's floating gradient-pill BottomNav. This is the standard `<Tabs>`
@@ -20,6 +21,14 @@ import { BottomNav } from "@/components/bottom-nav";
 // every /app/* page with no exceptions) without adding extra tab icons.
 // BottomNav filters its own rendered list to the 5 real tabs regardless.
 export default function AppLayout() {
+  // Route guard (BACKEND_PLAN.md Phase 3): only ACTIVE, authenticated users may
+  // enter the app. Wait for the persisted auth store to rehydrate first to
+  // avoid a redirect flash; no token → auth stack; PENDING → activation.
+  const { token, user, hydrated } = useAuth();
+  if (!hydrated) return null;
+  if (!token) return <Redirect href="/(auth)" />;
+  if (user?.status !== "ACTIVE") return <Redirect href="/(auth)/activate" />;
+
   // AIChat is a global floating overlay mounted above the tab navigator (the
   // web mounts <AIChat /> globally in MobileShell too). Wrapping <Tabs> in a
   // flex-1 View lets the FAB's `absolute` positioning measure against the full
