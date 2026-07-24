@@ -46,6 +46,7 @@ export default function AppLayout() {
         <Tabs.Screen name="search" options={{ href: null, title: "Recherche" }} />
         <Tabs.Screen name="calendar" options={{ href: null, title: "Calendrier" }} />
         <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
+        <Tabs.Screen name="reviews" options={{ href: null, title: "Donner mon avis" }} />
       </Tabs>
       <AIChat />
       <EventReminders />

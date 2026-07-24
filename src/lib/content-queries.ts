@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { contentApi } from "@/lib/content-api";
+import { reviewsApi, type SubmitReviewInput } from "@/lib/reviews-api";
 import { useAuth } from "@/lib/auth-store";
 import type { FounderInfo, WelcomeMessage } from "@/types/content";
 
@@ -112,4 +113,27 @@ export function useFounder(): FounderInfo {
     enabled: !!token,
   });
   return data ?? EMPTY_FOUNDER;
+}
+
+// Approved customer reviews for the home testimonials section.
+export function useReviews() {
+  const token = useToken();
+  const { data } = useQuery({
+    queryKey: ["reviews"],
+    queryFn: reviewsApi.listApproved,
+    enabled: !!token,
+  });
+  return data ?? [];
+}
+
+// Submit (or re-submit) the member's review. On success the reviews list is
+// refetched; the new review stays hidden until the founder approves it.
+export function useSubmitReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SubmitReviewInput) => reviewsApi.submit(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["reviews"] });
+    },
+  });
 }

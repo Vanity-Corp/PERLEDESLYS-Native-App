@@ -18,6 +18,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MiniCalendar } from "@/components/mini-calendar";
+import { StarRating } from "@/components/star-rating";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +27,7 @@ import {
   useFounder,
   useLives,
   useRecipes,
+  useReviews,
   useVideos,
 } from "@/lib/content-queries";
 
@@ -35,6 +37,7 @@ export default function DashboardScreen() {
   const founderInfo = useFounder();
   const lives = useLives();
   const recipes = useRecipes();
+  const reviews = useReviews();
   const videos = useVideos();
   const continueWatching = videos.filter((v) => v.progress).slice(0, 3);
   const newRecipes = recipes.filter((r) => r.isNew);
@@ -498,6 +501,34 @@ export default function DashboardScreen() {
               </Text>
             </View>
           </GradientView>
+        </Section>
+
+        {/* Customer reviews (testimonials) — only approved reviews are returned
+            by the API. A "Laisser un avis" CTA opens the submission screen. */}
+        <Section title="Avis de nos clientes">
+          <View className="gap-3 px-5">
+            {reviews.slice(0, 5).map((r) => (
+              <View
+                key={r.id}
+                className="rounded-2xl border border-border bg-card p-4"
+              >
+                <StarRating value={r.rating} size={16} readOnly />
+                <Text className="mt-2 text-sm leading-snug text-foreground">
+                  {r.comment}
+                </Text>
+                <Text className="mt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  @{r.username}
+                </Text>
+              </View>
+            ))}
+            <Link href="/app/reviews" asChild>
+              <Pressable className="items-center rounded-2xl border border-border bg-card py-3.5">
+                <Text className="text-sm font-medium text-primary">
+                  Laisser un avis
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
         </Section>
 
         {/* Articles */}

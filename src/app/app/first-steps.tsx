@@ -103,21 +103,22 @@ export default function FirstStepsScreen() {
           </View>
         </View>
 
-        {/* Actions — non-functional placeholders in the web version too (real
-            <button>s there with no onClick) — Pressable/role="button" keeps
-            the same "looks tappable, does nothing yet" semantic as Task 11's
-            precedent, rather than a plain non-interactive View. */}
+        {/* Actions. "Ajouter aux favoris" stays a non-functional placeholder
+            (as in the web version). "Envoyer mon retour" now opens the customer
+            review form (replaces the old dead Send-Feedback placeholder). */}
         <View className="px-5 mt-6 flex-row gap-3">
           <Pressable role="button" className="flex-1 items-center gap-1 rounded-2xl border border-border bg-card py-4">
             <Icon as={Heart} size={20} className="text-primary" />
             <Text className="text-xs font-medium text-foreground">Ajouter aux favoris</Text>
           </Pressable>
-          <Pressable role="button" className="flex-1">
-            <GradientView tone="luxe" className="items-center gap-1 rounded-2xl py-4">
-              <Icon as={MessageCircle} size={20} className="text-primary-foreground" />
-              <Text className="text-xs font-semibold text-primary-foreground">Envoyer mon retour</Text>
-            </GradientView>
-          </Pressable>
+          <Link href="/app/reviews" asChild>
+            <Pressable role="button" className="flex-1">
+              <GradientView tone="luxe" className="items-center gap-1 rounded-2xl py-4">
+                <Icon as={MessageCircle} size={20} className="text-primary-foreground" />
+                <Text className="text-xs font-semibold text-primary-foreground">Donner mon avis</Text>
+              </GradientView>
+            </Pressable>
+          </Link>
         </View>
       </ScrollView>
     </SafeAreaView>

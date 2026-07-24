@@ -99,3 +99,13 @@ export type WelcomeMessage = {
   subject: string;
   body: string;
 };
+
+// An approved customer review shown publicly (home testimonials). The app only
+// ever receives approved reviews; moderation happens in the dashboard.
+export type Review = {
+  id: string;
+  username: string;
+  rating: number; // 1..5
+  comment: string;
+  createdAt: string;
+};
