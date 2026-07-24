@@ -22,8 +22,18 @@ import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-store";
 
 const MONTHS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
 ];
 
 // Web source: kitchen-haven-club/src/routes/app/profile/index.tsx
@@ -44,7 +54,10 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-2">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">
@@ -57,19 +70,24 @@ export default function ProfileScreen() {
         </View>
 
         {/* User card */}
-        <GradientView tone="luxe" className="mx-5 mt-4 flex-row items-center gap-4 rounded-3xl p-5">
+        <GradientView
+          tone="luxe"
+          className="mx-5 mt-4 flex-row items-center gap-4 rounded-3xl p-5"
+        >
           <View
             className="items-center justify-center rounded-full bg-primary-foreground/20"
             style={{ width: 64, height: 64 }}
           >
-            <Text className="font-italiana text-2xl text-primary-foreground">{initials}</Text>
+            <Text className="font-italiana text-2xl text-primary-foreground">
+              {initials}
+            </Text>
           </View>
           <View className="min-w-0 flex-1">
             <Text className="font-italiana text-xl leading-tight tracking-wide text-primary-foreground">
               @{user?.username ?? ""}
             </Text>
             <Text className="mt-0.5 text-[11px] text-primary-foreground opacity-90">
-              Cliente Perle des Lys{memberSince ? ` · depuis ${memberSince}` : ""}
+              Cliente Perledeslys{memberSince ? ` · depuis ${memberSince}` : ""}
             </Text>
           </View>
         </GradientView>
@@ -83,28 +101,68 @@ export default function ProfileScreen() {
             // Hardcoded in the web version too, not derived from real data.
             subtitle="6 enregistrées"
           />
-          <Tile href="/app/profile/history" icon={HistoryIcon} title="Historique" subtitle="Reprendre" />
-          <Tile href="/app/profile/notes" icon={StickyNote} title="Mes notes" subtitle="Toutes mes idées" />
-          <Tile href="/app/first-steps" icon={Compass} title="Premiers pas" subtitle="TM7 — 35 min" />
+          <Tile
+            href="/app/profile/history"
+            icon={HistoryIcon}
+            title="Historique"
+            subtitle="Reprendre"
+          />
+          <Tile
+            href="/app/profile/notes"
+            icon={StickyNote}
+            title="Mes notes"
+            subtitle="Toutes mes idées"
+          />
+          <Tile
+            href="/app/first-steps"
+            icon={Compass}
+            title="Premiers pas"
+            subtitle="TM7 — 35 min"
+          />
         </View>
 
         <SectionTitle>Mon compte</SectionTitle>
         <View className="mx-5 divide-y divide-border rounded-2xl border border-border bg-card">
-          <Row href="/app/profile/settings" icon={SettingsIcon} label="Paramètres" value="Mes préférences" />
-          <Row href="/app/calendar" icon={CalendarDays} label="Calendrier" value="Lives & ateliers" />
+          <Row
+            href="/app/profile/settings"
+            icon={SettingsIcon}
+            label="Paramètres"
+            value="Mes préférences"
+          />
+          <Row
+            href="/app/calendar"
+            icon={CalendarDays}
+            label="Calendrier"
+            value="Lives & ateliers"
+          />
           <Row
             href="/app/profile/history"
             icon={HistoryIcon}
             label="Historique de visionnage"
             value="Reprendre où vous étiez"
           />
-          <Row href="/app/profile/notes" icon={StickyNote} label="Mes notes" value="Vos prises de notes" />
+          <Row
+            href="/app/profile/notes"
+            icon={StickyNote}
+            label="Mes notes"
+            value="Vos prises de notes"
+          />
         </View>
 
         <SectionTitle>Support</SectionTitle>
         <View className="mx-5 divide-y divide-border rounded-2xl border border-border bg-card">
-          <Row href="/app/profile/faq" icon={HelpCircle} label="FAQ" value="Toutes les réponses" />
-          <Row href="/app/profile/settings" icon={Mail} label="Newsletter" value="Gérer mes préférences" />
+          <Row
+            href="/app/profile/faq"
+            icon={HelpCircle}
+            label="FAQ"
+            value="Toutes les réponses"
+          />
+          <Row
+            href="/app/profile/settings"
+            icon={Mail}
+            label="Newsletter"
+            value="Gérer mes préférences"
+          />
         </View>
 
         <Pressable
@@ -119,7 +177,7 @@ export default function ProfileScreen() {
         </Pressable>
 
         <Text className="mt-4 text-center font-italiana text-[10px] tracking-[0.3em] text-muted-foreground">
-          Perle des Lys · v1.0
+          Perledeslys · v1.0
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -139,13 +197,23 @@ function Tile({
 }) {
   return (
     <Link href={href as never} asChild>
-      <Pressable style={{ width: "47%" }} className="gap-2 rounded-2xl border border-border bg-card p-4">
-        <GradientView tone="luxe" className="h-10 w-10 items-center justify-center rounded-xl">
+      <Pressable
+        style={{ width: "47%" }}
+        className="gap-2 rounded-2xl border border-border bg-card p-4"
+      >
+        <GradientView
+          tone="luxe"
+          className="h-10 w-10 items-center justify-center rounded-xl"
+        >
           <Icon as={icon} size={20} className="text-primary-foreground" />
         </GradientView>
         <View>
-          <Text className="text-sm font-medium leading-tight text-foreground">{title}</Text>
-          <Text className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</Text>
+          <Text className="text-sm font-medium leading-tight text-foreground">
+            {title}
+          </Text>
+          <Text className="mt-0.5 text-[10px] text-muted-foreground">
+            {subtitle}
+          </Text>
         </View>
       </Pressable>
     </Link>
@@ -178,8 +246,13 @@ function Row({
           <Icon as={icon} size={16} className="text-primary" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Text>
-          <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+          <Text className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {label}
+          </Text>
+          <Text
+            className="text-sm font-medium text-foreground"
+            numberOfLines={1}
+          >
             {value}
           </Text>
         </View>

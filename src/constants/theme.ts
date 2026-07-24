@@ -4,7 +4,7 @@ import {
   type Theme,
 } from "expo-router/react-navigation";
 
-// Perle des Lys palette — converted 1:1 from the web app's oklch tokens
+// Perledeslys palette — converted 1:1 from the web app's oklch tokens
 // (kitchen-haven-club/src/styles.css) to hsl via the OKLab matrices, so the
 // hue/chroma/lightness match exactly rather than being eyeballed. `rose` /
 // `goldSoft` / `cream` etc. aren't redefined by the web app's `.dark` block

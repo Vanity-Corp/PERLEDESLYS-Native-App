@@ -28,7 +28,11 @@ export default function LandingScreen() {
   // for the persisted auth store to rehydrate before deciding.
   const { token, user, hydrated } = useAuth();
   if (hydrated && token) {
-    return <Redirect href={user?.status === "ACTIVE" ? "/app" : "/(auth)/activate"} />;
+    return (
+      <Redirect
+        href={user?.status === "ACTIVE" ? "/app" : "/(auth)/activate"}
+      />
+    );
   }
 
   return (
@@ -41,7 +45,7 @@ export default function LandingScreen() {
             contentPosition="top"
             contentFit="cover"
             style={{ width: "100%", height: "100%" }}
-            accessibilityLabel="Perle des Lys"
+            accessibilityLabel="Perledeslys"
           />
           <GradientView tone="creamOverlay" className="absolute inset-0" />
           <SafeAreaView className="absolute right-0 top-0" edges={["top"]}>

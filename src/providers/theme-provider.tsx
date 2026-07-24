@@ -23,7 +23,7 @@ if (Platform.OS !== "web") {
 
 /**
  * Feeds React Navigation (via expo-router's re-exported `ThemeProvider`)
- * our own Perle des Lys `NAV_THEME` instead of the stock `DefaultTheme` /
+ * our own Perledeslys `NAV_THEME` instead of the stock `DefaultTheme` /
  * `DarkTheme`, so native chrome that reads the navigation theme (header,
  * tab bar, and any screen using `useTheme()` from `@react-navigation`)
  * gets the same background/border/card/primary colors as the web app,
