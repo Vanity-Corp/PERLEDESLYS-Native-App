@@ -73,14 +73,14 @@ export default function LandingScreen() {
           </Text>
 
           <View className="mt-auto w-full gap-3">
-            <Link href="/(auth)/login" asChild>
+            <Link href={{ pathname: "/(auth)/login", params: { tab: "login" } }} asChild>
               <GradientButton tone="luxe">
                 <Text className="font-medium tracking-wide text-primary-foreground">
                   J'ai déjà un compte
                 </Text>
               </GradientButton>
             </Link>
-            <Link href="/(auth)/login" asChild>
+            <Link href={{ pathname: "/(auth)/login", params: { tab: "register" } }} asChild>
               <Button
                 variant="outline"
                 className="rounded-2xl h-fit border-primary/30 bg-card p-4"

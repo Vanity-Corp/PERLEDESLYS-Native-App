@@ -1,3 +1,4 @@
+import { ApiError } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 import type {
   Article,
@@ -24,7 +25,14 @@ async function get<T>(path: string): Promise<T> {
     },
   });
   if (!res.ok) {
-    throw new Error(`Contenu indisponible (${res.status}).`);
+    // Preserve the backend's machine `code` (e.g. ACCOUNT_SUSPENDED) so the
+    // global query error handler can bounce a suspended member.
+    const json = (await res.json().catch(() => null)) as { code?: string } | null;
+    throw new ApiError(
+      `Contenu indisponible (${res.status}).`,
+      res.status,
+      json?.code,
+    );
   }
   return (await res.json()) as T;
 }

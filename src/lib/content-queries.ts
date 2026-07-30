@@ -5,24 +5,29 @@ import { reviewsApi, type SubmitReviewInput } from "@/lib/reviews-api";
 import { useAuth } from "@/lib/auth-store";
 import type { FounderInfo, WelcomeMessage } from "@/types/content";
 
-// TanStack Query hooks over the content API (BACKEND_PLAN.md Phase 5c). List
-// hooks return the array directly (defaulting to [] while loading) so screens
-// keep using `.map`/`.find` exactly as they did with mock-data. Detail hooks
-// return the full query result (so screens can show a loading state). All are
-// gated on an auth token being present (content is members-only).
+// TanStack Query hooks over the content API. Two flavours per collection:
+//   • use<X>()      → the array directly (defaults to [] while loading), so
+//                     existing screens keep using `.map`/`.find` unchanged.
+//   • use<X>Query() → the raw query result, for screens that need first-load
+//                     skeletons / a network-error state (isLoading/isError/
+//                     refetch). Both share the same query key (react-query
+//                     dedupes — no extra network).
+// All are gated on an auth token being present (content is members-only).
 
 function useToken() {
   return useAuth((s) => s.token);
 }
 
-export function useRecipes() {
+export function useRecipesQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["recipes"],
     queryFn: contentApi.recipes,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useRecipes() {
+  return useRecipesQuery().data ?? [];
 }
 
 export function useRecipe(id?: string) {
@@ -34,14 +39,16 @@ export function useRecipe(id?: string) {
   });
 }
 
-export function useVideos() {
+export function useVideosQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["videos"],
     queryFn: contentApi.videos,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useVideos() {
+  return useVideosQuery().data ?? [];
 }
 
 export function useVideo(id?: string) {
@@ -53,44 +60,52 @@ export function useVideo(id?: string) {
   });
 }
 
-export function useArticles() {
+export function useArticlesQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["articles"],
     queryFn: contentApi.articles,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useArticles() {
+  return useArticlesQuery().data ?? [];
 }
 
-export function useLives() {
+export function useLivesQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["lives"],
     queryFn: contentApi.lives,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useLives() {
+  return useLivesQuery().data ?? [];
 }
 
-export function useEvents() {
+export function useEventsQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["events"],
     queryFn: contentApi.events,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useEvents() {
+  return useEventsQuery().data ?? [];
 }
 
-export function useFaq() {
+export function useFaqQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["faq"],
     queryFn: contentApi.faq,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useFaq() {
+  return useFaqQuery().data ?? [];
 }
 
 const EMPTY_WELCOME: WelcomeMessage = { subject: "", body: "" };
@@ -116,14 +131,16 @@ export function useFounder(): FounderInfo {
 }
 
 // Approved customer reviews for the home testimonials section.
-export function useReviews() {
+export function useReviewsQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["reviews"],
     queryFn: reviewsApi.listApproved,
     enabled: !!token,
   });
-  return data ?? [];
+}
+export function useReviews() {
+  return useReviewsQuery().data ?? [];
 }
 
 // Submit (or re-submit) the member's review. On success the reviews list is

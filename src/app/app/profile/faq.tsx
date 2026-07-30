@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
-import { ArrowLeft, HelpCircle, Mail } from "lucide-react-native";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { ArrowLeft, HelpCircle } from "lucide-react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -85,16 +85,6 @@ export default function FaqScreen() {
             </AccordionItem>
           ))}
         </Accordion>
-
-        <Pressable
-          onPress={() => Linking.openURL("mailto:contact@perledelys.fr")}
-          className="mx-5 mt-6 flex-row items-center justify-center gap-2 rounded-2xl border border-border bg-card py-4 shadow-sm shadow-black/5"
-        >
-          <Icon as={Mail} size={16} className="text-primary" />
-          <Text className="text-sm font-medium text-foreground">
-            contact@perledelys.fr
-          </Text>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

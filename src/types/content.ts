@@ -98,6 +98,7 @@ export type FaqItem = {
 export type WelcomeMessage = {
   subject: string;
   body: string;
+  image?: string | null;
 };
 
 // An approved customer review shown publicly (home testimonials). The app only

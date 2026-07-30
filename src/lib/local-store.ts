@@ -174,7 +174,6 @@ export function useFavorites() {
 const DEFAULT_SETTINGS: UserSettings = {
   notifications: true,
   darkTheme: false,
-  newsletter: true,
 };
 
 type SettingsState = {

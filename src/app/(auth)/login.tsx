@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AtSign, KeyRound, User } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -43,7 +43,10 @@ export default function LoginScreen() {
   const login = useAuth((s) => s.login);
   const register = useAuth((s) => s.register);
 
-  const [tab, setTab] = useState<"login" | "register">("login");
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<"login" | "register">(
+    tabParam === "register" ? "register" : "login",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,8 +145,8 @@ export default function LoginScreen() {
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
                       autoCapitalize="none"
-                      placeholder="IDENTIFIANT"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                      placeholder="Identifiant"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide"
                     />
                   )}
                 />
@@ -158,8 +161,8 @@ export default function LoginScreen() {
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
                       secureTextEntry
-                      placeholder="MOT DE PASSE"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4 uppercase tracking-wide"
+                      placeholder="Mot de passe"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide"
                     />
                   )}
                 />

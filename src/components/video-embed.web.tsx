@@ -4,16 +4,17 @@ import { View, type ViewProps } from "react-native";
 import { cn } from "@/lib/utils";
 import {
   buildPlayerHtml,
-  parseVimeo,
-  type VimeoMessage,
-} from "./vimeo-embed.shared";
+  DEFAULT_YOUTUBE_URL,
+  parseYouTube,
+  type VideoMessage,
+} from "./video-embed.shared";
 
-// Web (Expo RN-Web) fallback for VimeoEmbed — react-native-webview does not run
+// Web (Expo RN-Web) fallback for VideoEmbed — react-native-webview does not run
 // on web, so we render a real <iframe> with the same player HTML via srcDoc.
 // The bridge posts to window.parent, which we listen for here, so "resume"
-// (startAt) and progress reporting work on web too (best-effort). WIRING_PLAN B4.
-type VimeoEmbedProps = ViewProps & {
-  vimeoUrl?: string | null;
+// (startAt) and progress reporting work on web too (best-effort).
+type VideoEmbedProps = ViewProps & {
+  url?: string | null;
   videoId?: string;
   title?: string;
   startAt?: number;
@@ -22,8 +23,8 @@ type VimeoEmbedProps = ViewProps & {
   onEnded?: () => void;
 };
 
-function VimeoEmbed({
-  vimeoUrl,
+function VideoEmbed({
+  url,
   videoId,
   title,
   startAt = 0,
@@ -32,12 +33,13 @@ function VimeoEmbed({
   onEnded,
   className,
   ...props
-}: VimeoEmbedProps) {
-  const ref = parseVimeo(vimeoUrl ?? videoId ?? null);
+}: VideoEmbedProps) {
+  const id =
+    parseYouTube(url ?? videoId ?? null) ?? parseYouTube(DEFAULT_YOUTUBE_URL)!;
 
   useEffect(() => {
     function handler(e: MessageEvent) {
-      let msg: VimeoMessage;
+      let msg: VideoMessage;
       try {
         msg = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
       } catch {
@@ -56,18 +58,16 @@ function VimeoEmbed({
       className={cn("aspect-video w-full overflow-hidden bg-foreground", className)}
       {...props}
     >
-      {ref && (
-        <iframe
-          title={title ?? "Vimeo"}
-          srcDoc={buildPlayerHtml(ref, startAt, autoplay)}
-          style={{ border: 0, width: "100%", height: "100%" }}
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-        />
-      )}
+      <iframe
+        title={title ?? "Vidéo"}
+        srcDoc={buildPlayerHtml(id, startAt, autoplay)}
+        style={{ border: 0, width: "100%", height: "100%" }}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
     </View>
   );
 }
 
-export { VimeoEmbed };
-export type { VimeoEmbedProps };
+export { VideoEmbed };
+export type { VideoEmbedProps };

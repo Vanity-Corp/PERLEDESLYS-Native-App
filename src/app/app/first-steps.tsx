@@ -1,9 +1,10 @@
+import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Heart, Lock, MessageCircle, Sparkles } from "lucide-react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { VimeoEmbed } from "@/components/vimeo-embed";
+import { VideoEmbed } from "@/components/video-embed";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { useVideo, useWelcomeMessage } from "@/lib/content-queries";
@@ -49,10 +50,7 @@ export default function FirstStepsScreen() {
         </View>
 
         <View className="mx-5 mt-4 overflow-hidden rounded-3xl">
-          <VimeoEmbed
-            vimeoUrl={video?.vimeoUrl ?? "https://vimeo.com/17433286?h=6bcdf4c934"}
-            title={title}
-          />
+          <VideoEmbed url={video?.vimeoUrl} title={title} />
         </View>
 
         <View className="px-5 mt-4">
@@ -77,6 +75,14 @@ export default function FirstStepsScreen() {
               {welcomeMessage.subject}
             </Text>
           </GradientView>
+          {welcomeMessage.image ? (
+            <Image
+              source={welcomeMessage.image}
+              contentFit="cover"
+              style={{ width: "100%", height: 180 }}
+              accessibilityLabel="Message d'accueil"
+            />
+          ) : null}
           <View className="border border-t-0 border-border bg-card p-5">
             <Text className="text-sm leading-relaxed text-foreground/90">{welcomeMessage.body}</Text>
           </View>

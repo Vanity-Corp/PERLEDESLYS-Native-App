@@ -5,11 +5,14 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useRecipes } from "@/lib/content-queries";
+import { useRecipesQuery } from "@/lib/content-queries";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/index.tsx
 const CATEGORIES = [
@@ -26,13 +29,15 @@ const CATEGORIES = [
 ];
 
 export default function RecipesScreen() {
-  const recipes = useRecipes();
+  const recipesQ = useRecipesQuery();
+  const recipes = recipesQ.data ?? [];
   const [active, setActive] = useState("Tout");
   const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q);
   const filtered = recipes.filter(
     (r) =>
       (active === "Tout" || r.category === active) &&
-      r.title.toLowerCase().includes(q.toLowerCase()),
+      r.title.toLowerCase().includes(debouncedQ.toLowerCase()),
   );
 
   return (
@@ -94,6 +99,16 @@ export default function RecipesScreen() {
           </ToggleGroup>
         </ScrollView>
 
+        {recipesQ.isError ? (
+          <NetworkError onRetry={() => void recipesQ.refetch()} />
+        ) : recipesQ.isLoading ? (
+          <View className="mt-5 flex-row flex-wrap gap-3 px-5">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-40 w-[47%] rounded-2xl" />
+            ))}
+          </View>
+        ) : (
+        <>
         <View className="mt-5 flex-row flex-wrap gap-3 px-5">
           {filtered.map((r) => (
             <Link
@@ -173,6 +188,8 @@ export default function RecipesScreen() {
           <Text className="mt-10 px-6 text-center text-sm text-muted-foreground">
             Aucune recette ne correspond à votre recherche.
           </Text>
+        )}
+        </>
         )}
       </ScrollView>
     </SafeAreaView>

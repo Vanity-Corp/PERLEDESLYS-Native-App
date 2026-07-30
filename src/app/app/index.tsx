@@ -18,32 +18,85 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MiniCalendar } from "@/components/mini-calendar";
-import { StarRating } from "@/components/star-rating";
+import { NetworkError } from "@/components/network-error";
+import { ReviewCarousel } from "@/components/review-carousel";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useArticles,
+  useArticlesQuery,
   useFounder,
-  useLives,
-  useRecipes,
-  useReviews,
-  useVideos,
+  useLivesQuery,
+  useRecipesQuery,
+  useReviewsQuery,
+  useVideosQuery,
 } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
-  const articles = useArticles();
+  const articlesQ = useArticlesQuery();
+  const livesQ = useLivesQuery();
+  const recipesQ = useRecipesQuery();
+  const reviewsQ = useReviewsQuery();
+  const videosQ = useVideosQuery();
   const founderInfo = useFounder();
-  const lives = useLives();
-  const recipes = useRecipes();
-  const reviews = useReviews();
-  const videos = useVideos();
+
+  const articles = articlesQ.data ?? [];
+  const lives = livesQ.data ?? [];
+  const recipes = recipesQ.data ?? [];
+  const reviews = reviewsQ.data ?? [];
+  const videos = videosQ.data ?? [];
+
+  // First-load / network state driven by the core content queries.
+  const isLoading =
+    recipesQ.isLoading || videosQ.isLoading || livesQ.isLoading;
+  const isError = recipesQ.isError || videosQ.isError || livesQ.isError;
+  const refetchAll = () => {
+    void recipesQ.refetch();
+    void videosQ.refetch();
+    void livesQ.refetch();
+    void articlesQ.refetch();
+    void reviewsQ.refetch();
+  };
+
   const continueWatching = videos.filter((v) => v.progress).slice(0, 3);
   const newRecipes = recipes.filter((r) => r.isNew);
   const popularRecipes = recipes.slice(0, 6);
   const nextLive = lives.find((l) => l.status === "À venir");
   const featured = recipes[0];
+
+  // Network failure on the core content → full-screen retry state.
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <NetworkError onRetry={refetchAll} />
+      </SafeAreaView>
+    );
+  }
+
+  // First load → skeleton placeholders.
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="gap-4 px-5 pt-6">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-3xl" />
+          <Skeleton className="h-6 w-48" />
+          <View className="flex-row gap-3">
+            <Skeleton className="h-44 w-44 rounded-2xl" />
+            <Skeleton className="h-44 w-44 rounded-2xl" />
+          </View>
+          <Skeleton className="h-6 w-48" />
+          <View className="flex-row flex-wrap gap-3">
+            <Skeleton className="h-40 w-[47%] rounded-2xl" />
+            <Skeleton className="h-40 w-[47%] rounded-2xl" />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -503,24 +556,11 @@ export default function DashboardScreen() {
           </GradientView>
         </Section>
 
-        {/* Customer reviews (testimonials) — only approved reviews are returned
-            by the API. A "Laisser un avis" CTA opens the submission screen. */}
+        {/* Customer reviews (testimonials) — approved reviews in an auto-looping
+            carousel; a "Laisser un avis" CTA opens the submission screen. */}
         <Section title="Avis de nos clientes">
-          <View className="gap-3 px-5">
-            {reviews.slice(0, 5).map((r) => (
-              <View
-                key={r.id}
-                className="rounded-2xl border border-border bg-card p-4"
-              >
-                <StarRating value={r.rating} size={16} readOnly />
-                <Text className="mt-2 text-sm leading-snug text-foreground">
-                  {r.comment}
-                </Text>
-                <Text className="mt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  @{r.username}
-                </Text>
-              </View>
-            ))}
+          {reviews.length > 0 && <ReviewCarousel reviews={reviews} />}
+          <View className="px-5 pt-3">
             <Link href="/app/reviews" asChild>
               <Pressable className="items-center rounded-2xl border border-border bg-card py-3.5">
                 <Text className="text-sm font-medium text-primary">

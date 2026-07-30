@@ -5,17 +5,20 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useVideos } from "@/lib/content-queries";
+import { useVideosQuery } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tutorials/index.tsx
 const TABS = ["Tout", "Mes premiers pas", "Premier démarrage", "Tutoriel TM7", "Recette vidéo", "Astuces"];
 
 export default function TutorialsScreen() {
-  const videos = useVideos();
+  const videosQ = useVideosQuery();
+  const videos = videosQ.data ?? [];
   const [tab, setTab] = useState("Tout");
   const filtered = videos.filter((v) => tab === "Tout" || v.category === tab);
 
@@ -55,6 +58,15 @@ export default function TutorialsScreen() {
           </ToggleGroup>
         </ScrollView>
 
+        {videosQ.isError ? (
+          <NetworkError onRetry={() => void videosQ.refetch()} />
+        ) : videosQ.isLoading ? (
+          <View className="mt-5 gap-4 px-5">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="aspect-video w-full rounded-2xl" />
+            ))}
+          </View>
+        ) : (
         <View className="mt-5 gap-4 px-5">
           {filtered.map((v) => (
             <Link key={v.id} href={{ pathname: "/app/videos/[videoId]", params: { videoId: v.id } }} asChild>
@@ -92,6 +104,7 @@ export default function TutorialsScreen() {
             </Link>
           ))}
         </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

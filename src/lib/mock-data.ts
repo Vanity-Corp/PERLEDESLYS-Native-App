@@ -616,6 +616,6 @@ export const faqItems: FaqItem[] = [
   },
   {
     q: "Comment contacter Ghania ?",
-    a: "Via Profil > Support, ou directement par email à contact@perledelys.fr.",
+    a: "Directement depuis l'application, via la section Support de votre profil.",
   },
 ];

@@ -52,6 +52,14 @@ export interface RegisterInput {
   password: string;
 }
 
+// Member self-service profile update. All fields optional (partial update).
+export interface UpdateProfileInput {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+}
+
 async function request<T>(
   path: string,
   options: { method: string; body?: unknown; token?: string; schema: z.ZodType<T> },
@@ -118,4 +126,12 @@ export const authApi = {
 
   me: (token: string) =>
     request("/auth/me", { method: "GET", token, schema: authUserSchema }),
+
+  updateProfile: (input: UpdateProfileInput, token: string) =>
+    request("/auth/me", {
+      method: "PATCH",
+      body: input,
+      token,
+      schema: authUserSchema,
+    }),
 };

@@ -18,8 +18,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { VimeoEmbed } from "@/components/vimeo-embed";
-import { vimeoWatchUrl } from "@/components/vimeo-embed.shared";
+import { VideoEmbed } from "@/components/video-embed";
+import { youTubeWatchUrl } from "@/components/video-embed.shared";
 import { useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
 import type { Video } from "@/types/content";
@@ -129,7 +129,7 @@ function VideoDetail({ video }: { video: Video }) {
     stored && stored.totalSec > 0
       ? Math.round((stored.positionSec / stored.totalSec) * 100)
       : 0;
-  const watchUrl = vimeoWatchUrl(video.vimeoUrl);
+  const watchUrl = youTubeWatchUrl(video.vimeoUrl);
 
   return (
     <View className="flex-1 bg-background">
@@ -139,9 +139,9 @@ function VideoDetail({ video }: { video: Video }) {
           seeks to the stored resume position and reports progress (B4). */}
       {playing ? (
         <View className="relative">
-          <VimeoEmbed
+          <VideoEmbed
             key={playerKey}
-            vimeoUrl={video.vimeoUrl}
+            url={video.vimeoUrl}
             title={video.title}
             startAt={startAt}
             autoplay
@@ -196,7 +196,7 @@ function VideoDetail({ video }: { video: Video }) {
       )}
 
       {/* Fullscreen is unreliable inside the in-app player, so offer a reliable
-          path: open the video on Vimeo (WIRING_PLAN B4, issue #3). */}
+          path: open the video on YouTube. */}
       {watchUrl && (
         <Pressable
           onPress={() => Linking.openURL(watchUrl)}
@@ -204,7 +204,7 @@ function VideoDetail({ video }: { video: Video }) {
         >
           <Icon as={Maximize2} size={16} className="text-primary" />
           <Text className="text-sm font-medium text-foreground">
-            Regarder la vidéo en plein écran sur Vimeo
+            Regarder la vidéo en plein écran sur YouTube
           </Text>
         </Pressable>
       )}

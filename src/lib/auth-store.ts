@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { asyncStorage } from "@/lib/storage";
-import { authApi, type AuthUser, type RegisterInput } from "@/lib/auth-api";
+import {
+  authApi,
+  type AuthUser,
+  type RegisterInput,
+  type UpdateProfileInput,
+} from "@/lib/auth-api";
 
 // Auth session store. Persisted (token + user) via the same AsyncStorage engine
 // as the rest of the app (see storage.ts — MMKV was dropped for Expo-Go
@@ -20,6 +25,7 @@ interface AuthState {
   register: (input: RegisterInput) => Promise<AuthUser>;
   login: (identifier: string, password: string) => Promise<AuthUser>;
   activate: (code: string) => Promise<AuthUser>;
+  updateProfile: (input: UpdateProfileInput) => Promise<AuthUser>;
   logout: () => void;
 }
 
@@ -52,6 +58,17 @@ export const useAuth = create<AuthState>()(
         }
         const { token: next, user } = await authApi.activate(code, token);
         set({ token: next, user });
+        return user;
+      },
+
+      // Member self-service profile update (nom, prénom, username, email).
+      updateProfile: async (input) => {
+        const token = get().token;
+        if (!token) {
+          throw new Error("Session expirée. Reconnecte-toi.");
+        }
+        const user = await authApi.updateProfile(input, token);
+        set({ user });
         return user;
       },
 

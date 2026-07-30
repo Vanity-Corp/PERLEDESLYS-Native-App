@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
-import { VimeoEmbed } from "@/components/vimeo-embed";
+import { VideoEmbed } from "@/components/video-embed";
 import { useLives } from "@/lib/content-queries";
 
 // Live/replay player (WIRING_PLAN B4). Resolves the live from the shared list
@@ -35,7 +35,7 @@ export default function LiveDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {live.vimeoUrl ? (
           <View className="relative">
-            <VimeoEmbed vimeoUrl={live.vimeoUrl} title={live.title} />
+            <VideoEmbed url={live.vimeoUrl} title={live.title} />
             <SafeAreaView
               className="absolute inset-x-0 top-0"
               edges={["top"]}

@@ -44,5 +44,4 @@ export type HistoryEntry = VideoHistoryEntry | RecipeHistoryEntry;
 export type UserSettings = {
   notifications: boolean;
   darkTheme: boolean;
-  newsletter: boolean;
 };

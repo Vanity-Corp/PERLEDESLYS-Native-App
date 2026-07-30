@@ -1,4 +1,22 @@
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/auth-api";
+import { useAuth } from "@/lib/auth-store";
+
+// If any authenticated request comes back 403 because the account is no longer
+// ACTIVE (suspended, or reverted to pending), clear the session. The app-layout
+// guard (src/app/app/_layout.tsx) then redirects to the landing screen. This is
+// how a member suspended mid-session gets bounced out automatically.
+function handleAuthError(error: unknown) {
+  if (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    (error.code === "ACCOUNT_SUSPENDED" || error.code === "ACCOUNT_PENDING")
+  ) {
+    if (useAuth.getState().token) {
+      useAuth.getState().logout();
+    }
+  }
+}
 
 /**
  * Single shared QueryClient for the whole app (mirrors the web app's
@@ -13,6 +31,8 @@ import { QueryClient } from "@tanstack/react-query";
  *    should tune first if a particular endpoint needs different behavior.
  */
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: handleAuthError }),
+  mutationCache: new MutationCache({ onError: handleAuthError }),
   defaultOptions: {
     queries: {
       staleTime: 60_000,

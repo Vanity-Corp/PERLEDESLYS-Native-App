@@ -9,7 +9,6 @@ import {
   HelpCircle,
   History as HistoryIcon,
   LogOut,
-  Mail,
   Settings as SettingsIcon,
   StickyNote,
 } from "lucide-react-native";
@@ -156,12 +155,6 @@ export default function ProfileScreen() {
             icon={HelpCircle}
             label="FAQ"
             value="Toutes les réponses"
-          />
-          <Row
-            href="/app/profile/settings"
-            icon={Mail}
-            label="Newsletter"
-            value="Gérer mes préférences"
           />
         </View>
 

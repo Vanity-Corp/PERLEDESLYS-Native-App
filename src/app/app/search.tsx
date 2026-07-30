@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useArticles,
   useFaq,
@@ -43,9 +44,10 @@ export default function SearchScreen() {
   const faqItems = useFaq();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<Tab>("all");
+  const debouncedQ = useDebounce(q);
 
   const results = useMemo(() => {
-    const needle = norm(q.trim());
+    const needle = norm(debouncedQ.trim());
     if (!needle) return { recipes: [], videos: [], articles: [], faq: [] as typeof faqItems };
     return {
       recipes: recipes.filter((r) =>
@@ -61,7 +63,7 @@ export default function SearchScreen() {
       ),
       faq: faqItems.filter((f) => [f.q, f.a].map(norm).some((t) => t.includes(needle))),
     };
-  }, [q, recipes, videos, articles, faqItems]);
+  }, [debouncedQ, recipes, videos, articles, faqItems]);
 
   const total =
     results.recipes.length + results.videos.length + results.articles.length + results.faq.length;
