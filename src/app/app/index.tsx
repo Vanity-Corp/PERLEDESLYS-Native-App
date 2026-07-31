@@ -575,38 +575,44 @@ export default function DashboardScreen() {
         <Section title="Astuces & conseils" href="/app/profile/tips">
           <View className="gap-3 px-5">
             {articles.slice(0, 3).map((a) => (
-              <View
+              <Link
                 key={a.id}
-                className="flex-row gap-3 rounded-2xl border border-border bg-card p-3"
+                href={{
+                  pathname: "/app/articles/[articleId]",
+                  params: { articleId: a.id },
+                }}
+                asChild
               >
-                <Image
-                  source={a.image}
-                  contentFit="cover"
-                  style={{ width: 80, height: 80, borderRadius: 12 }}
-                  accessibilityLabel={a.title}
-                />
-                <View className="min-w-0 flex-1">
-                  <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
-                    {a.category}
-                  </Text>
-                  <Text
-                    className="mt-0.5 text-sm font-medium leading-snug text-foreground"
-                    numberOfLines={2}
-                  >
-                    {a.title}
-                  </Text>
-                  <View className="mt-1.5 flex-row items-center gap-1">
-                    <Icon
-                      as={BookOpen}
-                      size={12}
-                      className="text-muted-foreground"
-                    />
-                    <Text className="text-[10px] text-muted-foreground">
-                      {a.readTime} de lecture
+                <Pressable className="flex-row gap-3 rounded-2xl border border-border bg-card p-3">
+                  <Image
+                    source={a.image}
+                    contentFit="cover"
+                    style={{ width: 80, height: 80, borderRadius: 12 }}
+                    accessibilityLabel={a.title}
+                  />
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
+                      {a.category}
                     </Text>
+                    <Text
+                      className="mt-0.5 text-sm font-medium leading-snug text-foreground"
+                      numberOfLines={2}
+                    >
+                      {a.title}
+                    </Text>
+                    <View className="mt-1.5 flex-row items-center gap-1">
+                      <Icon
+                        as={BookOpen}
+                        size={12}
+                        className="text-muted-foreground"
+                      />
+                      <Text className="text-[10px] text-muted-foreground">
+                        {a.readTime} de lecture
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </View>
+                </Pressable>
+              </Link>
             ))}
           </View>
         </Section>

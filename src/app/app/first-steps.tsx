@@ -49,8 +49,8 @@ export default function FirstStepsScreen() {
           </View>
         </View>
 
-        <View className="mx-5 mt-4 overflow-hidden rounded-3xl">
-          <VideoEmbed url={video?.vimeoUrl} title={title} />
+        <View className="mx-5 mt-4">
+          <VideoEmbed url={video?.vimeoUrl} title={title} className="rounded-3xl" />
         </View>
 
         <View className="px-5 mt-4">

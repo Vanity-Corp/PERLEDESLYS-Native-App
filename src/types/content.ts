@@ -40,6 +40,7 @@ export type Article = {
   image: ImageRef;
   readTime: string;
   category: string;
+  content?: string;
 };
 
 export type Live = {

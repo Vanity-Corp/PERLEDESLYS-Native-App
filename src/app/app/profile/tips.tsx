@@ -21,9 +21,8 @@ import { useArticles } from "@/lib/content-queries";
 // founder, renamed "Ghania" in the v2 client rebrand — updated here for
 // consistency with every other rebranded screen, not left as the old "Lys".
 //
-// Article rows are non-interactive (plain Views, no Link) — matching the web,
-// whose article rows are plain <div>s with no onClick; there is no tips-detail
-// route to navigate to.
+// Article rows link to the article detail screen (/app/articles/[articleId]),
+// which renders the rich-text content authored in the dashboard.
 const CATS = [
   "Tout",
   "Ramadan",
@@ -100,42 +99,48 @@ export default function TipsScreen() {
 
         <View className="mt-5 gap-3 px-5">
           {list.map((a) => (
-            <View
+            <Link
               key={a.id}
-              className="flex-row gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm shadow-black/5"
+              href={{
+                pathname: "/app/articles/[articleId]",
+                params: { articleId: a.id },
+              }}
+              asChild
             >
-              <View className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-                <Image
-                  source={a.image}
-                  contentFit="cover"
-                  style={{ width: "100%", height: "100%" }}
-                  accessibilityLabel={a.title}
-                />
-              </View>
-              <View className="min-w-0 flex-1">
-                <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
-                  {a.category}
-                </Text>
-                <Text
-                  className="mt-0.5 text-sm font-medium leading-snug text-foreground"
-                  numberOfLines={2}
-                >
-                  {a.title}
-                </Text>
-                <Text
-                  className="mt-1 text-[11px] leading-snug text-muted-foreground"
-                  numberOfLines={2}
-                >
-                  {a.excerpt}
-                </Text>
-                <View className="mt-1.5 flex-row items-center gap-1">
-                  <Icon as={BookOpen} size={12} className="text-muted-foreground" />
-                  <Text className="text-[10px] text-muted-foreground">
-                    {a.readTime} de lecture
-                  </Text>
+              <Pressable className="flex-row gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm shadow-black/5">
+                <View className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+                  <Image
+                    source={a.image}
+                    contentFit="cover"
+                    style={{ width: "100%", height: "100%" }}
+                    accessibilityLabel={a.title}
+                  />
                 </View>
-              </View>
-            </View>
+                <View className="min-w-0 flex-1">
+                  <Text className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
+                    {a.category}
+                  </Text>
+                  <Text
+                    className="mt-0.5 text-sm font-medium leading-snug text-foreground"
+                    numberOfLines={2}
+                  >
+                    {a.title}
+                  </Text>
+                  <Text
+                    className="mt-1 text-[11px] leading-snug text-muted-foreground"
+                    numberOfLines={2}
+                  >
+                    {a.excerpt}
+                  </Text>
+                  <View className="mt-1.5 flex-row items-center gap-1">
+                    <Icon as={BookOpen} size={12} className="text-muted-foreground" />
+                    <Text className="text-[10px] text-muted-foreground">
+                      {a.readTime} de lecture
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </Link>
           ))}
         </View>
       </ScrollView>

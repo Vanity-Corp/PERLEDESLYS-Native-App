@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/lib/auth-store";
+import { useLanding } from "@/lib/content-queries";
 
 import PerleDesLysText from "@/assets/perledeslys/Logo-rose.svg";
 import PerleDesLysWordmark from "@/assets/perledeslys/perle-des-lys-log-no-text.svg";
@@ -27,6 +28,9 @@ export default function LandingScreen() {
   // straight past the landing page — ACTIVE → app, PENDING → activation. Wait
   // for the persisted auth store to rehydrate before deciding.
   const { token, user, hydrated } = useAuth();
+  // Editable landing copy (public endpoint) with a built-in fallback. Called
+  // before the early return to respect the rules of hooks.
+  const landing = useLanding();
   if (hydrated && token) {
     return (
       <Redirect
@@ -41,7 +45,7 @@ export default function LandingScreen() {
         {/* Hero image — full-bleed, extends behind the status bar */}
         <View className="relative  w-full h-[53%]">
           <Image
-            source={heroImg}
+            source={landing.image ? { uri: landing.image } : heroImg}
             contentPosition="top"
             contentFit="cover"
             style={{ width: "100%", height: "100%" }}
@@ -56,7 +60,7 @@ export default function LandingScreen() {
           <View className="absolute bottom-4 left-5 flex-row items-center gap-1.5 rounded-full bg-background/95 px-3 py-1.5">
             <Icon as={Sparkles} size={20} className="text-primary" />
             <Text className="text-[11px] font-medium text-foreground">
-              Accès cliente uniquement
+              {landing.tagline}
             </Text>
           </View>
         </View>
@@ -65,11 +69,10 @@ export default function LandingScreen() {
         <View className="flex-1 items-center px-6 pb-6 ">
           <PerleDesLysText width={300} />
           <Text className="-mt-2 text-base font-medium text-foreground">
-            Par Ghania
+            {landing.title}
           </Text>
           <Text className="mt-4 text-center text-[14px] leading-relaxed text-muted-foreground">
-            Recettes signatures, lives privés et tutoriels exclusifs autour de
-            votre TM7, créés avec amour par Ghania - votre conseillère Thermomix
+            {landing.description}
           </Text>
 
           <View className="mt-auto w-full gap-3">

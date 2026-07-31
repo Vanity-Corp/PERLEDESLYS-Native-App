@@ -53,7 +53,7 @@ export function buildPlayerHtml(
 ): string {
   const start = Math.max(0, Math.floor(startAt));
   const auto = autoplay ? 1 : 0;
-  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%;background:#000;overflow:hidden}#p{position:absolute;inset:0}#p iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;border:0}</style></head><body><div id="p"></div><script src="https://www.youtube.com/iframe_api"></script><script>
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%;background:#000;overflow:hidden}#p{position:absolute;inset:0;overflow:hidden}#p iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;border:0;display:block}</style></head><body><div id="p"></div><script src="https://www.youtube.com/iframe_api"></script><script>
 (function(){
   function post(m){try{var s=JSON.stringify(m);if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(s);}else if(window.parent){window.parent.postMessage(s,'*');}}catch(e){}}
   var player, timer;

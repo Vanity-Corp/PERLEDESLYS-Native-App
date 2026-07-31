@@ -52,48 +52,52 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
   if (count === 0) return null;
 
   return (
-    <View className="px-5" onLayout={onLayout}>
-      <View className="relative">
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onMomentumEnd}
-          scrollEventThrottle={16}
-        >
-          {reviews.map((r) => (
-            <View key={r.id} style={{ width }} className="pr-0">
-              <View className="rounded-2xl border border-border bg-card p-4">
-                <StarRating value={r.rating} size={16} readOnly />
-                <Text className="mt-2 text-sm leading-snug text-foreground">
-                  {r.comment}
-                </Text>
-                <Text className="mt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  @{r.username}
-                </Text>
+    <View className="px-5">
+      {/* [◀]  [ paging carousel ]  [▶] — arrows flank the card, never cover it. */}
+      <View className="flex-row items-center gap-2">
+        {count > 1 && (
+          <Pressable
+            onPress={() => goTo(index - 1)}
+            hitSlop={8}
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background"
+          >
+            <Icon as={ChevronLeft} size={18} className="text-foreground" />
+          </Pressable>
+        )}
+
+        <View className="flex-1" onLayout={onLayout}>
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={onMomentumEnd}
+            scrollEventThrottle={16}
+          >
+            {reviews.map((r) => (
+              <View key={r.id} style={{ width }}>
+                <View className="rounded-2xl border border-border bg-card p-4">
+                  <StarRating value={r.rating} size={16} readOnly />
+                  <Text className="mt-2 text-sm leading-snug text-foreground">
+                    {r.comment}
+                  </Text>
+                  <Text className="mt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    @{r.username}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        </View>
 
         {count > 1 && (
-          <>
-            <Pressable
-              onPress={() => goTo(index - 1)}
-              hitSlop={8}
-              className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 items-center justify-center rounded-full bg-background/90 border border-border"
-            >
-              <Icon as={ChevronLeft} size={18} className="text-foreground" />
-            </Pressable>
-            <Pressable
-              onPress={() => goTo(index + 1)}
-              hitSlop={8}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 items-center justify-center rounded-full bg-background/90 border border-border"
-            >
-              <Icon as={ChevronRight} size={18} className="text-foreground" />
-            </Pressable>
-          </>
+          <Pressable
+            onPress={() => goTo(index + 1)}
+            hitSlop={8}
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background"
+          >
+            <Icon as={ChevronRight} size={18} className="text-foreground" />
+          </Pressable>
         )}
       </View>
 

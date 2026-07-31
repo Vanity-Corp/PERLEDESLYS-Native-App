@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { contentApi } from "@/lib/content-api";
 import { reviewsApi, type SubmitReviewInput } from "@/lib/reviews-api";
+import { fetchLanding, type LandingContent } from "@/lib/landing-api";
 import { useAuth } from "@/lib/auth-store";
 import type { FounderInfo, WelcomeMessage } from "@/types/content";
 
@@ -141,6 +142,23 @@ export function useReviewsQuery() {
 }
 export function useReviews() {
   return useReviewsQuery().data ?? [];
+}
+
+// Pre-login landing copy (public — no token needed). Falls back to the app's
+// built-in strings so the landing renders instantly / offline.
+const FALLBACK_LANDING: LandingContent = {
+  tagline: "Accès cliente uniquement",
+  title: "Par Ghania",
+  description:
+    "Recettes signatures, lives privés et tutoriels exclusifs autour de votre TM7, créés avec amour par Ghania - votre conseillère Thermomix",
+  image: null,
+};
+export function useLanding(): LandingContent {
+  const { data } = useQuery({
+    queryKey: ["landing"],
+    queryFn: fetchLanding,
+  });
+  return data ?? FALLBACK_LANDING;
 }
 
 // Submit (or re-submit) the member's review. On success the reviews list is
