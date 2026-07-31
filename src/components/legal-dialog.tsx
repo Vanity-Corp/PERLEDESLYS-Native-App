@@ -38,7 +38,7 @@ export function LegalLink({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             {html.trim() ? (
               <RichTextView html={html} />
             ) : (

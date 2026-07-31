@@ -4,8 +4,16 @@ import { cn } from '@/lib/utils';
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
-import { Platform, Text, View, type GestureResponderEvent, type ViewProps } from 'react-native';
+import {
+  Platform,
+  Text,
+  useWindowDimensions,
+  View,
+  type GestureResponderEvent,
+  type ViewProps,
+} from 'react-native';
 import { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
 const Dialog = DialogPrimitive.Root;
@@ -27,6 +35,7 @@ function DialogOverlay({
   children?: React.ReactNode;
 }) {
   const { onOpenChange } = DialogPrimitive.useRootContext();
+  const insets = useSafeAreaInsets();
 
   function onOverlayPress(event: GestureResponderEvent) {
     onPress?.(event);
@@ -45,6 +54,9 @@ function DialogOverlay({
           }),
           className
         )}
+        // Keep the centered dialog clear of the Android status/navigation bars
+        // (and the iOS notch) so tall content isn't clipped.
+        style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }}
         {...props}
         onPress={Platform.select({ web: onOverlayPress, native: onPress })}
         asChild={Platform.OS !== 'web'}>
@@ -66,10 +78,19 @@ function DialogContent({
   className,
   portalHost,
   children,
+  style,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   portalHost?: string;
 }) {
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Never let the dialog exceed the visible viewport (window minus system bars
+  // and the overlay's own 8px padding); a `max-h-*` className can't express
+  // this reliably on Android, so cap it numerically. Callers that pass a fixed
+  // height (e.g. h-[92%]) are clamped by this max.
+  const maxHeight = Math.max(200, height - insets.top - insets.bottom - 32);
+
   return (
     <DialogPortal hostName={portalHost}>
       <DialogOverlay>
@@ -81,6 +102,7 @@ function DialogContent({
             }),
             className
           )}
+          style={[{ maxHeight }, style]}
           {...props}>
           <>{children}</>
           <DialogPrimitive.Close
@@ -105,7 +127,9 @@ function DialogContent({
 
 function DialogHeader({ className, ...props }: ViewProps) {
   return (
-    <View className={cn('flex flex-col gap-2 text-center sm:text-left', className)} {...props} />
+    // pr-8 reserves room for the absolute close (X) button so long titles don't
+    // render underneath it.
+    <View className={cn('flex flex-col gap-2 pr-8 text-center sm:text-left', className)} {...props} />
   );
 }
 
