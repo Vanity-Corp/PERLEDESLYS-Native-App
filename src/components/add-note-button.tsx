@@ -56,7 +56,7 @@ export function AddNoteButton({ contextLabel, contextHref }: AddNoteButtonProps)
           if (!next) setText("");
         }}
       >
-        <DialogContent className="h-[92%] w-[94%] max-w-none flex-1 sm:max-w-none">
+        <DialogContent className="w-fit">
           <DialogHeader>
             <DialogTitle>Nouvelle note</DialogTitle>
           </DialogHeader>
@@ -68,7 +68,7 @@ export function AddNoteButton({ contextLabel, contextHref }: AddNoteButtonProps)
             onChangeText={setText}
             placeholder="Écrivez votre note..."
             autoFocus
-            className="flex-1"
+            className="w-fit"
             multiline
             textAlignVertical="top"
           />

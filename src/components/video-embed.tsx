@@ -57,7 +57,7 @@ function VideoEmbed({
 
   return (
     <View
-      className={cn("aspect-video w-full overflow-hidden bg-foreground", className)}
+      className={cn("aspect-video  overflow-hidden w-fit bg-foreground", className)}
       {...props}
     >
       <WebView
@@ -82,3 +82,4 @@ function VideoEmbed({
 
 export { VideoEmbed };
 export type { VideoEmbedProps };
+

@@ -4,9 +4,9 @@ import { ArrowLeft, Clock, Heart, Lock, MessageCircle, Sparkles } from "lucide-r
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { VideoEmbed } from "@/components/video-embed";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { VideoEmbed } from "@/components/video-embed";
 import { useVideo, useWelcomeMessageQuery } from "@/lib/content-queries";
 import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 
@@ -63,7 +63,7 @@ export default function FirstStepsScreen() {
           </View>
         </View>
 
-        <View className="mx-5 mt-4">
+        <View className="mx-5 mt-4 flex">
           <VideoEmbed url={video?.vimeoUrl} title={title} className="rounded-3xl" />
         </View>
 
