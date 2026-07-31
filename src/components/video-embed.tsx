@@ -1,19 +1,14 @@
-import { useCallback } from "react";
-import { View, type ViewProps } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { View, type LayoutChangeEvent, type ViewProps } from "react-native";
+import YoutubePlayer, { type YoutubeIframeRef } from "react-native-youtube-iframe";
 
 import { cn } from "@/lib/utils";
-import {
-  buildPlayerHtml,
-  DEFAULT_YOUTUBE_URL,
-  parseYouTube,
-  type VideoMessage,
-} from "./video-embed.shared";
+import { DEFAULT_YOUTUBE_URL, parseYouTube } from "./video-embed.shared";
 
-// Native (iOS/Android) YouTube player. Loads a small HTML page driving the
-// YouTube IFrame API (see video-embed.shared) so we can seek to `startAt` and
-// report playback position back for the "resume" feature. The web build uses
-// video-embed.web.tsx (an <iframe>) — Metro resolves the platform file.
+// Native (iOS/Android) YouTube player using react-native-youtube-iframe (pure
+// JS over react-native-webview). We measure the container width and render the
+// player at an exact 16:9 height so it always fits its frame. The web build
+// uses video-embed.web.tsx (an <iframe>) — Metro resolves the platform file.
 //
 // Accepts a `url` (from content, historically named vimeoUrl) or a bare id.
 // Falls back to the default video when the url is empty/unparseable.
@@ -41,45 +36,72 @@ function VideoEmbed({
   const id =
     parseYouTube(url ?? videoId ?? null) ?? parseYouTube(DEFAULT_YOUTUBE_URL)!;
 
-  const onMessage = useCallback(
-    (e: WebViewMessageEvent) => {
-      let msg: VideoMessage;
+  const playerRef = useRef<YoutubeIframeRef>(null);
+  const [width, setWidth] = useState(0);
+  const [playing, setPlaying] = useState(autoplay);
+  const height = Math.round((width * 9) / 16);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w && w !== width) setWidth(w);
+  };
+
+  // Poll the player for playback position while it's playing (drives the
+  // "resume" feature on the video detail screen).
+  useEffect(() => {
+    if (!onProgress || !playing) return;
+    const iv = setInterval(async () => {
       try {
-        msg = JSON.parse(e.nativeEvent.data) as VideoMessage;
+        const [sec, dur] = await Promise.all([
+          playerRef.current?.getCurrentTime(),
+          playerRef.current?.getDuration(),
+        ]);
+        if (typeof sec === "number" && typeof dur === "number" && dur > 0) {
+          onProgress(sec, dur);
+        }
       } catch {
-        return;
+        // ignore transient bridge errors
       }
-      if (msg.type === "progress") onProgress?.(msg.seconds, msg.duration);
-      else if (msg.type === "ended") onEnded?.();
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [onProgress, playing]);
+
+  const onChangeState = useCallback(
+    (state: string) => {
+      if (state === "playing") setPlaying(true);
+      else if (state === "paused") setPlaying(false);
+      else if (state === "ended") onEnded?.();
     },
-    [onProgress, onEnded],
+    [onEnded],
   );
 
   return (
     <View
-      className={cn("aspect-video  overflow-hidden w-fit bg-foreground", className)}
+      className={cn("aspect-video w-full overflow-hidden bg-foreground", className)}
+      onLayout={onLayout}
+      accessibilityLabel={title}
       {...props}
     >
-      <WebView
-        source={{
-          html: buildPlayerHtml(id, startAt, autoplay),
-          baseUrl: "https://www.youtube.com",
-        }}
-        originWhitelist={["*"]}
-        accessibilityLabel={title}
-        style={{ flex: 1, backgroundColor: "transparent" }}
-        javaScriptEnabled
-        domStorageEnabled
-        onMessage={onMessage}
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback
-        allowsFullscreenVideo
-        allowsPictureInPictureMediaPlayback
-      />
+      {width > 0 && (
+        <YoutubePlayer
+          ref={playerRef}
+          height={height}
+          width={width}
+          videoId={id}
+          play={playing}
+          onChangeState={onChangeState}
+          initialPlayerParams={{
+            start: Math.max(0, Math.floor(startAt)),
+            rel: false,
+            modestbranding: true,
+          }}
+          webViewProps={{ allowsInlineMediaPlayback: true }}
+          webViewStyle={{ backgroundColor: "transparent" }}
+        />
+      )}
     </View>
   );
 }
 
 export { VideoEmbed };
 export type { VideoEmbedProps };
-
