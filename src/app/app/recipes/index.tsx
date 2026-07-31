@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Flame, Search, Sparkles } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { NetworkError } from "@/components/network-error";
@@ -45,6 +45,12 @@ export default function RecipesScreen() {
       <ScrollView
         contentContainerClassName="pb-16"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={recipesQ.isFetching}
+            onRefresh={() => recipesQ.refetch()}
+          />
+        }
       >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-2">
           <Link href="/app" asChild>

@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import {
@@ -74,12 +75,21 @@ export default function ProfileScreen() {
           className="mx-5 mt-4 flex-row items-center gap-4 rounded-3xl p-5"
         >
           <View
-            className="items-center justify-center rounded-full bg-primary-foreground/20"
+            className="items-center justify-center overflow-hidden rounded-full bg-primary-foreground/20"
             style={{ width: 64, height: 64 }}
           >
-            <Text className="font-italiana text-2xl text-primary-foreground">
-              {initials}
-            </Text>
+            {user?.avatar ? (
+              <Image
+                source={{ uri: user.avatar }}
+                contentFit="cover"
+                style={{ width: "100%", height: "100%" }}
+                accessibilityLabel="Avatar"
+              />
+            ) : (
+              <Text className="font-italiana text-2xl text-primary-foreground">
+                {initials}
+              </Text>
+            )}
           </View>
           <View className="min-w-0 flex-1">
             <Text className="font-italiana text-xl leading-tight tracking-wide text-primary-foreground">

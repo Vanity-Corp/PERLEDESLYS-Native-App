@@ -12,7 +12,15 @@ import {
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AddNoteButton } from "@/components/add-note-button";
@@ -30,7 +38,7 @@ import { useFavorites, useHistory } from "@/lib/local-store";
 // (Task 27) shows recently-viewed recipes alongside recently-watched videos.
 export default function RecipeDetailScreen() {
   const { recipeId } = useLocalSearchParams<{ recipeId: string }>();
-  const { data: recipe, isLoading } = useRecipe(recipeId);
+  const { data: recipe, isLoading, isFetching, refetch } = useRecipe(recipeId);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const { isFavorite, toggle } = useFavorites();
   const { upsert } = useHistory();
@@ -73,7 +81,12 @@ export default function RecipeDetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isFetching} onRefresh={() => refetch()} />
+        }
+      >
         {/* Hero image */}
         <View className="relative aspect-[4/5]">
           <Image

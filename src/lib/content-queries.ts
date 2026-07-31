@@ -3,8 +3,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { contentApi } from "@/lib/content-api";
 import { reviewsApi, type SubmitReviewInput } from "@/lib/reviews-api";
 import { fetchLanding, type LandingContent } from "@/lib/landing-api";
+import { fetchLegal } from "@/lib/legal-api";
 import { useAuth } from "@/lib/auth-store";
-import type { FounderInfo, WelcomeMessage } from "@/types/content";
+import type {
+  About,
+  FounderInfo,
+  Legal,
+  WelcomeMessage,
+  WhoAmI,
+} from "@/types/content";
 
 // TanStack Query hooks over the content API. Two flavours per collection:
 //   • use<X>()      → the array directly (defaults to [] while loading), so
@@ -109,15 +116,66 @@ export function useFaq() {
   return useFaqQuery().data ?? [];
 }
 
-const EMPTY_WELCOME: WelcomeMessage = { subject: "", body: "" };
-export function useWelcomeMessage(): WelcomeMessage {
+export function useWelcomeMessageQuery() {
   const token = useToken();
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["welcome-message"],
     queryFn: contentApi.welcomeMessage,
     enabled: !!token,
   });
-  return data ?? EMPTY_WELCOME;
+}
+const EMPTY_WELCOME: WelcomeMessage = { subject: "", body: "" };
+export function useWelcomeMessage(): WelcomeMessage {
+  return useWelcomeMessageQuery().data ?? EMPTY_WELCOME;
+}
+
+// "À propos" + "Qui suis-je" singletons.
+export function useAboutQuery() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["about"],
+    queryFn: contentApi.about,
+    enabled: !!token,
+  });
+}
+const EMPTY_ABOUT: About = { image: null, body: "" };
+export function useAbout(): About {
+  return useAboutQuery().data ?? EMPTY_ABOUT;
+}
+
+export function useWhoAmIQuery() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["who-am-i"],
+    queryFn: contentApi.whoAmI,
+    enabled: !!token,
+  });
+}
+const EMPTY_WHOAMI: WhoAmI = {
+  bio: "",
+  gridImages: [],
+  carouselImages: [],
+  quote: "",
+};
+export function useWhoAmI(): WhoAmI {
+  return useWhoAmIQuery().data ?? EMPTY_WHOAMI;
+}
+
+// Legal texts (public — no token; shown at signup before login).
+const EMPTY_LEGAL: Legal = { privacy: "", terms: "" };
+export function useLegal(): Legal {
+  const { data } = useQuery({ queryKey: ["legal"], queryFn: fetchLegal });
+  return data ?? EMPTY_LEGAL;
+}
+
+// Recently-added content feed for the in-app notification center.
+export function useRecentQuery() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["recent"],
+    queryFn: contentApi.recent,
+    enabled: !!token,
+  });
 }
 
 const EMPTY_FOUNDER: FounderInfo = { name: "", fullName: "", bio: "", avatar: "" };

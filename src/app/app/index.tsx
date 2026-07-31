@@ -8,13 +8,15 @@ import {
   Compass,
   ExternalLink,
   Flame,
+  Info,
   Play,
   Radio,
   Search,
   Sparkles,
+  User,
 } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MiniCalendar } from "@/components/mini-calendar";
@@ -28,10 +30,12 @@ import {
   useArticlesQuery,
   useFounder,
   useLivesQuery,
+  useRecentQuery,
   useRecipesQuery,
   useReviewsQuery,
   useVideosQuery,
 } from "@/lib/content-queries";
+import { useNotificationsStore } from "@/lib/notifications-store";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
@@ -41,6 +45,11 @@ export default function DashboardScreen() {
   const reviewsQ = useReviewsQuery();
   const videosQ = useVideosQuery();
   const founderInfo = useFounder();
+  const recent = useRecentQuery().data ?? [];
+  const lastSeenAt = useNotificationsStore((s) => s.lastSeenAt);
+  const hasUnread = recent.some(
+    (r) => new Date(r.createdAt).getTime() > lastSeenAt,
+  );
 
   const articles = articlesQ.data ?? [];
   const lives = livesQ.data ?? [];
@@ -103,6 +112,14 @@ export default function DashboardScreen() {
       <ScrollView
         contentContainerClassName="pb-32"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={
+              recipesQ.isFetching || videosQ.isFetching || livesQ.isFetching
+            }
+            onRefresh={refetchAll}
+          />
+        }
       >
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
@@ -111,13 +128,17 @@ export default function DashboardScreen() {
               Accueil
             </Text>
           </View>
-          <Pressable
-            role="button"
-            className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
-          >
-            <Icon as={Bell} size={20} className="text-foreground" />
-            <View className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-primary" />
-          </Pressable>
+          <Link href="/app/notifications" asChild>
+            <Pressable
+              role="button"
+              className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
+            >
+              <Icon as={Bell} size={20} className="text-foreground" />
+              {hasUnread && (
+                <View className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Pressable>
+          </Link>
         </View>
 
         {/* Search */}
@@ -614,6 +635,30 @@ export default function DashboardScreen() {
                 </Pressable>
               </Link>
             ))}
+          </View>
+        </Section>
+
+        {/* À propos / Qui suis-je */}
+        <Section title="En savoir plus">
+          <View className="mx-5 divide-y divide-border rounded-2xl border border-border bg-card">
+            <Link href="/app/who-am-i" asChild>
+              <Pressable className="flex-row items-center gap-3 p-4">
+                <Icon as={User} size={18} className="text-primary" />
+                <Text className="flex-1 text-sm font-medium text-foreground">
+                  Qui suis-je ?
+                </Text>
+                <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
+              </Pressable>
+            </Link>
+            <Link href="/app/about" asChild>
+              <Pressable className="flex-row items-center gap-3 p-4">
+                <Icon as={Info} size={18} className="text-primary" />
+                <Text className="flex-1 text-sm font-medium text-foreground">
+                  À propos
+                </Text>
+                <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
+              </Pressable>
+            </Link>
           </View>
         </Section>
       </ScrollView>

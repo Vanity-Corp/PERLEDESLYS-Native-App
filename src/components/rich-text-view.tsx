@@ -1,0 +1,56 @@
+import { useState } from "react";
+import { View } from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+
+// Renders rich-text HTML (authored in the dashboard Tiptap editor) inside a
+// WebView with a readable stylesheet and dynamic height (the page posts its
+// scroll height so the WebView grows to fit inside an outer ScrollView).
+function buildHtml(content: string): string {
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#2b2b2b;background:transparent;font-size:16px;line-height:1.65}
+    h2{font-size:20px;margin:18px 0 8px;font-weight:600}
+    h3{font-size:17px;margin:16px 0 6px;font-weight:600}
+    p{margin:0 0 12px}
+    ul,ol{margin:0 0 12px 20px}
+    li{margin:0 0 6px}
+    img{max-width:100%;height:auto;border-radius:12px;margin:12px 0;display:block}
+    a{color:#b06a8f}
+  </style></head><body>
+    <div id="root">${content}</div>
+    <script>
+      function postHeight(){
+        var h = document.getElementById('root').scrollHeight;
+        window.ReactNativeWebView && window.ReactNativeWebView.postMessage(String(h));
+      }
+      window.addEventListener('load', postHeight);
+      Array.prototype.forEach.call(document.images, function(img){
+        if(!img.complete){ img.addEventListener('load', postHeight); img.addEventListener('error', postHeight); }
+      });
+      setTimeout(postHeight, 300);
+    </script>
+  </body></html>`;
+}
+
+export function RichTextView({ html }: { html: string }) {
+  const [height, setHeight] = useState(80);
+  if (!html?.trim()) return null;
+
+  const onMessage = (e: WebViewMessageEvent) => {
+    const h = Number(e.nativeEvent.data);
+    if (!Number.isNaN(h) && h > 0) setHeight(h);
+  };
+
+  return (
+    <View style={{ height }}>
+      <WebView
+        originWhitelist={["*"]}
+        source={{ html: buildHtml(html) }}
+        style={{ flex: 1, backgroundColor: "transparent" }}
+        scrollEnabled={false}
+        onMessage={onMessage}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+}

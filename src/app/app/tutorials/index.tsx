@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Play } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { NetworkError } from "@/components/network-error";
@@ -24,7 +24,16 @@ export default function TutorialsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={videosQ.isFetching}
+            onRefresh={() => videosQ.refetch()}
+          />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-2">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">

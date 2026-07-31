@@ -24,6 +24,7 @@ const authUserSchema = z.object({
   role: z.enum(["MEMBER", "ADMIN"]),
   status: z.enum(["PENDING", "ACTIVE", "SUSPENDED"]),
   isActivated: z.boolean(),
+  avatar: z.string().nullable().optional(),
   createdAt: z.string().optional(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
@@ -58,6 +59,42 @@ export interface UpdateProfileInput {
   lastName?: string;
   username?: string;
   email?: string;
+  avatar?: string;
+}
+
+// Upload an image (member avatar) to the member-guarded endpoint. Multipart —
+// the JSON `request()` helper can't do this. Returns the hosted URL.
+export async function uploadImage(
+  file: { uri: string; name: string; type: string },
+  token: string,
+): Promise<string> {
+  if (!API_URL) {
+    throw new ApiError("URL de l'API non configurée.", 0, "NO_API_URL");
+  }
+  const form = new FormData();
+  // React Native FormData file shape.
+  form.append("file", {
+    uri: file.uri,
+    name: file.name,
+    type: file.type,
+  } as unknown as Blob);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/uploads`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+  } catch {
+    throw new ApiError("Impossible de joindre le serveur.", 0, "NETWORK");
+  }
+  const json = (await res.json().catch(() => null)) as
+    | { url?: string; message?: string }
+    | null;
+  if (!res.ok || !json?.url) {
+    throw new ApiError(json?.message ?? "Échec du téléversement.", res.status);
+  }
+  return json.url;
 }
 
 async function request<T>(

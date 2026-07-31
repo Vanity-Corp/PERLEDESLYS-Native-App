@@ -2,13 +2,13 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, BookOpen, Sparkles } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useArticles } from "@/lib/content-queries";
+import { useArticlesQuery, useWhoAmI } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tips/index.tsx
 //
@@ -34,13 +34,27 @@ const CATS = [
 ];
 
 export default function TipsScreen() {
-  const articles = useArticles();
+  const articlesQ = useArticlesQuery();
+  const articles = articlesQ.data ?? [];
+  const who = useWhoAmI();
+  const quote =
+    who.quote ||
+    "Cuisiner, c'est offrir de l'amour. Et le faire au TM7, c'est se libérer du temps pour les siens.";
   const [cat, setCat] = useState("Tout");
   const list = articles.filter((a) => cat === "Tout" || a.category === cat);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={articlesQ.isFetching}
+            onRefresh={() => articlesQ.refetch()}
+          />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-6">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">
@@ -66,11 +80,10 @@ export default function TipsScreen() {
             <Icon as={Sparkles} size={96} className="text-primary-foreground" />
           </View>
           <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
-            Le mot de Ghania
+            Un mot de Ghania
           </Text>
           <Text className="mt-2 font-italiana text-xl leading-snug text-primary-foreground">
-            « Cuisiner, c'est offrir de l'amour. Et le faire au TM7, c'est se
-            libérer du temps pour les siens. »
+            «&nbsp;{quote}&nbsp;»
           </Text>
         </GradientView>
 

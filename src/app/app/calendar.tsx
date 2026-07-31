@@ -10,13 +10,13 @@ import {
   Sparkles,
 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useEvents } from "@/lib/content-queries";
+import { useEventsQuery } from "@/lib/content-queries";
 import type { AppEvent } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/calendar/index.tsx
@@ -75,7 +75,8 @@ function weekStart(d: Date) {
 }
 
 export default function CalendarScreen() {
-  const events = useEvents();
+  const eventsQ = useEventsQuery();
+  const events = eventsQ.data ?? [];
   const [view, setView] = useState<CalendarView>("mois");
   const [cursor, setCursor] = useState(new Date());
 
@@ -117,7 +118,16 @@ export default function CalendarScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={eventsQ.isFetching}
+            onRefresh={() => eventsQ.refetch()}
+          />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-6">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">

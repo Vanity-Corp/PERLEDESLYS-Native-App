@@ -11,7 +11,7 @@ import {
   Sparkles,
 } from "lucide-react-native";
 import { useMemo, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
@@ -19,10 +19,10 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
-  useArticles,
-  useFaq,
-  useRecipes,
-  useVideos,
+  useArticlesQuery,
+  useFaqQuery,
+  useRecipesQuery,
+  useVideosQuery,
 } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/search/index.tsx
@@ -38,10 +38,25 @@ function norm(s: string) {
 }
 
 export default function SearchScreen() {
-  const recipes = useRecipes();
-  const videos = useVideos();
-  const articles = useArticles();
-  const faqItems = useFaq();
+  const recipesQ = useRecipesQuery();
+  const videosQ = useVideosQuery();
+  const articlesQ = useArticlesQuery();
+  const faqQ = useFaqQuery();
+  const recipes = recipesQ.data ?? [];
+  const videos = videosQ.data ?? [];
+  const articles = articlesQ.data ?? [];
+  const faqItems = faqQ.data ?? [];
+  const refreshing =
+    recipesQ.isFetching ||
+    videosQ.isFetching ||
+    articlesQ.isFetching ||
+    faqQ.isFetching;
+  const onRefresh = () => {
+    recipesQ.refetch();
+    videosQ.refetch();
+    articlesQ.refetch();
+    faqQ.refetch();
+  };
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<Tab>("all");
   const debouncedQ = useDebounce(q);
@@ -83,7 +98,13 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-6">
           <Link href="/app" asChild>
             <Pressable className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card">

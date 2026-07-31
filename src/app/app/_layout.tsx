@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
+import { ContentNotifier } from "@/components/content-notifier";
 import { EventReminders } from "@/components/event-reminders";
 import { useAuth } from "@/lib/auth-store";
 
@@ -47,9 +48,13 @@ export default function AppLayout() {
         <Tabs.Screen name="calendar" options={{ href: null, title: "Calendrier" }} />
         <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
         <Tabs.Screen name="reviews" options={{ href: null, title: "Donner mon avis" }} />
+        <Tabs.Screen name="about" options={{ href: null, title: "À propos" }} />
+        <Tabs.Screen name="who-am-i" options={{ href: null, title: "Qui suis-je ?" }} />
+        <Tabs.Screen name="notifications" options={{ href: null, title: "Notifications" }} />
       </Tabs>
       <AIChat />
       <EventReminders />
+      <ContentNotifier />
     </View>
   );
 }

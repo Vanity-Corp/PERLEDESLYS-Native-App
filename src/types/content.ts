@@ -111,3 +111,32 @@ export type Review = {
   comment: string;
   createdAt: string;
 };
+
+// "À propos" page content.
+export type About = {
+  image?: string | null;
+  body: string; // rich-text HTML
+};
+
+// "Qui suis-je ?" page content.
+export type WhoAmI = {
+  bio: string;
+  gridImages: string[];
+  carouselImages: string[];
+  quote: string;
+};
+
+// Legal texts shown in popups + at signup (rich-text HTML).
+export type Legal = {
+  privacy: string;
+  terms: string;
+};
+
+// A "recently added content" item for the in-app notification center.
+export type RecentItem = {
+  type: "recipe" | "video" | "live" | "article";
+  id: string;
+  title: string;
+  image: ImageRef;
+  createdAt: string;
+};

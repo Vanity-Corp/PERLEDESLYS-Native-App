@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -13,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
 import { Icon } from "@/components/ui/icon";
-import { useArticles } from "@/lib/content-queries";
+import { useArticlesQuery } from "@/lib/content-queries";
 
 // Article ("Astuce") detail. Resolves from the shared articles list query (same
 // pattern as the live detail) and renders the rich HTML `content` in a WebView
@@ -50,7 +51,8 @@ function buildArticleHtml(content: string): string {
 export default function ArticleDetailScreen() {
   const { articleId } = useLocalSearchParams<{ articleId: string }>();
   const router = useRouter();
-  const articles = useArticles();
+  const articlesQ = useArticlesQuery();
+  const articles = articlesQ.data ?? [];
   const article = articles.find((a) => a.id === articleId);
   const [webHeight, setWebHeight] = useState(200);
 
@@ -80,7 +82,15 @@ export default function ArticleDetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={articlesQ.isFetching}
+            onRefresh={() => articlesQ.refetch()}
+          />
+        }
+      >
         <View className="relative">
           <Image
             source={article.image}

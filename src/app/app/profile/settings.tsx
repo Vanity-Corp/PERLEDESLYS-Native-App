@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { Link } from "expo-router";
-import { ArrowLeft, Bell, Save } from "lucide-react-native";
+import { ArrowLeft, Bell, Camera, Save } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { ReactNode } from "react";
@@ -13,9 +15,12 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError, uploadImage } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/local-store";
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB (matches the backend)
+const ALLOWED_AVATAR = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 // Profile editing: nom, prénom, nom d'utilisateur, email (persisted via
 // PATCH /auth/me), plus the push-notifications preference (device-local).
@@ -29,11 +34,61 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsScreen() {
   const user = useAuth((s) => s.user);
+  const token = useAuth((s) => s.token);
   const updateProfile = useAuth((s) => s.updateProfile);
   const [settings, setSettings] = useSettings();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState(user?.avatar ?? "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const initials = (
+    (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
+    user?.username?.slice(0, 2) ||
+    "?"
+  ).toUpperCase();
+
+  const pickAvatar = async () => {
+    setError(null);
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setError("Autorisez l'accès aux photos pour changer votre avatar.");
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+    });
+    if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
+    const type = asset.mimeType ?? "image/jpeg";
+    if (!ALLOWED_AVATAR.includes(type)) {
+      setError("Format non supporté (JPEG, PNG, WebP ou GIF).");
+      return;
+    }
+    if ((asset.fileSize ?? 0) > MAX_AVATAR_BYTES) {
+      setError("Image trop volumineuse (max 5 Mo).");
+      return;
+    }
+    if (!token) return;
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadImage(
+        {
+          uri: asset.uri,
+          name: asset.fileName ?? `avatar.${type.split("/")[1] ?? "jpg"}`,
+          type,
+        },
+        token,
+      );
+      setAvatar(url);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Échec du téléversement.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const { control, handleSubmit } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -54,6 +109,7 @@ export default function SettingsScreen() {
         lastName: draft.lastName.trim(),
         username: draft.username.trim(),
         email: draft.email.trim() || undefined,
+        avatar: avatar || undefined,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
@@ -78,6 +134,35 @@ export default function SettingsScreen() {
           <Text className="font-display text-2xl font-medium tracking-tight text-foreground">
             Paramètres
           </Text>
+        </View>
+
+        <View className="mt-4 items-center gap-3">
+          <Pressable onPress={pickAvatar} disabled={uploadingAvatar}>
+            <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
+              {uploadingAvatar ? (
+                <ActivityIndicator />
+              ) : avatar ? (
+                <Image
+                  source={{ uri: avatar }}
+                  contentFit="cover"
+                  style={{ width: "100%", height: "100%" }}
+                  accessibilityLabel="Avatar"
+                />
+              ) : (
+                <Text className="font-display text-2xl text-muted-foreground">
+                  {initials}
+                </Text>
+              )}
+              <View className="absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full bg-primary">
+                <Icon as={Camera} size={14} className="text-primary-foreground" />
+              </View>
+            </View>
+          </Pressable>
+          <Pressable onPress={pickAvatar} disabled={uploadingAvatar}>
+            <Text className="text-xs font-medium text-primary">
+              Changer la photo
+            </Text>
+          </Pressable>
         </View>
 
         <SectionTitle>Mes informations</SectionTitle>

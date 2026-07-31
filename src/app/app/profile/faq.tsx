@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { ArrowLeft, HelpCircle } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { Icon } from "@/components/ui/icon";
 import { GradientView } from "@/components/ui/gradient-view";
-import { useFaq } from "@/lib/content-queries";
+import { useFaqQuery } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/faq/index.tsx
 //
@@ -25,10 +25,20 @@ import { useFaq } from "@/lib/content-queries";
 // exactly would mean editing the shared `ui/accordion.tsx` primitive, so the
 // RNR default is kept as the "direct upgrade" the plan calls for.
 export default function FaqScreen() {
-  const faqItems = useFaq();
+  const faqQ = useFaqQuery();
+  const faqItems = faqQ.data ?? [];
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={faqQ.isFetching}
+            onRefresh={() => faqQ.refetch()}
+          />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-6">
           <Link href="/app/profile" asChild>
             <Pressable className="-ml-2 rounded-full p-2">

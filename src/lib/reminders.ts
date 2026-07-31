@@ -96,6 +96,25 @@ export async function syncEventReminders(
   }
 }
 
+// Present an immediate local notification (used to "mirror push" when new
+// content appears). Best-effort; no-op on web / when not installed / no perms.
+export async function presentLocalNotification(
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<void> {
+  if (!Notifications) return;
+  try {
+    if (!(await ensureNotificationPermission())) return;
+    await Notifications.scheduleNotificationAsync({
+      content: { title, body, data: data ?? {} },
+      trigger: null, // fire now
+    });
+  } catch {
+    // never crash over a notification
+  }
+}
+
 // Subscribe to reminder taps; returns an unsubscribe fn. `onLive` fires with a
 // liveId when the tapped reminder was for a live (to deep-link the player).
 export function addReminderTapListener(

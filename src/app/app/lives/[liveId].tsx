@@ -1,18 +1,26 @@
 import { Link, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, CalendarDays, Clock, Radio } from "lucide-react-native";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
-import { useLives } from "@/lib/content-queries";
+import { useLivesQuery } from "@/lib/content-queries";
 
 // Live/replay player (WIRING_PLAN B4). Resolves the live from the shared list
 // query and plays its Vimeo link. No resume for lives (they're event streams,
 // not resumable lessons).
 export default function LiveDetailScreen() {
   const { liveId } = useLocalSearchParams<{ liveId: string }>();
-  const lives = useLives();
+  const livesQ = useLivesQuery();
+  const lives = livesQ.data ?? [];
   const live = lives.find((l) => l.id === liveId);
 
   if (lives.length === 0 && !live) {
@@ -32,7 +40,15 @@ export default function LiveDetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={livesQ.isFetching}
+            onRefresh={() => livesQ.refetch()}
+          />
+        }
+      >
         {live.vimeoUrl ? (
           <View className="relative">
             <VideoEmbed url={live.vimeoUrl} title={live.title} />

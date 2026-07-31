@@ -12,7 +12,15 @@ import {
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AddNoteButton } from "@/components/add-note-button";
@@ -41,7 +49,7 @@ import type { Video } from "@/types/content";
 // content pages (recipe/video/tips) while keeping the floating-button look.
 export default function VideoDetailScreen() {
   const { videoId } = useLocalSearchParams<{ videoId: string }>();
-  const { data: video, isLoading } = useVideo(videoId);
+  const { data: video, isLoading, isFetching, refetch } = useVideo(videoId);
 
   if (isLoading) {
     return (
@@ -59,13 +67,27 @@ export default function VideoDetailScreen() {
     );
   }
 
-  return <VideoDetail video={video} />;
+  return (
+    <VideoDetail
+      video={video}
+      refreshing={isFetching}
+      onRefresh={() => refetch()}
+    />
+  );
 }
 
 // Split out so the player only mounts once the video is loaded — its position
 // state initialises from stored history at mount, which requires the video to
 // be present (async fetch would otherwise init to 0 and lose the resume point).
-function VideoDetail({ video }: { video: Video }) {
+function VideoDetail({
+  video,
+  refreshing,
+  onRefresh,
+}: {
+  video: Video;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
   const videos = useVideos();
   const similar = videos.filter((v) => v.id !== video.id).slice(0, 4);
 
@@ -133,7 +155,12 @@ function VideoDetail({ video }: { video: Video }) {
 
   return (
     <View className="flex-1 bg-background">
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Player. Keeps the poster + custom luxe play button (the original
           wrapper design); tapping play reveals the real Vimeo embed, which
           seeks to the stored resume position and reports progress (B4). */}

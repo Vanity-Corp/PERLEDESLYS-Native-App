@@ -1,14 +1,17 @@
 import { ApiError } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 import type {
+  About,
   Article,
   AppEvent,
   FaqItem,
   FounderInfo,
   Live,
   Recipe,
+  RecentItem,
   Video,
   WelcomeMessage,
+  WhoAmI,
 } from "@/types/content";
 
 // Client for the backend content API (BACKEND_PLAN.md Phase 5). All content is
@@ -48,4 +51,7 @@ export const contentApi = {
   faq: () => get<FaqItem[]>("/faq"),
   welcomeMessage: () => get<WelcomeMessage>("/welcome-message"),
   founder: () => get<FounderInfo>("/founder"),
+  about: () => get<About>("/about"),
+  whoAmI: () => get<WhoAmI>("/who-am-i"),
+  recent: () => get<RecentItem[]>("/recent"),
 };

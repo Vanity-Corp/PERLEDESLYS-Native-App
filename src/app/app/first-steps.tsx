@@ -1,13 +1,13 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Heart, Lock, MessageCircle, Sparkles } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { VideoEmbed } from "@/components/video-embed";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { useVideo, useWelcomeMessage } from "@/lib/content-queries";
+import { useVideo, useWelcomeMessageQuery } from "@/lib/content-queries";
 import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/first-steps/index.tsx
@@ -22,8 +22,10 @@ export default function FirstStepsScreen() {
   // The "first steps" video is a fixed, hardcoded Vimeo embed; its text
   // metadata comes from the content API when present, with fallbacks so the
   // screen never depends on that specific record existing.
-  const { data: video } = useVideo(FIRST_STEPS_VIDEO_ID);
-  const welcomeMessage = useWelcomeMessage();
+  const videoQ = useVideo(FIRST_STEPS_VIDEO_ID);
+  const video = videoQ.data;
+  const welcomeQ = useWelcomeMessageQuery();
+  const welcomeMessage = welcomeQ.data ?? { subject: "", body: "" };
   const title = video?.title ?? "Mes premiers pas";
   const duration = video?.duration ?? "";
   const description =
@@ -32,7 +34,19 @@ export default function FirstStepsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView contentContainerClassName="pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="pb-16"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={videoQ.isFetching || welcomeQ.isFetching}
+            onRefresh={() => {
+              videoQ.refetch();
+              welcomeQ.refetch();
+            }}
+          />
+        }
+      >
         <View className="flex-row items-center gap-3 px-5 pb-2 pt-2">
           <Link href="/app" asChild>
             <Pressable className="-ml-2 rounded-full p-2">

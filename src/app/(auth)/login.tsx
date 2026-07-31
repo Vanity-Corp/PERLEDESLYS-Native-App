@@ -8,7 +8,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
 import OgeeArch from "@/assets/perledeslys/ogee-arch.svg";
+import { LegalLink } from "@/components/legal-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -49,6 +51,7 @@ export default function LoginScreen() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -203,6 +206,22 @@ export default function LoginScreen() {
                   )}
                 />
               </FieldRow>
+
+              {/* Required: accept the terms before creating an account. */}
+              <View className="mt-1 flex-row items-start gap-2.5 px-1">
+                <Checkbox
+                  checked={acceptedTerms}
+                  onCheckedChange={setAcceptedTerms}
+                  className="mt-0.5"
+                />
+                <View className="flex-1 flex-row flex-wrap items-center gap-x-1">
+                  <Text className="text-xs text-muted-foreground">J'accepte les</Text>
+                  <LegalLink doc="terms">conditions générales</LegalLink>
+                  <Text className="text-xs text-muted-foreground">et la</Text>
+                  <LegalLink doc="privacy">politique de confidentialité</LegalLink>
+                  <Text className="text-xs text-muted-foreground">.</Text>
+                </View>
+              </View>
             </TabsContent>
           </Tabs>
 
@@ -213,7 +232,7 @@ export default function LoginScreen() {
           <GradientButton
             tone="luxe"
             onPress={tab === "login" ? onLogin : onRegister}
-            disabled={loading}
+            disabled={loading || (tab === "register" && !acceptedTerms)}
             className="mt-8"
           >
             {loading ? (
