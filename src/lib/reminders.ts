@@ -45,6 +45,19 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   }
 }
 
+// Read-only permission check (never prompts). Event reminders use this so
+// scheduling on mount can't trigger the OS permission dialog on the
+// post-login navigation path — the deferred push hook owns the actual prompt.
+async function hasNotificationPermission(): Promise<boolean> {
+  if (!Notifications) return false;
+  try {
+    const current = await Notifications.getPermissionsAsync();
+    return !!current.granted;
+  } catch {
+    return false;
+  }
+}
+
 // Local date/time of an event minus its lead time, as an epoch ms (or null).
 function eventFireTime(ev: AppEvent): number | null {
   const [y, m, d] = (ev.date ?? "").split("-").map(Number);
@@ -65,7 +78,9 @@ export async function syncEventReminders(
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
     if (!enabled) return;
-    if (!(await ensureNotificationPermission())) return;
+    // Don't prompt here — only schedule if permission was already granted
+    // (the push hook requests it, deferred, off the navigation path).
+    if (!(await hasNotificationPermission())) return;
 
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("events", {

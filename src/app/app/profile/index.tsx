@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-store";
+import { unregisterPushToken } from "@/lib/push";
 
 const MONTHS = [
   "janvier",
@@ -44,6 +45,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const logout = useAuth((s) => s.logout);
   const user = useAuth((s) => s.user);
+  const token = useAuth((s) => s.token);
 
   const memberSince = (() => {
     if (!user?.createdAt) return null;
@@ -170,6 +172,9 @@ export default function ProfileScreen() {
 
         <Pressable
           onPress={() => {
+            // Stop this device receiving push before dropping the session
+            // (the unregister route is member-guarded — needs the token).
+            void unregisterPushToken(token ?? undefined);
             logout();
             router.replace("/(auth)");
           }}

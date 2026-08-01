@@ -3,8 +3,8 @@ import { View } from "react-native";
 
 import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
-import { ContentNotifier } from "@/components/content-notifier";
 import { EventReminders } from "@/components/event-reminders";
+import { PushNotifications } from "@/components/push-notifications";
 import { useAuth } from "@/lib/auth-store";
 
 // Custom `tabBar` (Task 2, src/components/bottom-nav.tsx) matching the
@@ -54,7 +54,7 @@ export default function AppLayout() {
       </Tabs>
       <AIChat />
       <EventReminders />
-      <ContentNotifier />
+      <PushNotifications />
     </View>
   );
 }

@@ -84,6 +84,14 @@ export default function LoginScreen() {
 
   const onRegister = registerForm.handleSubmit(async (values) => {
     setError(null);
+    // Terms gate — surfaced as a message instead of a silently disabled button
+    // (users couldn't tell why "Créer mon compte" did nothing).
+    if (!acceptedTerms) {
+      setError(
+        "Veuillez accepter les conditions générales et la politique de confidentialité.",
+      );
+      return;
+    }
     setLoading(true);
     try {
       const user = await register({
@@ -170,6 +178,13 @@ export default function LoginScreen() {
                   )}
                 />
               </FieldRow>
+              {(loginForm.formState.errors.identifier ||
+                loginForm.formState.errors.password) && (
+                <Text className="px-1 text-xs text-destructive">
+                  {loginForm.formState.errors.identifier?.message ??
+                    loginForm.formState.errors.password?.message}
+                </Text>
+              )}
             </TabsContent>
 
             {/* S'inscrire — username + password only (privacy) */}
@@ -206,6 +221,13 @@ export default function LoginScreen() {
                   )}
                 />
               </FieldRow>
+              {(registerForm.formState.errors.username ||
+                registerForm.formState.errors.password) && (
+                <Text className="px-1 text-xs text-destructive">
+                  {registerForm.formState.errors.username?.message ??
+                    registerForm.formState.errors.password?.message}
+                </Text>
+              )}
 
               {/* Required: accept the terms before creating an account. */}
               <View className="mt-1 flex-row items-start gap-2.5 px-1">
@@ -232,7 +254,7 @@ export default function LoginScreen() {
           <GradientButton
             tone="luxe"
             onPress={tab === "login" ? onLogin : onRegister}
-            disabled={loading || (tab === "register" && !acceptedTerms)}
+            disabled={loading}
             className="mt-8"
           >
             {loading ? (
