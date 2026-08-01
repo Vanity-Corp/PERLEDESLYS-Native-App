@@ -48,9 +48,18 @@
           "photosPermission": "Autorisez l'accès à vos photos pour choisir votre avatar."
         }
       ],
+<<<<<<< HEAD
       "expo-font",
       "expo-image",
       "expo-web-browser"
+=======
+      [
+        "expo-notifications",
+        {
+          "color": "#C4849B"
+        }
+      ]
+>>>>>>> bfb6a2599ce467e2df737de3398bda78e5a08ec0
     ],
     "experiments": {
       "typedRoutes": true,

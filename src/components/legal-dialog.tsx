@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Pressable, ScrollView, Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { RichTextView } from "@/components/rich-text-view";
 import {
@@ -38,15 +38,15 @@ export function LegalLink({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <View className="flex-1">
             {html.trim() ? (
-              <RichTextView html={html} />
+              <RichTextView html={html} scrollable />
             ) : (
               <Text className="text-sm text-muted-foreground">
                 Contenu à venir.
               </Text>
             )}
-          </ScrollView>
+          </View>
         </DialogContent>
       </Dialog>
     </>
