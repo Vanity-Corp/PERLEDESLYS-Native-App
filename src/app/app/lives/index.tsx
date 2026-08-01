@@ -122,10 +122,10 @@ export default function LivesScreen() {
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as "upcoming" | "replays")} className="mx-5 mt-6">
           <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1">
-            <TabsTrigger value="upcoming" className="flex-1 rounded-xl py-2.5">
+            <TabsTrigger value="upcoming" className="flex-1 rounded-xl ">
               <Text className="text-xs font-medium">À venir ({upcoming.length})</Text>
             </TabsTrigger>
-            <TabsTrigger value="replays" className="flex-1 rounded-xl py-2.5">
+            <TabsTrigger value="replays" className="flex-1 rounded-xl ">
               <Text className="text-xs font-medium">Replays ({replays.length})</Text>
             </TabsTrigger>
           </TabsList>
