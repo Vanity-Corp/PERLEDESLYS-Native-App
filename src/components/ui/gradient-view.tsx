@@ -3,32 +3,29 @@ import {
   type LinearGradientPoint,
   type LinearGradientProps,
 } from "expo-linear-gradient";
-import { cssInterop } from "nativewind";
+import { StyleSheet, View } from "react-native";
 
 import { GRADIENTS } from "@/constants/theme";
 
-// RNR has no gradient primitive, so this wraps expo-linear-gradient instead
-// — the RN replacement for every web `bg-gradient-*` utility class. Stop
-// colors come from `GRADIENTS` (src/constants/theme.ts), already converted
-// from the same oklch source values as the rest of the palette.
+// RNR has no gradient primitive, so this wraps expo-linear-gradient — the RN
+// replacement for every web `bg-gradient-*` utility. Stop colors come from
+// `GRADIENTS` (src/constants/theme.ts).
 //
-// Directions mirror the web's actual CSS angles (kitchen-haven-club's
-// styles.css `--gradient-*` tokens) rather than expo-linear-gradient's
-// {x:0.5,y:0}->{x:0.5,y:1} default: `luxe`/`rose`/`gold` are 135deg
-// (top-left -> bottom-right diagonal), `cream`/`overlay`/`roseOverlay` are
-// 180deg (straight down).
+// IMPORTANT (New Architecture / Fabric): the gradient is rendered as an
+// absolute-fill background BEHIND a plain <View>, never as the container
+// itself. A `LinearGradientView` used as a screen/layout root crashes the app
+// when react-native-screens re-parents it during a navigation transition:
+//   "addViewAt: ... The specified child already has a parent"
+//   (ReactClippingViewManager.addView → SurfaceMountingManager).
+// A plain View re-parents cleanly, so it becomes the container and the gradient
+// stays a stable, non-reparented child. `collapsable={false}` keeps the wrapper
+// a real native view (Android view-flattening would otherwise drop it and
+// expose the gradient as the reparent boundary again). `overflow: hidden`
+// clips the fill to the container's border radius (e.g. gradient buttons).
 //
-// NativeWind has no built-in awareness of expo-linear-gradient's
-// LinearGradient (confirmed: nothing in its source even mentions it) — on
-// native, an unregistered third-party component's `className` prop is a
-// no-op (it just gets passed through as a meaningless string), even though
-// it *looks* like it works when only checked via a web build (react-native-
-// web compiles className to real CSS regardless of the component). This
-// bit us for real: the cream/luxe backgrounds rendered as plain black on an
-// actual Android device (className="flex-1" etc. silently doing nothing)
-// despite verifying fine via `expo start --web`. `cssInterop` registration
-// is the fix — same pattern `ui/icon.tsx` already uses for lucide icons.
-cssInterop(LinearGradient, { className: "style" });
+// Directions mirror the web's CSS angles (kitchen-haven-club `--gradient-*`):
+// `luxe`/`rose`/`gold` are 135deg (diagonal); `cream`/overlays are 180deg
+// (vertical).
 
 export type GradientTone = keyof typeof GRADIENTS;
 
@@ -59,18 +56,33 @@ type GradientViewProps = Omit<
   "colors" | "start" | "end"
 > & {
   tone: GradientTone;
+  className?: string;
 };
 
-function GradientView({ tone, ...props }: GradientViewProps) {
+function GradientView({
+  tone,
+  style,
+  className,
+  children,
+  ...rest
+}: GradientViewProps) {
   const { start, end } = DIRECTIONS[tone];
 
   return (
-    <LinearGradient
-      colors={GRADIENTS[tone]}
-      start={start}
-      end={end}
-      {...props}
-    />
+    <View
+      collapsable={false}
+      className={className}
+      style={[{ overflow: "hidden" }, style]}
+      {...rest}
+    >
+      <LinearGradient
+        colors={GRADIENTS[tone]}
+        start={start}
+        end={end}
+        style={StyleSheet.absoluteFill}
+      />
+      {children}
+    </View>
   );
 }
 
