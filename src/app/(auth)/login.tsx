@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { AtSign, KeyRound, User } from "lucide-react-native";
+import { AtSign, KeyRound, Mail, User } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
@@ -11,6 +11,12 @@ import OgeeArch from "@/assets/perledeslys/ogee-arch.svg";
 import { LegalLink } from "@/components/legal-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -52,6 +58,17 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  // After a successful registration we show a one-time popup reminding the user
+  // to add an email (needed for password reset), then route by status.
+  const [emailReminderFor, setEmailReminderFor] = useState<UserStatus | null>(
+    null,
+  );
+
+  const dismissEmailReminder = () => {
+    const status = emailReminderFor;
+    setEmailReminderFor(null);
+    if (status) routeByStatus(status);
+  };
 
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -98,7 +115,9 @@ export default function LoginScreen() {
         username: values.username.trim(),
         password: values.password,
       });
-      routeByStatus(user.status); // always PENDING → activation
+      // Show the email-reminder popup; it routes on dismiss (always PENDING →
+      // activation).
+      setEmailReminderFor(user.status);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Une erreur est survenue.");
     } finally {
@@ -108,6 +127,40 @@ export default function LoginScreen() {
 
   return (
     <GradientView tone="cream" className="flex-1">
+      {/* One-time email reminder shown right after a successful registration. */}
+      <Dialog
+        open={emailReminderFor !== null}
+        onOpenChange={(o) => {
+          if (!o) dismissEmailReminder();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-secondary">
+              <Icon as={Mail} size={22} className="text-primary" />
+            </View>
+            <DialogTitle>Bienvenue chez Perle de Lys 🌸</DialogTitle>
+          </DialogHeader>
+          <Text className="text-sm leading-relaxed text-muted-foreground">
+            Pensez à ajouter votre adresse e-mail dans{" "}
+            <Text className="font-semibold text-foreground">
+              Profil › Paramètres
+            </Text>
+            . C'est elle qui vous permettra de réinitialiser votre mot de passe
+            en cas d'oubli.
+          </Text>
+          <GradientButton
+            tone="luxe"
+            onPress={dismissEmailReminder}
+            className="mt-4"
+          >
+            <Text className="font-medium text-primary-foreground">
+              J'ai compris
+            </Text>
+          </GradientButton>
+        </DialogContent>
+      </Dialog>
+
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
         <ScrollView
           contentContainerClassName="px-6 pb-10 pt-6"

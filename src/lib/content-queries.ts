@@ -138,7 +138,7 @@ export function useAboutQuery() {
     enabled: !!token,
   });
 }
-const EMPTY_ABOUT: About = { image: null, body: "" };
+const EMPTY_ABOUT: About = { image: null, title: "", body: "", signature: "" };
 export function useAbout(): About {
   return useAboutQuery().data ?? EMPTY_ABOUT;
 }
@@ -153,9 +153,13 @@ export function useWhoAmIQuery() {
 }
 const EMPTY_WHOAMI: WhoAmI = {
   bio: "",
+  why: "",
+  stats: [],
   gridImages: [],
   carouselImages: [],
   quote: "",
+  testimonialName: "",
+  testimonialText: "",
 };
 export function useWhoAmI(): WhoAmI {
   return useWhoAmIQuery().data ?? EMPTY_WHOAMI;

@@ -18,6 +18,8 @@ export type Recipe = {
   description: string;
   cookidooUrl: string;
   isNew?: boolean;
+  // The single "recette signature" featured on the home screen.
+  signature?: boolean;
   ingredients: { label: string; qty: string }[];
   steps: string[];
 };
@@ -115,15 +117,22 @@ export type Review = {
 // "À propos" page content.
 export type About = {
   image?: string | null;
-  body: string; // rich-text HTML
+  title: string;
+  body: string;
+  signature: string;
 };
 
 // "Qui suis-je ?" page content.
+export type Stat = { value: string; label: string };
 export type WhoAmI = {
-  bio: string;
+  bio: string; // "Mon histoire"
+  why: string; // "Pourquoi cette application ?"
+  stats: Stat[];
   gridImages: string[];
   carouselImages: string[];
-  quote: string;
+  quote: string; // "Un mot de Ghania"
+  testimonialName: string;
+  testimonialText: string;
 };
 
 // Legal texts shown in popups + at signup (rich-text HTML).

@@ -10,6 +10,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { addToCalendar, parseEventDate } from "@/lib/calendar";
 import { useLivesQuery } from "@/lib/content-queries";
 import type { Live } from "@/types/content";
 
@@ -93,8 +94,8 @@ export default function LivesScreen() {
                   </View>
                 </View>
                 <View className="mt-4 flex-row gap-2">
-                  {/* B4: opens the live/replay player (Vimeo). "Me rappeler"
-                      stays inert until reminders land (B2). */}
+                  {/* Join the live (Vimeo player) + "Me rappeler" adds it to the
+                      device calendar, pre-filled. */}
                   <Link
                     href={{ pathname: "/app/lives/[liveId]", params: { liveId: next.id } }}
                     asChild
@@ -109,6 +110,15 @@ export default function LivesScreen() {
                   </Link>
                   <Pressable
                     role="button"
+                    onPress={() => {
+                      const start = parseEventDate(next.date, next.time);
+                      if (!start) return;
+                      void addToCalendar({
+                        title: `Perledeslys - ${next.title}`,
+                        start,
+                        notes: next.description ?? undefined,
+                      });
+                    }}
                     className="flex-row items-center gap-1.5 rounded-full border border-background/30 bg-background/20 px-4 py-2"
                   >
                     <Icon as={Bell} size={16} className="text-primary-foreground" />

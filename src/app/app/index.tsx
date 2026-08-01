@@ -73,7 +73,9 @@ export default function DashboardScreen() {
   const newRecipes = recipes.filter((r) => r.isNew);
   const popularRecipes = recipes.slice(0, 6);
   const nextLive = lives.find((l) => l.status === "À venir");
-  const featured = recipes[0];
+  // "Recette signature" — the recipe the dashboard flagged (only one), falling
+  // back to the most recent if none is flagged yet.
+  const featured = recipes.find((r) => r.signature) ?? recipes[0];
 
   // Network failure on the core content → full-screen retry state.
   if (isError) {
