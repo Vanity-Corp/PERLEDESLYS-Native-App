@@ -52,11 +52,13 @@
       "expo-font",
       "expo-image",
       "expo-web-browser",
+      [
         "expo-notifications",
         {
           "color": "#C4849B"
         }
-      ],
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
