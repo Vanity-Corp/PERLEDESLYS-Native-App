@@ -158,8 +158,6 @@ const EMPTY_WHOAMI: WhoAmI = {
   gridImages: [],
   carouselImages: [],
   quote: "",
-  testimonialName: "",
-  testimonialText: "",
 };
 export function useWhoAmI(): WhoAmI {
   return useWhoAmIQuery().data ?? EMPTY_WHOAMI;

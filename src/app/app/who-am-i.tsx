@@ -1,31 +1,40 @@
 import { Link, useRouter } from "expo-router";
-import { ArrowLeft, Bell, ImageIcon, User } from "lucide-react-native";
+import { ArrowLeft, Bell, ImageIcon } from "lucide-react-native";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ReviewCarousel } from "@/components/review-carousel";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { useWhoAmIQuery } from "@/lib/content-queries";
+import { useReviews, useWhoAmIQuery } from "@/lib/content-queries";
 
 // "Qui suis-je ?" — Mon histoire, Pourquoi cette application, Statistiques,
-// Mes photos and a client testimonial. Faithful to the design; images are
-// placeholders. All text is editable from the dashboard.
+// Mes photos and client reviews. Faithful to the design; images are
+// placeholders. Text/stats are editable from the dashboard, with the
+// screenshot content as built-in defaults so the page is never empty.
+
+const DEFAULT_STORY =
+  "Je m'appelle Ghania. Passionnée de cuisine algérienne depuis toujours, j'ai souhaité moderniser les recettes traditionnelles grâce au Thermomix TM7 tout en conservant leur authenticité.";
+const DEFAULT_WHY =
+  "J'ai créé PERLEDESLYS afin d'offrir à mes clientes un espace privé regroupant toutes mes recettes, astuces, vidéos et accompagnements.";
+const DEFAULT_STATS = [
+  { value: "3 Ans", label: "d'expérience" },
+  { value: "+3000", label: "Clientes Accompagnées" },
+  { value: "+ 200", label: "Recettes" },
+  { value: "3ème", label: "en France" },
+];
+
 export default function WhoAmIScreen() {
   const router = useRouter();
   const whoQ = useWhoAmIQuery();
-  const who = whoQ.data ?? {
-    bio: "",
-    why: "",
-    stats: [] as { value: string; label: string }[],
-    gridImages: [] as string[],
-    carouselImages: [] as string[],
-    quote: "",
-    testimonialName: "",
-    testimonialText: "",
-  };
+  const who = whoQ.data;
+  const reviews = useReviews();
 
-  // "Mes photos" uses placeholders (design uses placeholder imagery for now).
-  const photoCount = 4;
+  // Fall back to the screenshot content when a field hasn't been filled in the
+  // dashboard yet.
+  const bio = who?.bio?.trim() ? who.bio : DEFAULT_STORY;
+  const why = who?.why?.trim() ? who.why : DEFAULT_WHY;
+  const stats = who?.stats?.length ? who.stats : DEFAULT_STATS;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -54,44 +63,34 @@ export default function WhoAmIScreen() {
         <SectionTitle>Mon histoire</SectionTitle>
         <View className="flex-row gap-4">
           <Text className="flex-1 text-[13px] leading-relaxed text-foreground">
-            {who.bio}
+            {bio}
           </Text>
           <ImagePlaceholder size={120} />
         </View>
 
         {/* Pourquoi cette application */}
-        {who.why ? (
-          <>
-            <SectionTitle>Pourquoi cette application ?</SectionTitle>
-            <Text className="text-[13px] leading-relaxed text-foreground">
-              {who.why}
-            </Text>
-          </>
-        ) : null}
+        <SectionTitle>Pourquoi cette application ?</SectionTitle>
+        <Text className="text-[13px] leading-relaxed text-foreground">{why}</Text>
 
         {/* Statistiques */}
-        {who.stats.length > 0 && (
-          <>
-            <SectionTitle>Statistiques</SectionTitle>
-            <View className="flex-row flex-wrap gap-3">
-              {who.stats.map((s, i) => (
-                <GradientView
-                  key={i}
-                  tone="luxe"
-                  className="items-center justify-center rounded-2xl px-4 py-6"
-                  style={{ width: "47.5%" }}
-                >
-                  <Text className="text-center font-display text-2xl font-bold text-primary-foreground">
-                    {s.value}
-                  </Text>
-                  <Text className="mt-1 text-center text-xs text-primary-foreground/90">
-                    {s.label}
-                  </Text>
-                </GradientView>
-              ))}
-            </View>
-          </>
-        )}
+        <SectionTitle>Statistiques</SectionTitle>
+        <View className="flex-row flex-wrap gap-3">
+          {stats.map((s, i) => (
+            <GradientView
+              key={i}
+              tone="luxe"
+              className="items-center justify-center rounded-2xl px-4 py-6"
+              style={{ width: "47.5%" }}
+            >
+              <Text className="text-center font-display text-2xl font-bold text-primary-foreground">
+                {s.value}
+              </Text>
+              <Text className="mt-1 text-center text-xs text-primary-foreground/90">
+                {s.label}
+              </Text>
+            </GradientView>
+          ))}
+        </View>
 
         {/* Mes photos (placeholders) */}
         <SectionTitle>Mes photos</SectionTitle>
@@ -100,35 +99,20 @@ export default function WhoAmIScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="gap-3"
         >
-          {Array.from({ length: photoCount }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <ImagePlaceholder key={i} size={150} />
           ))}
         </ScrollView>
 
-        {/* Témoignage clients */}
-        {who.testimonialText ? (
-          <>
-            <SectionTitle>Témoignage clients</SectionTitle>
-            <GradientView
-              tone="luxe"
-              className="flex-row items-center gap-4 rounded-3xl p-5"
-            >
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/20">
-                <Icon as={User} size={24} className="text-primary-foreground" />
-              </View>
-              <View className="min-w-0 flex-1">
-                {who.testimonialName ? (
-                  <Text className="font-display text-lg text-primary-foreground">
-                    {who.testimonialName}
-                  </Text>
-                ) : null}
-                <Text className="mt-0.5 text-xs leading-snug text-primary-foreground/90">
-                  {who.testimonialText}
-                </Text>
-              </View>
-            </GradientView>
-          </>
-        ) : null}
+        {/* Témoignage clients — reuses the home "Avis de nos clientes" carousel. */}
+        <SectionTitle>Témoignage clients</SectionTitle>
+        {reviews.length > 0 ? (
+          <ReviewCarousel reviews={reviews} />
+        ) : (
+          <Text className="text-sm text-muted-foreground">
+            Aucun avis pour le moment.
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -130,9 +130,9 @@ export type WhoAmI = {
   stats: Stat[];
   gridImages: string[];
   carouselImages: string[];
-  quote: string; // "Un mot de Ghania"
-  testimonialName: string;
-  testimonialText: string;
+  quote: string; // "Un mot de Ghania" (reused on Astuces)
+  // Testimonials are shown via the shared "Avis de nos clientes" carousel
+  // (approved reviews), not a per-page field.
 };
 
 // Legal texts shown in popups + at signup (rich-text HTML).
