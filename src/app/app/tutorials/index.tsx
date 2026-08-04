@@ -11,14 +11,21 @@ import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useVideosQuery } from "@/lib/content-queries";
+import { useCategories, useVideosQuery } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tutorials/index.tsx
-const TABS = ["Tout", "Mes premiers pas", "Premier démarrage", "Tutoriel TM7", "Recette vidéo", "Astuces"];
-
 export default function TutorialsScreen() {
   const videosQ = useVideosQuery();
   const videos = videosQ.data ?? [];
+  // Category tabs come from the dashboard-managed video categories; fall back
+  // to the distinct categories present in the loaded videos when empty.
+  const managedCategories = useCategories("video");
+  const TABS = [
+    "Tout",
+    ...(managedCategories.length > 0
+      ? managedCategories
+      : [...new Set(videos.map((v) => v.category))]),
+  ];
   const [tab, setTab] = useState("Tout");
   const filtered = videos.filter((v) => tab === "Tout" || v.category === tab);
 
@@ -93,9 +100,11 @@ export default function TutorialsScreen() {
                       <Icon as={Play} size={24} className="text-primary" fill="currentColor" />
                     </View>
                   </View>
-                  <View className="absolute bottom-2 right-2 rounded-full bg-background/95 px-2 py-0.5">
-                    <Text className="text-[10px] font-medium text-foreground">{v.duration}</Text>
-                  </View>
+                  {v.duration ? (
+                    <View className="absolute bottom-2 right-2 rounded-full bg-background/95 px-2 py-0.5">
+                      <Text className="text-[10px] font-medium text-foreground">{v.duration}</Text>
+                    </View>
+                  ) : null}
                   {v.progress ? (
                     <Progress value={v.progress} className="absolute inset-x-0 bottom-0" />
                   ) : null}

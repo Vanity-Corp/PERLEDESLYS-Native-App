@@ -38,6 +38,20 @@ export function useRecipes() {
   return useRecipesQuery().data ?? [];
 }
 
+// Dashboard-managed category names for a given scope ("recipe" | "video"),
+// mapped to a plain `string[]` for the filter pills. Empty while loading or
+// when the dashboard has no categories yet (callers fall back to the distinct
+// categories present in the loaded content).
+export function useCategories(scope: string): string[] {
+  const token = useToken();
+  const { data } = useQuery({
+    queryKey: ["categories", scope],
+    queryFn: () => contentApi.categories(scope),
+    enabled: !!token,
+  });
+  return (data ?? []).map((c) => c.name);
+}
+
 export function useRecipe(id?: string) {
   const token = useToken();
   return useQuery({
@@ -124,7 +138,13 @@ export function useWelcomeMessageQuery() {
     enabled: !!token,
   });
 }
-const EMPTY_WELCOME: WelcomeMessage = { subject: "", body: "" };
+const EMPTY_WELCOME: WelcomeMessage = {
+  introTitle: "",
+  introContent: "",
+  subject: "",
+  body: "",
+  steps: [],
+};
 export function useWelcomeMessage(): WelcomeMessage {
   return useWelcomeMessageQuery().data ?? EMPTY_WELCOME;
 }
@@ -138,7 +158,7 @@ export function useAboutQuery() {
     enabled: !!token,
   });
 }
-const EMPTY_ABOUT: About = { image: null, title: "", body: "", signature: "" };
+const EMPTY_ABOUT: About = { image: null, body: "" };
 export function useAbout(): About {
   return useAboutQuery().data ?? EMPTY_ABOUT;
 }
@@ -157,6 +177,7 @@ const EMPTY_WHOAMI: WhoAmI = {
   stats: [],
   gridImages: [],
   carouselImages: [],
+  storyImage: "",
   quote: "",
 };
 export function useWhoAmI(): WhoAmI {

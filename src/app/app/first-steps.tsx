@@ -1,6 +1,5 @@
-import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ArrowLeft, Clock, Heart, Lock, MessageCircle, Sparkles } from "lucide-react-native";
+import { ArrowLeft, Heart, Lock, MessageCircle, Sparkles } from "lucide-react-native";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -11,7 +10,8 @@ import { useVideo, useWelcomeMessageQuery } from "@/lib/content-queries";
 import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/first-steps/index.tsx
-const NEXT_STEPS = [
+// Fallback steps used when the dashboard hasn't set any yet.
+const DEFAULT_STEPS = [
   "Regardez la vidéo en entier, idéalement TM7 à proximité.",
   "Lancez une première recette simple (ex : Baghrir ou Thé à la menthe).",
   "Notez vos questions au fur et à mesure avec le bouton note.",
@@ -19,18 +19,29 @@ const NEXT_STEPS = [
 ];
 
 export default function FirstStepsScreen() {
-  // The "first steps" video is a fixed, hardcoded Vimeo embed; its text
-  // metadata comes from the content API when present, with fallbacks so the
-  // screen never depends on that specific record existing.
+  // The "first steps" video is a fixed, hardcoded YouTube embed; the intro text,
+  // "Mot de Ghania" and the steps list are all editable from the dashboard
+  // ("Mes premiers pas"), with fallbacks so the screen never renders empty.
   const videoQ = useVideo(FIRST_STEPS_VIDEO_ID);
   const video = videoQ.data;
   const welcomeQ = useWelcomeMessageQuery();
-  const welcomeMessage = welcomeQ.data ?? { subject: "", body: "" };
-  const title = video?.title ?? "Mes premiers pas";
-  const duration = video?.duration ?? "";
-  const description =
-    video?.description ??
-    "La vidéo de mise en service de votre Thermomix TM7.";
+  const welcomeMessage = welcomeQ.data ?? {
+    introTitle: "",
+    introContent: "",
+    subject: "",
+    body: "",
+    steps: [],
+  };
+  const title = welcomeMessage.introTitle?.trim()
+    ? welcomeMessage.introTitle
+    : "Mise en service du TM7";
+  const description = welcomeMessage.introContent?.trim()
+    ? welcomeMessage.introContent
+    : "La vidéo de mise en service de votre Thermomix TM7.";
+  const steps =
+    welcomeMessage.steps && welcomeMessage.steps.length > 0
+      ? welcomeMessage.steps
+      : DEFAULT_STEPS;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -69,9 +80,6 @@ export default function FirstStepsScreen() {
 
         <View className="px-5 mt-4">
           <View className="flex-row items-center gap-2">
-            <Icon as={Clock} size={12} className="text-muted-foreground" />
-            <Text className="text-[11px] text-muted-foreground">{duration}</Text>
-            <Text className="text-[11px] text-muted-foreground">·</Text>
             <Icon as={Lock} size={12} className="text-muted-foreground" />
             <Text className="text-[11px] text-muted-foreground">Vidéo privée intégrée</Text>
           </View>
@@ -89,14 +97,6 @@ export default function FirstStepsScreen() {
               {welcomeMessage.subject}
             </Text>
           </GradientView>
-          {welcomeMessage.image ? (
-            <Image
-              source={welcomeMessage.image}
-              contentFit="cover"
-              style={{ width: "100%", height: 180 }}
-              accessibilityLabel="Message d'accueil"
-            />
-          ) : null}
           <View className="border border-t-0 border-border bg-card p-5">
             <Text className="text-sm leading-relaxed text-foreground/90">{welcomeMessage.body}</Text>
           </View>
@@ -109,7 +109,7 @@ export default function FirstStepsScreen() {
             <Text className="font-display text-lg text-foreground">Vos prochaines étapes</Text>
           </View>
           <View className="gap-2">
-            {NEXT_STEPS.map((step, i) => (
+            {steps.map((step, i) => (
               <View
                 key={step}
                 className="flex-row gap-3 rounded-2xl border border-border bg-card p-3"

@@ -96,13 +96,17 @@ function VideoDetail({
   const { isFavorite, toggle } = useFavorites();
   const favVideo = isFavorite(video.id, "video");
 
-  // Resume: the Vimeo player seeks to `startAt` on mount (the stored position);
-  // it reports playback progress via onProgress, which we persist (throttled)
-  // to local history. "Recommencer" remounts the player at 0 (playerKey bump).
+  // Resume: the YouTube player seeks to `startAt` on mount (the stored
+  // position); it reports playback progress via onProgress, which we persist
+  // (throttled) to local history. "Recommencer" remounts the player at 0
+  // (playerKey bump).
   const [startAt, setStartAt] = useState(stored?.positionSec ?? 0);
   const [playerKey, setPlayerKey] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [showResume, setShowResume] = useState((stored?.positionSec ?? 0) > 5);
+  // The dashboard is dropping the manual duration field; when the video has
+  // none, we display the length reported by the YouTube player at runtime.
+  const [runtimeDur, setRuntimeDur] = useState(stored?.totalSec ?? 0);
   const progressRef = useRef({
     sec: stored?.positionSec ?? 0,
     dur: stored?.totalSec ?? 0,
@@ -117,7 +121,7 @@ function VideoDetail({
       title: video.title,
       image: video.image,
       category: video.category,
-      duration: video.duration,
+      duration: video.duration ?? formatSeconds(dur),
       positionSec: Math.round(sec),
       totalSec: Math.round(dur),
       progress: Math.round((sec / dur) * 100),
@@ -137,7 +141,13 @@ function VideoDetail({
 
   const onProgress = (sec: number, dur: number) => {
     progressRef.current = { sec, dur };
+    if (dur > 0 && dur !== runtimeDur) setRuntimeDur(dur);
   };
+
+  // Prefer the dashboard duration if still present; otherwise the runtime
+  // length from the player. Undefined → the duration UI is hidden entirely.
+  const durationLabel =
+    video.duration ?? (runtimeDur > 0 ? formatSeconds(runtimeDur) : undefined);
 
   const restart = () => {
     progressRef.current = { sec: 0, dur: progressRef.current.dur };
@@ -162,7 +172,7 @@ function VideoDetail({
       }
     >
       {/* Player. Keeps the poster + custom luxe play button (the original
-          wrapper design); tapping play reveals the real Vimeo embed, which
+          wrapper design); tapping play reveals the real YouTube embed, which
           seeks to the stored resume position and reports progress (B4). */}
       {playing ? (
         <View className="relative">
@@ -244,11 +254,15 @@ function VideoDetail({
           {video.title}
         </Text>
         <View className="mt-2 flex-row items-center gap-3">
-          <View className="flex-row items-center gap-1">
-            <Icon as={Clock} size={12} className="text-muted-foreground" />
-            <Text className="text-xs text-muted-foreground">{video.duration}</Text>
-          </View>
-          <Text className="text-xs text-muted-foreground">·</Text>
+          {durationLabel ? (
+            <>
+              <View className="flex-row items-center gap-1">
+                <Icon as={Clock} size={12} className="text-muted-foreground" />
+                <Text className="text-xs text-muted-foreground">{durationLabel}</Text>
+              </View>
+              <Text className="text-xs text-muted-foreground">·</Text>
+            </>
+          ) : null}
           <Text className="text-xs text-muted-foreground">HD 1080p</Text>
         </View>
 

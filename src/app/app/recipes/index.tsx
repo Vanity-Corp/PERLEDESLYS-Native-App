@@ -11,26 +11,24 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useRecipesQuery } from "@/lib/content-queries";
+import { useCategories, useRecipesQuery } from "@/lib/content-queries";
 import { useDebounce } from "@/hooks/use-debounce";
+import { isRecent } from "@/lib/utils";
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/index.tsx
-const CATEGORIES = [
-  "Tout",
-  "Plats algériens",
-  "Couscous",
-  "Rechta",
-  "Tajines",
-  "Pâtisseries",
-  "Baghrir",
-  "Boissons",
-  "Ramadan",
-  "Recettes rapides",
-];
-
 export default function RecipesScreen() {
   const recipesQ = useRecipesQuery();
   const recipes = recipesQ.data ?? [];
+  // Filter pills come from the dashboard-managed categories; if that endpoint
+  // is empty, fall back to the distinct categories present in the loaded
+  // recipes so the tabs are never blank.
+  const managedCategories = useCategories("recipe");
+  const CATEGORIES = [
+    "Tout",
+    ...(managedCategories.length > 0
+      ? managedCategories
+      : [...new Set(recipes.map((r) => r.category))]),
+  ];
   const [active, setActive] = useState("Tout");
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q);
@@ -138,7 +136,7 @@ export default function RecipesScreen() {
                       {r.category}
                     </Text>
                   </View>
-                  {r.isNew && (
+                  {isRecent(r.createdAt) && (
                     <GradientView
                       tone="gold"
                       className="absolute right-2 top-2 flex-row items-center gap-1 rounded-full px-2 py-0.5"

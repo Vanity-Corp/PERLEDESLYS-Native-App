@@ -4,6 +4,7 @@ import type {
   About,
   Article,
   AppEvent,
+  Category,
   FaqItem,
   FounderInfo,
   Live,
@@ -54,4 +55,7 @@ export const contentApi = {
   about: () => get<About>("/about"),
   whoAmI: () => get<WhoAmI>("/who-am-i"),
   recent: () => get<RecentItem[]>("/recent"),
+  // Dashboard-managed categories, scoped per content kind ("recipe" | "video").
+  categories: (scope: string) =>
+    get<Category[]>(`/categories?scope=${scope}`),
 };

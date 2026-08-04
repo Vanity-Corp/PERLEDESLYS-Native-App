@@ -36,6 +36,7 @@ import {
   useVideosQuery,
 } from "@/lib/content-queries";
 import { useNotificationsStore } from "@/lib/notifications-store";
+import { isRecent } from "@/lib/utils";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
@@ -70,7 +71,7 @@ export default function DashboardScreen() {
   };
 
   const continueWatching = videos.filter((v) => v.progress).slice(0, 3);
-  const newRecipes = recipes.filter((r) => r.isNew);
+  const newRecipes = recipes.filter((r) => isRecent(r.createdAt));
   const popularRecipes = recipes.slice(0, 6);
   const nextLive = lives.find((l) => l.status === "À venir");
   // "Recette signature" — the recipe the dashboard flagged (only one), falling
@@ -268,7 +269,7 @@ export default function DashboardScreen() {
                     accessibilityLabel={featured.title}
                   />
                   <GradientView tone="overlay" className="absolute inset-0" />
-                  {featured.isNew && (
+                  {isRecent(featured.createdAt) && (
                     <GradientView
                       tone="gold"
                       className="absolute left-3 top-3 rounded-full px-2.5 py-1"
@@ -480,7 +481,7 @@ export default function DashboardScreen() {
                 </GradientView>
               </Pressable>
             </Link>
-            <Link href="/app/profile/tips" asChild>
+            <Link href="/app/tips" asChild>
               <Pressable className="flex-1">
                 <View className="aspect-square flex-col justify-between rounded-2xl border border-border bg-card p-4">
                   <Icon as={Sparkles} size={24} className="text-primary" />
@@ -498,8 +499,8 @@ export default function DashboardScreen() {
           </View>
         </Section>
 
-        {/* Popular recipes */}
-        <Section title="Recettes populaires" href="/app/recipes">
+        {/* Recipes */}
+        <Section title="Recettes" href="/app/recipes">
           <View className="flex-row flex-wrap gap-3 px-5">
             {popularRecipes.map((r) => (
               <Link
@@ -595,7 +596,7 @@ export default function DashboardScreen() {
         </Section>
 
         {/* Articles */}
-        <Section title="Astuces & conseils" href="/app/profile/tips">
+        <Section title="Astuces & conseils" href="/app/tips">
           <View className="gap-3 px-5">
             {articles.slice(0, 3).map((a) => (
               <Link

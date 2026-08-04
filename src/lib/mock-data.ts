@@ -490,7 +490,7 @@ export const lives: Live[] = [
     image: cornes,
     status: "À venir",
     description: "Cornes de gazelle, makrout au four et ghribia bahla en direct.",
-    platform: "Vimeo Live",
+    platform: "YouTube Live",
   },
   {
     id: "live-q-r",
@@ -510,7 +510,7 @@ export const lives: Live[] = [
     image: couscous,
     status: "Replay",
     description: "Le live le plus regardé : votre couscous royal pas à pas.",
-    platform: "Replay Vimeo",
+    platform: "Replay YouTube",
   },
   {
     id: "replay-tajine",
@@ -520,7 +520,7 @@ export const lives: Live[] = [
     image: tajine,
     status: "Replay",
     description: "Maîtrisez le tajine fondant avec les astuces de Ghania.",
-    platform: "Replay Vimeo",
+    platform: "Replay YouTube",
   },
 ];
 
@@ -565,6 +565,9 @@ export const events: AppEvent[] = [
 ];
 
 export const welcomeMessage: WelcomeMessage = {
+  introTitle: "Mise en service du TM7",
+  introContent: "La vidéo de mise en service de votre Thermomix TM7.",
+  steps: [],
   subject: "Bienvenue dans l'aventure Thermomix TM7",
   body: `Coucou,
 
@@ -588,7 +591,7 @@ Ghania`,
 export const faqItems: FaqItem[] = [
   {
     q: "Comment accéder à la vidéo « Mes premiers pas » ?",
-    a: "Elle est directement intégrée dans l'application, dans l'onglet Accueil > Mes premiers pas. Plus besoin de lien Vimeo ni de mot de passe.",
+    a: "Elle est directement intégrée dans l'application, dans l'onglet Accueil > Mes premiers pas. Plus besoin de lien YouTube ni de mot de passe.",
   },
   {
     q: "Puis-je reprendre une vidéo là où je m'étais arrêtée ?",

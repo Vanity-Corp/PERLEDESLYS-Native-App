@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-store";
+import { useFavorites } from "@/lib/local-store";
 import { unregisterPushToken } from "@/lib/push";
 
 const MONTHS = [
@@ -46,6 +47,8 @@ export default function ProfileScreen() {
   const logout = useAuth((s) => s.logout);
   const user = useAuth((s) => s.user);
   const token = useAuth((s) => s.token);
+  const { favoriteRecipes, favoriteVideos } = useFavorites();
+  const favoritesCount = favoriteRecipes.length + favoriteVideos.length;
 
   const memberSince = (() => {
     if (!user?.createdAt) return null;
@@ -109,8 +112,7 @@ export default function ProfileScreen() {
             href="/app/profile/favorites"
             icon={Heart}
             title="Favoris"
-            // Hardcoded in the web version too, not derived from real data.
-            subtitle="6 enregistrées"
+            subtitle={`${favoritesCount} ${favoritesCount <= 1 ? "enregistrée" : "enregistrées"}`}
           />
           <Tile
             href="/app/profile/history"

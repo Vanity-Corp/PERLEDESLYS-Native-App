@@ -94,7 +94,7 @@ export default function LivesScreen() {
                   </View>
                 </View>
                 <View className="mt-4 flex-row gap-2">
-                  {/* Join the live (Vimeo player) + "Me rappeler" adds it to the
+                  {/* Join the live (YouTube player) + "Me rappeler" adds it to the
                       device calendar, pre-filled. */}
                   <Link
                     href={{ pathname: "/app/lives/[liveId]", params: { liveId: next.id } }}

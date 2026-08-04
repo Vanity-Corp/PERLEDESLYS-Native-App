@@ -15,7 +15,7 @@ import { VideoEmbed } from "@/components/video-embed";
 import { useLivesQuery } from "@/lib/content-queries";
 
 // Live/replay player (WIRING_PLAN B4). Resolves the live from the shared list
-// query and plays its Vimeo link. No resume for lives (they're event streams,
+// query and plays its YouTube link. No resume for lives (they're event streams,
 // not resumable lessons).
 export default function LiveDetailScreen() {
   const { liveId } = useLocalSearchParams<{ liveId: string }>();

@@ -18,6 +18,9 @@ export type Recipe = {
   description: string;
   cookidooUrl: string;
   isNew?: boolean;
+  // ISO timestamp; drives the automatic "Nouveau" badge (recipe < 5 days old),
+  // replacing the manual `isNew` flag.
+  createdAt?: string;
   // The single "recette signature" featured on the home screen.
   signature?: boolean;
   ingredients: { label: string; qty: string }[];
@@ -28,11 +31,20 @@ export type Video = {
   id: string;
   title: string;
   image: ImageRef;
-  duration: string;
+  // Optional: the dashboard no longer sets a manual duration; the video detail
+  // screen reads it from the YouTube player at runtime instead.
+  duration?: string;
   category: string;
   description: string;
   vimeoUrl?: string | null;
   progress?: number;
+};
+
+// Dashboard-managed category, scoped per content kind (recipe/video).
+export type Category = {
+  id: string;
+  scope: string;
+  name: string;
 };
 
 export type Article = {
@@ -99,8 +111,11 @@ export type FaqItem = {
 };
 
 export type WelcomeMessage = {
-  subject: string;
-  body: string;
+  introTitle: string; // "Mise en service du TM7…"
+  introContent: string; // text under the video
+  subject: string; // Mot de Ghania — objet
+  body: string; // Mot de Ghania — message
+  steps: string[]; // "Vos prochaines étapes"
   image?: string | null;
 };
 
@@ -117,9 +132,7 @@ export type Review = {
 // "À propos" page content.
 export type About = {
   image?: string | null;
-  title: string;
-  body: string;
-  signature: string;
+  body: string; // rich-text HTML
 };
 
 // "Qui suis-je ?" page content.
@@ -130,6 +143,7 @@ export type WhoAmI = {
   stats: Stat[];
   gridImages: string[];
   carouselImages: string[];
+  storyImage: string; // image shown next to "Mon histoire"
   quote: string; // "Un mot de Ghania" (reused on Astuces)
   // Testimonials are shown via the shared "Avis de nos clientes" carousel
   // (approved reviews), not a per-page field.

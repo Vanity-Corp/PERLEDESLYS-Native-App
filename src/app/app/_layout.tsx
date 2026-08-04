@@ -50,6 +50,7 @@ export default function AppLayout() {
         <Tabs.Screen name="reviews" options={{ href: null, title: "Donner mon avis" }} />
         <Tabs.Screen name="about" options={{ href: null, title: "À propos" }} />
         <Tabs.Screen name="who-am-i" options={{ href: null, title: "Qui suis-je ?" }} />
+        <Tabs.Screen name="tips" options={{ href: null, title: "Astuces" }} />
         <Tabs.Screen name="notifications" options={{ href: null, title: "Notifications" }} />
       </Tabs>
       <AIChat />
