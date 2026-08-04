@@ -8,9 +8,13 @@ import type { Review } from "@/types/content";
 // under /api/reviews (not /api/content).
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-async function req<T>(method: "GET" | "POST", body?: unknown): Promise<T> {
+async function req<T>(
+  method: "GET" | "POST",
+  path = "",
+  body?: unknown,
+): Promise<T> {
   const token = useAuth.getState().token;
-  const res = await fetch(`${API_URL}/api/reviews`, {
+  const res = await fetch(`${API_URL}/api/reviews${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -38,5 +42,7 @@ export interface SubmitReviewInput {
 
 export const reviewsApi = {
   listApproved: () => req<Review[]>("GET"),
-  submit: (input: SubmitReviewInput) => req<Review>("POST", input),
+  submit: (input: SubmitReviewInput) => req<Review>("POST", "", input),
+  // The current member's own review (approved or pending), or null if none.
+  mine: () => req<{ review: Review | null }>("GET", "/mine"),
 };

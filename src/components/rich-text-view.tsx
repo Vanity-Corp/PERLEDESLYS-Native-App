@@ -12,11 +12,18 @@ import { WebView, type WebViewMessageEvent } from "react-native-webview";
 //   • scrollable — the WebView fills its parent (e.g. a fixed-height dialog)
 //     and scrolls its own content. Used for the long legal texts (Conditions
 //     générales / Politique de confidentialité).
-function buildHtml(content: string): string {
+function buildHtml(content: string, onDark: boolean): string {
+  // On the maroon "À propos" card the body sits on a dark background, so text,
+  // headings and links must be light; the default (used everywhere else) stays
+  // dark-on-light.
+  const bodyColor = onDark ? "rgba(255,255,255,0.9)" : "#2b2b2b";
+  const headingColor = onDark ? "#ffffff" : "inherit";
+  const linkColor = onDark ? "#f0c8d8" : "#b06a8f";
   return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{background:transparent}
-    body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#2b2b2b;font-size:16px;line-height:1.65;padding:2px 0}
+    body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:${bodyColor};font-size:16px;line-height:1.65;padding:2px 0}
+    h1,h2,h3{color:${headingColor}}
     h1{font-size:22px;margin:18px 0 8px;font-weight:700}
     h2{font-size:20px;margin:18px 0 8px;font-weight:600}
     h3{font-size:17px;margin:16px 0 6px;font-weight:600}
@@ -24,7 +31,7 @@ function buildHtml(content: string): string {
     ul,ol{margin:0 0 12px 20px}
     li{margin:0 0 6px}
     img{max-width:100%;height:auto;border-radius:12px;margin:12px 0;display:block}
-    a{color:#b06a8f}
+    a{color:${linkColor}}
   </style></head><body>
     <div id="root">${content}</div>
     <script>
@@ -50,9 +57,11 @@ function buildHtml(content: string): string {
 export function RichTextView({
   html,
   scrollable = false,
+  onDark = false,
 }: {
   html: string;
   scrollable?: boolean;
+  onDark?: boolean;
 }) {
   const [height, setHeight] = useState(80);
   if (!html?.trim()) return null;
@@ -63,7 +72,7 @@ export function RichTextView({
       <View style={{ flex: 1 }}>
         <WebView
           originWhitelist={["*"]}
-          source={{ html: buildHtml(html) }}
+          source={{ html: buildHtml(html, onDark) }}
           style={{ flex: 1, backgroundColor: "transparent" }}
           scrollEnabled
           showsVerticalScrollIndicator
@@ -83,7 +92,7 @@ export function RichTextView({
     <View style={{ height }}>
       <WebView
         originWhitelist={["*"]}
-        source={{ html: buildHtml(html) }}
+        source={{ html: buildHtml(html, onDark) }}
         style={{ flex: 1, backgroundColor: "transparent" }}
         scrollEnabled={false}
         onMessage={onMessage}

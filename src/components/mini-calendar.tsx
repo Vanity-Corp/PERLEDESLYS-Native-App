@@ -12,6 +12,7 @@ import { Pressable, View } from "react-native";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { parseEventDate } from "@/lib/calendar";
 import { useEvents } from "@/lib/content-queries";
 import { cn } from "@/lib/utils";
 import type { AppEvent } from "@/types/content";
@@ -61,9 +62,16 @@ function MiniCalendar() {
     return acc;
   }, {});
 
-  const weekEvents = week
-    .flatMap((d) => eventsByDate[iso(d)] ?? [])
-    .slice(0, 3);
+  // The 3 nearest UPCOMING events (date+time in the future), sorted ascending.
+  // The day grid above still reflects the current week; this list is a
+  // "what's next" preview, not a per-week dump.
+  const now = Date.now();
+  const upcomingEvents = events
+    .map((e) => ({ event: e, at: parseEventDate(e.date, e.time)?.getTime() ?? NaN }))
+    .filter((x) => !Number.isNaN(x.at) && x.at >= now)
+    .sort((a, b) => a.at - b.at)
+    .slice(0, 3)
+    .map((x) => x.event);
 
   return (
     <Link href="/app/calendar" asChild>
@@ -147,9 +155,9 @@ function MiniCalendar() {
           })}
         </View>
 
-        {weekEvents.length > 0 && (
+        {upcomingEvents.length > 0 && (
           <View className="mt-3 gap-1.5">
-            {weekEvents.map((e) => (
+            {upcomingEvents.map((e) => (
               <View key={e.id} className="flex-row items-center gap-2">
                 <Icon
                   as={typeIcon(e.type)}

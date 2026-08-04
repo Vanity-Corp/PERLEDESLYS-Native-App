@@ -23,6 +23,10 @@ export type Recipe = {
   createdAt?: string;
   // The single "recette signature" featured on the home screen.
   signature?: boolean;
+  // Optional tutorial video link. Named `vimeoUrl` for historical reasons but
+  // it actually holds a YouTube URL (same as Video/Live). Drives the
+  // "Voir le tutoriel vidéo" button on the recipe detail screen.
+  vimeoUrl?: string | null;
   ingredients: { label: string; qty: string }[];
   steps: string[];
 };
@@ -161,5 +165,16 @@ export type RecentItem = {
   id: string;
   title: string;
   image: ImageRef;
+  createdAt: string;
+};
+
+// A backend-driven notification (GET /api/content/notifications). The server
+// prunes to the last 14 days. `data` carries a deep-link target when present.
+export type NotificationItem = {
+  id: string;
+  type: "recipe" | "video" | "live" | "replay" | "article" | "ramadan" | "promo";
+  title: string;
+  body: string;
+  data?: { type?: string; id?: string };
   createdAt: string;
 };

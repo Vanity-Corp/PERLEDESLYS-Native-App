@@ -5,10 +5,15 @@ import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useArticlesQuery, useWhoAmI } from "@/lib/content-queries";
+import {
+  useArticlesQuery,
+  useHardRefresh,
+  useWhoAmI,
+} from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tips/index.tsx
 //
@@ -42,6 +47,7 @@ export default function TipsScreen() {
     "Cuisiner, c'est offrir de l'amour. Et le faire au TM7, c'est se libérer du temps pour les siens.";
   const [cat, setCat] = useState("Tout");
   const list = articles.filter((a) => cat === "Tout" || a.category === cat);
+  const onRefresh = useHardRefresh([["articles"]]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -51,7 +57,7 @@ export default function TipsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={articlesQ.isFetching}
-            onRefresh={() => articlesQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >
@@ -157,6 +163,9 @@ export default function TipsScreen() {
           ))}
         </View>
       </ScrollView>
+      {/* Same note affordance as recipe/video detail, scoped to the tips
+          section (reuses the shared notes store + dialog). */}
+      <AddNoteButton contextLabel="Astuces & conseils" contextHref="/app/tips" />
     </SafeAreaView>
   );
 }

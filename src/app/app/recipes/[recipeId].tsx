@@ -7,7 +7,6 @@ import {
   Flame,
   Heart,
   PlayCircle,
-  Share2,
   Users,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -27,7 +26,8 @@ import { AddNoteButton } from "@/components/add-note-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { useRecipe } from "@/lib/content-queries";
+import { VideoEmbed } from "@/components/video-embed";
+import { useHardRefresh, useRecipe } from "@/lib/content-queries";
 import { useFavorites, useHistory } from "@/lib/local-store";
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/$recipeId.tsx
@@ -38,8 +38,12 @@ import { useFavorites, useHistory } from "@/lib/local-store";
 // (Task 27) shows recently-viewed recipes alongside recently-watched videos.
 export default function RecipeDetailScreen() {
   const { recipeId } = useLocalSearchParams<{ recipeId: string }>();
-  const { data: recipe, isLoading, isFetching, refetch } = useRecipe(recipeId);
+  const { data: recipe, isLoading, isFetching } = useRecipe(recipeId);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  // Reveals the inline tutorial video player when "Voir le tutoriel vidéo" is
+  // tapped (only rendered when the recipe actually has a video link).
+  const [showTutorial, setShowTutorial] = useState(false);
+  const onRefresh = useHardRefresh([["recipe", recipeId]]);
   const { isFavorite, toggle } = useFavorites();
   const { upsert } = useHistory();
 
@@ -84,7 +88,7 @@ export default function RecipeDetailScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={() => refetch()} />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} />
         }
       >
         {/* Hero image */}
@@ -103,25 +107,17 @@ export default function RecipeDetailScreen() {
                   <Icon as={ArrowLeft} size={20} className="text-foreground" />
                 </Pressable>
               </Link>
-              <View className="flex-row gap-2">
-                <Pressable
-                  onPress={() => toggle(recipe.id, "recipe")}
-                  className="h-10 w-10 items-center justify-center rounded-full bg-background/95"
-                >
-                  <Icon
-                    as={Heart}
-                    size={20}
-                    className={fav ? "text-primary" : "text-foreground"}
-                    fill={fav ? "currentColor" : "none"}
-                  />
-                </Pressable>
-                <Pressable
-                  role="button"
-                  className="h-10 w-10 items-center justify-center rounded-full bg-background/95"
-                >
-                  <Icon as={Share2} size={20} className="text-foreground" />
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={() => toggle(recipe.id, "recipe")}
+                className="h-10 w-10 items-center justify-center rounded-full bg-background/95"
+              >
+                <Icon
+                  as={Heart}
+                  size={20}
+                  className={fav ? "text-primary" : "text-foreground"}
+                  fill={fav ? "currentColor" : "none"}
+                />
+              </Pressable>
             </View>
           </SafeAreaView>
           <View className="absolute bottom-6 left-5 right-5">
@@ -216,14 +212,24 @@ export default function RecipeDetailScreen() {
             ))}
           </View>
 
-          {/* Non-functional in the web version too (no onClick there) */}
-          <Pressable
-            role="button"
-            className="mt-7 flex-row items-center justify-center gap-2 rounded-2xl bg-foreground py-4"
-          >
-            <Icon as={PlayCircle} size={20} className="text-background" />
-            <Text className="font-medium text-background">Voir le tutoriel vidéo</Text>
-          </Pressable>
+          {/* Tutorial video — only shown when the recipe has a video link
+              (vimeoUrl holds a YouTube URL). Tapping reveals an inline player. */}
+          {recipe.vimeoUrl ? (
+            showTutorial ? (
+              <View className="mt-7 overflow-hidden rounded-2xl">
+                <VideoEmbed url={recipe.vimeoUrl} title={recipe.title} />
+              </View>
+            ) : (
+              <Pressable
+                role="button"
+                onPress={() => setShowTutorial(true)}
+                className="mt-7 flex-row items-center justify-center gap-2 rounded-2xl bg-foreground py-4"
+              >
+                <Icon as={PlayCircle} size={20} className="text-background" />
+                <Text className="font-medium text-background">Voir le tutoriel vidéo</Text>
+              </Pressable>
+            )
+          ) : null}
         </View>
       </ScrollView>
       <AddNoteButton

@@ -1,6 +1,7 @@
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -22,6 +23,8 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
   const scrollRef = useRef<ScrollView>(null);
   const [width, setWidth] = useState(0);
   const [index, setIndex] = useState(0);
+  // The review whose full text is shown in the modal (null = closed).
+  const [expanded, setExpanded] = useState<Review | null>(null);
   const count = reviews.length;
 
   const goTo = (i: number) => {
@@ -76,15 +79,23 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
           >
             {reviews.map((r) => (
               <View key={r.id} style={{ width }}>
-                <View className="rounded-2xl border border-border bg-card p-4">
+                {/* Tap the card to read the full review in a modal (the text
+                    itself is capped to 4 lines here). */}
+                <Pressable
+                  onPress={() => setExpanded(r)}
+                  className="rounded-2xl border border-border bg-card p-4"
+                >
                   <StarRating value={r.rating} size={16} readOnly />
-                  <Text className="mt-2 text-sm leading-snug text-foreground">
+                  <Text
+                    className="mt-2 text-sm leading-snug text-foreground"
+                    numberOfLines={4}
+                  >
                     {r.comment}
                   </Text>
                   <Text className="mt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                     @{r.username}
                   </Text>
-                </View>
+                </Pressable>
               </View>
             ))}
           </ScrollView>
@@ -114,6 +125,54 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
           ))}
         </View>
       )}
+
+      {/* Full-review modal — dimmed backdrop (tap to close), card with the
+          author + stars + the full comment in a ScrollView so long reviews
+          scroll, plus an explicit close button. */}
+      <Modal
+        visible={expanded !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setExpanded(null)}
+      >
+        <Pressable
+          className="flex-1 items-center justify-center bg-black/60 p-6"
+          onPress={() => setExpanded(null)}
+        >
+          {expanded && (
+            <Pressable
+              onPress={() => {}}
+              className="w-full max-w-md rounded-3xl border border-border bg-card p-5"
+              style={{ maxHeight: "75%" }}
+            >
+              <View className="flex-row items-start justify-between">
+                <StarRating value={expanded.rating} size={18} readOnly />
+                <Pressable
+                  onPress={() => setExpanded(null)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fermer"
+                  className="-mr-1 -mt-1 h-8 w-8 items-center justify-center rounded-full bg-secondary"
+                >
+                  <Icon as={X} size={16} className="text-foreground" />
+                </Pressable>
+              </View>
+              <ScrollView
+                className="mt-3"
+                showsVerticalScrollIndicator={false}
+                contentContainerClassName="pb-1"
+              >
+                <Text className="text-sm leading-relaxed text-foreground">
+                  {expanded.comment}
+                </Text>
+              </ScrollView>
+              <Text className="mt-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                @{expanded.username}
+              </Text>
+            </Pressable>
+          )}
+        </Pressable>
+      </Modal>
     </View>
   );
 }

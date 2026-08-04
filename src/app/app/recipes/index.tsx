@@ -11,7 +11,11 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useCategories, useRecipesQuery } from "@/lib/content-queries";
+import {
+  useCategories,
+  useHardRefresh,
+  useRecipesQuery,
+} from "@/lib/content-queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { isRecent } from "@/lib/utils";
 
@@ -19,6 +23,7 @@ import { isRecent } from "@/lib/utils";
 export default function RecipesScreen() {
   const recipesQ = useRecipesQuery();
   const recipes = recipesQ.data ?? [];
+  const onRefresh = useHardRefresh([["recipes"]]);
   // Filter pills come from the dashboard-managed categories; if that endpoint
   // is empty, fall back to the distinct categories present in the loaded
   // recipes so the tabs are never blank.
@@ -46,7 +51,7 @@ export default function RecipesScreen() {
         refreshControl={
           <RefreshControl
             refreshing={recipesQ.isFetching}
-            onRefresh={() => recipesQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

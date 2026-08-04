@@ -8,6 +8,7 @@ import type {
   FaqItem,
   FounderInfo,
   Live,
+  NotificationItem,
   Recipe,
   RecentItem,
   Video,
@@ -55,6 +56,8 @@ export const contentApi = {
   about: () => get<About>("/about"),
   whoAmI: () => get<WhoAmI>("/who-am-i"),
   recent: () => get<RecentItem[]>("/recent"),
+  // Backend-driven notification feed (pruned to the last 14 days server-side).
+  notifications: () => get<NotificationItem[]>("/notifications"),
   // Dashboard-managed categories, scoped per content kind ("recipe" | "video").
   categories: (scope: string) =>
     get<Category[]>(`/categories?scope=${scope}`),

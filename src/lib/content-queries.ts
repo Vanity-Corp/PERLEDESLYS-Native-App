@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 
 import { contentApi } from "@/lib/content-api";
 import { reviewsApi, type SubmitReviewInput } from "@/lib/reviews-api";
@@ -201,6 +206,17 @@ export function useRecentQuery() {
   });
 }
 
+// Backend-driven notification feed (last 14 days) for the notifications screen
+// and the home bell counter.
+export function useNotificationsFeedQuery() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: contentApi.notifications,
+    enabled: !!token,
+  });
+}
+
 const EMPTY_FOUNDER: FounderInfo = { name: "", fullName: "", bio: "", avatar: "" };
 export function useFounder(): FounderInfo {
   const token = useToken();
@@ -223,6 +239,17 @@ export function useReviewsQuery() {
 }
 export function useReviews() {
   return useReviewsQuery().data ?? [];
+}
+
+// The current member's own review (approved or pending), or null if they
+// haven't submitted one. Used to hide the "Laisser un avis" CTA.
+export function useMyReview() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["my-review"],
+    queryFn: reviewsApi.mine,
+    enabled: !!token,
+  });
 }
 
 // Pre-login landing copy (public — no token needed). Falls back to the app's
@@ -250,6 +277,20 @@ export function useSubmitReview() {
     mutationFn: (input: SubmitReviewInput) => reviewsApi.submit(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      void queryClient.invalidateQueries({ queryKey: ["my-review"] });
     },
   });
+}
+
+// Hard pull-to-refresh: resets the given queries so their screens drop cached
+// data, return to their pending/skeleton state, and refetch fresh — instead of
+// a background `refetch()` that leaves stale content on screen. Returns an
+// `onRefresh` handler ready to pass to a RefreshControl.
+export function useHardRefresh(keys: QueryKey[]) {
+  const queryClient = useQueryClient();
+  return () => {
+    for (const key of keys) {
+      void queryClient.resetQueries({ queryKey: key });
+    }
+  };
 }

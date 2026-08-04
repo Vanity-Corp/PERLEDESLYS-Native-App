@@ -11,12 +11,17 @@ import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useCategories, useVideosQuery } from "@/lib/content-queries";
+import {
+  useCategories,
+  useHardRefresh,
+  useVideosQuery,
+} from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/tutorials/index.tsx
 export default function TutorialsScreen() {
   const videosQ = useVideosQuery();
   const videos = videosQ.data ?? [];
+  const onRefresh = useHardRefresh([["videos"]]);
   // Category tabs come from the dashboard-managed video categories; fall back
   // to the distinct categories present in the loaded videos when empty.
   const managedCategories = useCategories("video");
@@ -37,7 +42,7 @@ export default function TutorialsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={videosQ.isFetching}
-            onRefresh={() => videosQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

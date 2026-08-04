@@ -11,13 +11,14 @@ import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addToCalendar, parseEventDate } from "@/lib/calendar";
-import { useLivesQuery } from "@/lib/content-queries";
+import { useHardRefresh, useLivesQuery } from "@/lib/content-queries";
 import type { Live } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/lives/index.tsx
 export default function LivesScreen() {
   const livesQ = useLivesQuery();
   const lives = livesQ.data ?? [];
+  const onRefresh = useHardRefresh([["lives"]]);
   const [tab, setTab] = useState<"upcoming" | "replays">("upcoming");
   const upcoming = lives.filter((l) => l.status === "À venir");
   const replays = lives.filter((l) => l.status === "Replay");
@@ -31,7 +32,7 @@ export default function LivesScreen() {
         refreshControl={
           <RefreshControl
             refreshing={livesQ.isFetching}
-            onRefresh={() => livesQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

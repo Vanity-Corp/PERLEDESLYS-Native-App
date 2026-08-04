@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
-import { useLivesQuery } from "@/lib/content-queries";
+import { useHardRefresh, useLivesQuery } from "@/lib/content-queries";
 
 // Live/replay player (WIRING_PLAN B4). Resolves the live from the shared list
 // query and plays its YouTube link. No resume for lives (they're event streams,
@@ -22,6 +22,7 @@ export default function LiveDetailScreen() {
   const livesQ = useLivesQuery();
   const lives = livesQ.data ?? [];
   const live = lives.find((l) => l.id === liveId);
+  const onRefresh = useHardRefresh([["lives"]]);
 
   if (lives.length === 0 && !live) {
     return (
@@ -45,7 +46,7 @@ export default function LiveDetailScreen() {
         refreshControl={
           <RefreshControl
             refreshing={livesQ.isFetching}
-            onRefresh={() => livesQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { RichTextView } from "@/components/rich-text-view";
 import { Icon } from "@/components/ui/icon";
-import { useArticlesQuery } from "@/lib/content-queries";
+import { useArticlesQuery, useHardRefresh } from "@/lib/content-queries";
 
 // Article ("Astuce") detail. Resolves from the shared articles list query (same
 // pattern as the live detail) and renders the rich HTML `content` via the
@@ -24,6 +24,7 @@ export default function ArticleDetailScreen() {
   const articlesQ = useArticlesQuery();
   const articles = articlesQ.data ?? [];
   const article = articles.find((a) => a.id === articleId);
+  const onRefresh = useHardRefresh([["articles"]]);
 
   if (articles.length === 0 && !article) {
     return (
@@ -49,7 +50,7 @@ export default function ArticleDetailScreen() {
         refreshControl={
           <RefreshControl
             refreshing={articlesQ.isFetching}
-            onRefresh={() => articlesQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

@@ -21,6 +21,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import {
   useArticlesQuery,
   useFaqQuery,
+  useHardRefresh,
   useRecipesQuery,
   useVideosQuery,
 } from "@/lib/content-queries";
@@ -51,12 +52,12 @@ export default function SearchScreen() {
     videosQ.isFetching ||
     articlesQ.isFetching ||
     faqQ.isFetching;
-  const onRefresh = () => {
-    recipesQ.refetch();
-    videosQ.refetch();
-    articlesQ.refetch();
-    faqQ.refetch();
-  };
+  const onRefresh = useHardRefresh([
+    ["recipes"],
+    ["videos"],
+    ["articles"],
+    ["faq"],
+  ]);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<Tab>("all");
   const debouncedQ = useDebounce(q);

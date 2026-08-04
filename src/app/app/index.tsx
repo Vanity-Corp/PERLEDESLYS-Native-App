@@ -29,8 +29,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useArticlesQuery,
   useFounder,
+  useHardRefresh,
   useLivesQuery,
-  useRecentQuery,
+  useMyReview,
+  useNotificationsFeedQuery,
   useRecipesQuery,
   useReviewsQuery,
   useVideosQuery,
@@ -46,11 +48,15 @@ export default function DashboardScreen() {
   const reviewsQ = useReviewsQuery();
   const videosQ = useVideosQuery();
   const founderInfo = useFounder();
-  const recent = useRecentQuery().data ?? [];
+  const notifications = useNotificationsFeedQuery().data ?? [];
   const lastSeenAt = useNotificationsStore((s) => s.lastSeenAt);
-  const hasUnread = recent.some(
-    (r) => new Date(r.createdAt).getTime() > lastSeenAt,
-  );
+  // Numeric unread counter: notifications newer than the last time the member
+  // opened the notifications screen (display capped at "9+").
+  const unreadCount = notifications.filter(
+    (n) => new Date(n.createdAt).getTime() > lastSeenAt,
+  ).length;
+  const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
+  const myReview = useMyReview().data?.review ?? null;
 
   const articles = articlesQ.data ?? [];
   const lives = livesQ.data ?? [];
@@ -69,6 +75,17 @@ export default function DashboardScreen() {
     void articlesQ.refetch();
     void reviewsQ.refetch();
   };
+  // Pull-to-refresh does a HARD refresh: resets every home query so the screen
+  // drops back to its skeleton and refetches fresh.
+  const onHardRefresh = useHardRefresh([
+    ["recipes"],
+    ["videos"],
+    ["lives"],
+    ["articles"],
+    ["reviews"],
+    ["recent"],
+    ["notifications"],
+  ]);
 
   const continueWatching = videos.filter((v) => v.progress).slice(0, 3);
   const newRecipes = recipes.filter((r) => isRecent(r.createdAt));
@@ -120,7 +137,7 @@ export default function DashboardScreen() {
             refreshing={
               recipesQ.isFetching || videosQ.isFetching || livesQ.isFetching
             }
-            onRefresh={refetchAll}
+            onRefresh={onHardRefresh}
           />
         }
       >
@@ -137,8 +154,12 @@ export default function DashboardScreen() {
               className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
             >
               <Icon as={Bell} size={20} className="text-foreground" />
-              {hasUnread && (
-                <View className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-primary" />
+              {unreadCount > 0 && (
+                <View className="absolute -right-1.5 -top-1.5 h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1">
+                  <Text className="text-[10px] font-semibold text-primary-foreground">
+                    {unreadLabel}
+                  </Text>
+                </View>
               )}
             </Pressable>
           </Link>
@@ -584,15 +605,19 @@ export default function DashboardScreen() {
             carousel; a "Laisser un avis" CTA opens the submission screen. */}
         <Section title="Avis de nos clientes">
           {reviews.length > 0 && <ReviewCarousel reviews={reviews} />}
-          <View className="px-5 pt-3">
-            <Link href="/app/reviews" asChild>
-              <Pressable className="items-center rounded-2xl border border-border bg-card py-3.5">
-                <Text className="text-sm font-medium text-primary">
-                  Laisser un avis
-                </Text>
-              </Pressable>
-            </Link>
-          </View>
+          {/* Hidden once the member has already submitted a review (approved or
+              pending) — they can't leave a second one. */}
+          {!myReview && (
+            <View className="px-5 pt-3">
+              <Link href="/app/reviews" asChild>
+                <Pressable className="items-center rounded-2xl border border-border bg-card py-3.5">
+                  <Text className="text-sm font-medium text-primary">
+                    Laisser un avis
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
+          )}
         </Section>
 
         {/* Articles */}

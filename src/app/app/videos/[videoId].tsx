@@ -3,12 +3,10 @@ import { Link, useLocalSearchParams } from "expo-router";
 import {
   ArrowLeft,
   Clock,
-  Download,
   Heart,
   Maximize2,
   Play,
   RotateCcw,
-  Share2,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -28,7 +26,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
 import { youTubeWatchUrl } from "@/components/video-embed.shared";
-import { useVideo, useVideos } from "@/lib/content-queries";
+import { useHardRefresh, useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
 import type { Video } from "@/types/content";
 
@@ -49,7 +47,8 @@ import type { Video } from "@/types/content";
 // content pages (recipe/video/tips) while keeping the floating-button look.
 export default function VideoDetailScreen() {
   const { videoId } = useLocalSearchParams<{ videoId: string }>();
-  const { data: video, isLoading, isFetching, refetch } = useVideo(videoId);
+  const { data: video, isLoading, isFetching } = useVideo(videoId);
+  const onRefresh = useHardRefresh([["video", videoId]]);
 
   if (isLoading) {
     return (
@@ -71,7 +70,7 @@ export default function VideoDetailScreen() {
     <VideoDetail
       video={video}
       refreshing={isFetching}
-      onRefresh={() => refetch()}
+      onRefresh={onRefresh}
     />
   );
 }
@@ -282,7 +281,6 @@ function VideoDetail({
         <Text className="mt-4 text-sm leading-relaxed text-muted-foreground">{video.description}</Text>
 
         <View className="mt-5 flex-row gap-2">
-          <ActionBtn icon={<Icon as={Download} size={16} className="text-primary" />} label="Guide PDF" />
           <ActionBtn
             icon={
               <Icon
@@ -295,7 +293,6 @@ function VideoDetail({
             label="Favoris"
             onPress={() => toggle(video.id, "video")}
           />
-          <ActionBtn icon={<Icon as={Share2} size={16} className="text-primary" />} label="Partager" />
         </View>
 
         <Text className="mb-3 mt-8 font-display text-lg font-semibold text-foreground">Vidéos similaires</Text>

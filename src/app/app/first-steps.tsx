@@ -6,7 +6,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
-import { useVideo, useWelcomeMessageQuery } from "@/lib/content-queries";
+import {
+  useHardRefresh,
+  useVideo,
+  useWelcomeMessageQuery,
+} from "@/lib/content-queries";
+import { useFavorites } from "@/lib/local-store";
 import { FIRST_STEPS_VIDEO_ID } from "@/lib/mock-data";
 
 // Web source: kitchen-haven-club/src/routes/app/first-steps/index.tsx
@@ -43,6 +48,13 @@ export default function FirstStepsScreen() {
       ? welcomeMessage.steps
       : DEFAULT_STEPS;
 
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(FIRST_STEPS_VIDEO_ID, "video");
+  const onRefresh = useHardRefresh([
+    ["video", FIRST_STEPS_VIDEO_ID],
+    ["welcome-message"],
+  ]);
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <ScrollView
@@ -51,10 +63,7 @@ export default function FirstStepsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={videoQ.isFetching || welcomeQ.isFetching}
-            onRefresh={() => {
-              videoQ.refetch();
-              welcomeQ.refetch();
-            }}
+            onRefresh={onRefresh}
           />
         }
       >
@@ -123,13 +132,24 @@ export default function FirstStepsScreen() {
           </View>
         </View>
 
-        {/* Actions. "Ajouter aux favoris" stays a non-functional placeholder
-            (as in the web version). "Envoyer mon retour" now opens the customer
-            review form (replaces the old dead Send-Feedback placeholder). */}
+        {/* Actions. "Ajouter aux favoris" toggles the first-steps video in the
+            local favorites store. "Donner mon avis" opens the customer review
+            form (replaces the old dead Send-Feedback placeholder). */}
         <View className="px-5 mt-6 flex-row gap-3">
-          <Pressable role="button" className="flex-1 items-center gap-1 rounded-2xl border border-border bg-card py-4">
-            <Icon as={Heart} size={20} className="text-primary" />
-            <Text className="text-xs font-medium text-foreground">Ajouter aux favoris</Text>
+          <Pressable
+            role="button"
+            onPress={() => toggle(FIRST_STEPS_VIDEO_ID, "video")}
+            className="flex-1 items-center gap-1 rounded-2xl border border-border bg-card py-4"
+          >
+            <Icon
+              as={Heart}
+              size={20}
+              className="text-primary"
+              fill={fav ? "currentColor" : "none"}
+            />
+            <Text className="text-xs font-medium text-foreground">
+              {fav ? "Ajouté aux favoris" : "Ajouter aux favoris"}
+            </Text>
           </Pressable>
           <Link href="/app/reviews" asChild>
             <Pressable role="button" className="flex-1">

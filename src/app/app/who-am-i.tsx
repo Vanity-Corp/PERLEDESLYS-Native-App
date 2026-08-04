@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ReviewCarousel } from "@/components/review-carousel";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { useReviews, useWhoAmIQuery } from "@/lib/content-queries";
+import { useHardRefresh, useReviews, useWhoAmIQuery } from "@/lib/content-queries";
 
 // "Qui suis-je ?" — Mon histoire, Pourquoi cette application, Statistiques,
 // Mes photos and client reviews. Faithful to the design; images come from the
@@ -32,6 +32,7 @@ export default function WhoAmIScreen() {
   const whoQ = useWhoAmIQuery();
   const who = whoQ.data;
   const reviews = useReviews();
+  const onRefresh = useHardRefresh([["who-am-i"], ["reviews"]]);
 
   // Full-screen image viewer: holds the tapped carousel image uri (null closed).
   const [viewer, setViewer] = useState<string | null>(null);
@@ -64,7 +65,7 @@ export default function WhoAmIScreen() {
         contentContainerClassName="px-5 pb-16"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={whoQ.isFetching} onRefresh={() => whoQ.refetch()} />
+          <RefreshControl refreshing={whoQ.isFetching} onRefresh={onRefresh} />
         }
       >
         {/* Mon histoire */}

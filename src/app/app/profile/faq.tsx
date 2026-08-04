@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { Icon } from "@/components/ui/icon";
 import { GradientView } from "@/components/ui/gradient-view";
-import { useFaqQuery } from "@/lib/content-queries";
+import { useFaqQuery, useHardRefresh } from "@/lib/content-queries";
 
 // Web source: kitchen-haven-club/src/routes/app/faq/index.tsx
 //
@@ -27,6 +27,7 @@ import { useFaqQuery } from "@/lib/content-queries";
 export default function FaqScreen() {
   const faqQ = useFaqQuery();
   const faqItems = faqQ.data ?? [];
+  const onRefresh = useHardRefresh([["faq"]]);
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <ScrollView
@@ -35,7 +36,7 @@ export default function FaqScreen() {
         refreshControl={
           <RefreshControl
             refreshing={faqQ.isFetching}
-            onRefresh={() => faqQ.refetch()}
+            onRefresh={onRefresh}
           />
         }
       >

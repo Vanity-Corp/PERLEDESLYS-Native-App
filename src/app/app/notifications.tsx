@@ -1,40 +1,37 @@
 import { useRouter } from "expo-router";
-import { ArrowLeft, BookOpen, Play, Radio, UtensilsCrossed } from "lucide-react-native";
-import { useEffect } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Megaphone,
+  Play,
+  Radio,
+  Sparkles,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
-import { useRecentQuery } from "@/lib/content-queries";
+import { useHardRefresh, useNotificationsFeedQuery } from "@/lib/content-queries";
 import { useNotificationsStore } from "@/lib/notifications-store";
-import type { RecentItem } from "@/types/content";
+import { hrefForPushData } from "@/lib/push";
+import type { NotificationItem } from "@/types/content";
 
-const ICONS = {
+// Icon per notification type.
+const ICONS: Record<NotificationItem["type"], LucideIcon> = {
   recipe: UtensilsCrossed,
   video: Play,
   live: Radio,
+  replay: Radio,
   article: BookOpen,
-} as const;
+  ramadan: Sparkles,
+  promo: Megaphone,
+};
 
-const LABELS = {
-  recipe: "Nouvelle recette",
-  video: "Nouvelle vidéo",
-  live: "Nouveau live",
-  article: "Nouvel article",
-} as const;
-
-function href(item: RecentItem) {
-  switch (item.type) {
-    case "recipe":
-      return { pathname: "/app/recipes/[recipeId]", params: { recipeId: item.id } } as const;
-    case "video":
-      return { pathname: "/app/videos/[videoId]", params: { videoId: item.id } } as const;
-    case "live":
-      return { pathname: "/app/lives/[liveId]", params: { liveId: item.id } } as const;
-    case "article":
-      return { pathname: "/app/articles/[articleId]", params: { articleId: item.id } } as const;
-  }
-}
+// How many items are shown initially and revealed per "Voir plus" press.
+const PAGE_SIZE = 8;
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -51,14 +48,23 @@ function relativeTime(iso: string): string {
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const recentQ = useRecentQuery();
-  const items = recentQ.data ?? [];
+  const feedQ = useNotificationsFeedQuery();
+  const items = feedQ.data ?? [];
   const markSeen = useNotificationsStore((s) => s.markSeen);
+  const onRefresh = useHardRefresh([["notifications"]]);
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   // Viewing the list clears the unread badge.
   useEffect(() => {
     markSeen();
   }, [markSeen]);
+
+  const shown = items.slice(0, visible);
+
+  const openItem = (item: NotificationItem) => {
+    const href = hrefForPushData(item.data);
+    if (href) router.push(href);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -66,19 +72,21 @@ export default function NotificationsScreen() {
         <Pressable onPress={() => router.back()} className="-ml-2 rounded-full p-2">
           <Icon as={ArrowLeft} size={20} className="text-foreground" />
         </Pressable>
-        <Text className="font-display text-2xl font-medium tracking-tight text-foreground">
-          Notifications
-        </Text>
+        <View>
+          <Text className="font-display text-2xl font-medium tracking-tight text-foreground">
+            Notifications
+          </Text>
+          <Text className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            {items.length} notification{items.length !== 1 ? "s" : ""}
+          </Text>
+        </View>
       </View>
 
       <ScrollView
         contentContainerClassName="px-5 pb-16 pt-2 gap-3"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={recentQ.isFetching}
-            onRefresh={() => recentQ.refetch()}
-          />
+          <RefreshControl refreshing={feedQ.isFetching} onRefresh={onRefresh} />
         }
       >
         {items.length === 0 ? (
@@ -86,31 +94,55 @@ export default function NotificationsScreen() {
             Aucune notification pour le moment.
           </Text>
         ) : (
-          items.map((item) => (
-            <Pressable
-              key={`${item.type}-${item.id}`}
-              onPress={() => router.push(href(item))}
-              className="flex-row items-center gap-3 rounded-2xl border border-border bg-card p-3"
-            >
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                <Icon as={ICONS[item.type]} size={18} className="text-primary" />
-              </View>
-              <View className="min-w-0 flex-1">
-                <Text className="text-[10px] font-medium uppercase tracking-wider text-primary">
-                  {LABELS[item.type]}
-                </Text>
-                <Text
-                  className="text-sm font-medium leading-snug text-foreground"
-                  numberOfLines={1}
+          <>
+            {shown.map((item) => {
+              const hasLink = !!hrefForPushData(item.data);
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => openItem(item)}
+                  disabled={!hasLink}
+                  className="flex-row items-center gap-3 rounded-2xl border border-border bg-card p-3"
                 >
-                  {item.title}
-                </Text>
-                <Text className="mt-0.5 text-[11px] text-muted-foreground">
-                  {relativeTime(item.createdAt)}
-                </Text>
-              </View>
-            </Pressable>
-          ))
+                  <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                    <Icon
+                      as={ICONS[item.type] ?? Sparkles}
+                      size={18}
+                      className="text-primary"
+                    />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      className="text-sm font-medium leading-snug text-foreground"
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    {item.body ? (
+                      <Text
+                        className="mt-0.5 text-xs leading-snug text-muted-foreground"
+                        numberOfLines={2}
+                      >
+                        {item.body}
+                      </Text>
+                    ) : null}
+                    <Text className="mt-0.5 text-[11px] text-muted-foreground">
+                      {relativeTime(item.createdAt)}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            {visible < items.length && (
+              <Pressable
+                onPress={() => setVisible((v) => v + PAGE_SIZE)}
+                className="mt-1 items-center rounded-2xl border border-border bg-card py-3.5"
+              >
+                <Text className="text-sm font-medium text-primary">Voir plus</Text>
+              </Pressable>
+            )}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
