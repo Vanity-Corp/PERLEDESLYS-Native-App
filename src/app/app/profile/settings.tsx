@@ -6,7 +6,7 @@ import { ArrowLeft, Bell, Camera, Save } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -90,33 +90,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // Long-press the avatar to remove it — always behind a confirmation modal.
-  const confirmRemoveAvatar = () => {
-    if (!avatar || uploadingAvatar) return;
-    Alert.alert(
-      "Supprimer la photo",
-      "Voulez-vous vraiment supprimer votre photo de profil ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        { text: "Supprimer", style: "destructive", onPress: removeAvatar },
-      ],
-    );
-  };
-
-  const removeAvatar = async () => {
-    setError(null);
-    setUploadingAvatar(true);
-    try {
-      // Empty string clears the avatar server-side (PATCH /auth/me).
-      await updateProfile({ avatar: "" });
-      setAvatar("");
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Impossible de supprimer la photo.");
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
   const { control, handleSubmit } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -164,11 +137,7 @@ export default function SettingsScreen() {
         </View>
 
         <View className="mt-4 items-center gap-3">
-          <Pressable
-            onPress={pickAvatar}
-            onLongPress={confirmRemoveAvatar}
-            disabled={uploadingAvatar}
-          >
+          <Pressable onPress={pickAvatar} disabled={uploadingAvatar}>
             <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
               {uploadingAvatar ? (
                 <ActivityIndicator />
@@ -194,11 +163,6 @@ export default function SettingsScreen() {
               Changer la photo
             </Text>
           </Pressable>
-          {avatar ? (
-            <Text className="text-[11px] text-muted-foreground">
-              Maintenez la photo pour la supprimer
-            </Text>
-          ) : null}
         </View>
 
         <SectionTitle>Mes informations</SectionTitle>
