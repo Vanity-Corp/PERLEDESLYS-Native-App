@@ -18,7 +18,7 @@ function buildHtml(content: string, onDark: boolean): string {
   // dark-on-light.
   const bodyColor = onDark ? "rgba(255,255,255,0.9)" : "#2b2b2b";
   const headingColor = onDark ? "#ffffff" : "inherit";
-  const linkColor = onDark ? "#f0c8d8" : "#b06a8f";
+  const linkColor = onDark ? "#E8883C" : "#3E090E";
   return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{background:transparent}

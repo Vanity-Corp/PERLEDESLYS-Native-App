@@ -39,7 +39,7 @@ async function ensureAndroidChannel(): Promise<void> {
   await Notifications.setNotificationChannelAsync("default", {
     name: "Nouveautés",
     importance: Notifications.AndroidImportance.HIGH,
-    lightColor: "#C4849B",
+    lightColor: "#E8883C",
   });
 }
 
