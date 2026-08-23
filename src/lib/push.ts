@@ -17,6 +17,11 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 // logout / when push is disabled (even after the auth token is gone).
 const STORED_TOKEN_KEY = "pdl.pushToken";
 
+// Expo Go (SDK 53+) removed remote-push support, so getExpoPushTokenAsync
+// errors there. Skip all push work when running in Expo Go — it re-enables
+// automatically in a dev/production build. Use a dev build to test push.
+export const isExpoGo = Constants.appOwnership === "expo";
+
 function projectId(): string | undefined {
   return (
     Constants.expoConfig?.extra?.eas?.projectId ??
@@ -46,7 +51,7 @@ async function ensureAndroidChannel(): Promise<void> {
 // Register this device against the backend. Requests notification permission
 // (the OS prompt) the first time. No-op on web / when the API URL is unset.
 export async function registerPushToken(authToken: string): Promise<void> {
-  if (Platform.OS === "web" || !API_URL) return;
+  if (Platform.OS === "web" || !API_URL || isExpoGo) return;
   try {
     if (!(await ensurePermission())) return;
     await ensureAndroidChannel();
@@ -73,7 +78,7 @@ export async function registerPushToken(authToken: string): Promise<void> {
 // (member disabled push, or logged out). Call while the auth token is still
 // valid — the backend route is member-guarded.
 export async function unregisterPushToken(authToken?: string): Promise<void> {
-  if (Platform.OS === "web" || !API_URL) return;
+  if (Platform.OS === "web" || !API_URL || isExpoGo) return;
   try {
     const expoToken = await AsyncStorage.getItem(STORED_TOKEN_KEY);
     if (expoToken && authToken) {
