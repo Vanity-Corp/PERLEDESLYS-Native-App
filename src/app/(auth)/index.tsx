@@ -54,10 +54,10 @@ export default function LandingScreen() {
           contentFit="contain"
           style={{
             position: "absolute",
-            left: -24,
-            top: "38%",
-            width: 96,
-            height: 128,
+            left: "-75%",
+            top: 0,
+            width: 396,
+            height: 428,
             opacity: 0.9,
           }}
           accessibilityLabel="Algérie"
@@ -77,12 +77,15 @@ export default function LandingScreen() {
       </View>
 
       {/* Content */}
-      <SafeAreaView className="flex-1 items-center px-6 pb-4" edges={["bottom"]}>
-        <WhiteLogo width={220} height={186} />
-        <Text className="-mt-1 font-display text-2xl italic text-accent">
+      <SafeAreaView
+        className="flex-1 items-center px-6 pb-4"
+        edges={["bottom"]}
+      >
+        <WhiteLogo width={200} height={166} />
+        <Text className="text-left font-display text-base italic text-accent w-full">
           {landing.title}
         </Text>
-        <Text className="mt-3 text-center text-[14px] leading-relaxed text-primary-foreground/85">
+        <Text className="mt-1 text-left text-[14px] leading-relaxed text-primary-foreground/85">
           {landing.description}
         </Text>
 
@@ -91,7 +94,7 @@ export default function LandingScreen() {
             href={{ pathname: "/(auth)/login", params: { tab: "login" } }}
             asChild
           >
-            <Button variant="secondary" className="h-14 w-full rounded-2xl">
+            <Button variant="secondary" className="h-12 w-full rounded-full">
               <Text className="font-medium tracking-wide text-primary">
                 J'ai déjà un compte
               </Text>
@@ -101,7 +104,7 @@ export default function LandingScreen() {
             href={{ pathname: "/(auth)/login", params: { tab: "register" } }}
             asChild
           >
-            <Button className="h-14 w-full rounded-2xl bg-card">
+            <Button className="h-12 w-full rounded-full bg-card">
               <Text className="font-medium text-primary">Créer un compte</Text>
             </Button>
           </Link>
