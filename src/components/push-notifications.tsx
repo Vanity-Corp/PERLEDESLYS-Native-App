@@ -1,12 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 import { InteractionManager } from "react-native";
 
 import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/local-store";
-import { hrefForPushData, isExpoGo, registerPushToken, unregisterPushToken } from "@/lib/push";
+import {
+  getNotifications,
+  hrefForPushData,
+  registerPushToken,
+  unregisterPushToken,
+} from "@/lib/push";
 
 // Mounted inside the (ACTIVE-only) app tab tree. Owns the whole remote-push
 // lifecycle: registers/unregisters the device token with the backend (gated on
@@ -35,7 +39,8 @@ export function PushNotifications() {
   // Tapping a notification (foreground, background, or cold-start) → route to
   // the content it points at.
   useEffect(() => {
-    if (isExpoGo) return;
+    const Notifications = getNotifications();
+    if (!Notifications) return;
     const route = (data: unknown) => {
       const href = hrefForPushData(data);
       if (href) router.push(href);
@@ -58,7 +63,8 @@ export function PushNotifications() {
   // A push received while the app is open → refresh the recent feed so the
   // notification center updates live (no pull-to-refresh needed).
   useEffect(() => {
-    if (isExpoGo) return;
+    const Notifications = getNotifications();
+    if (!Notifications) return;
     const sub = Notifications.addNotificationReceivedListener(() => {
       void queryClient.invalidateQueries({ queryKey: ["recent"] });
     });

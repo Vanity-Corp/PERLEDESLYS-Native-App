@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 
+import { isExpoGo } from "@/lib/runtime";
 import type { AppEvent } from "@/types/content";
 
 // Local event reminders (WIRING_PLAN B2). Native uses expo-notifications to
@@ -12,7 +13,8 @@ import type { AppEvent } from "@/types/content";
 type NotificationsModule = any;
 
 let Notifications: NotificationsModule = null;
-if (Platform.OS !== "web") {
+// Expo Go (SDK 53+) throws on importing expo-notifications, so skip it there.
+if (Platform.OS !== "web" && !isExpoGo) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     Notifications = require("expo-notifications");

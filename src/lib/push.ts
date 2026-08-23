@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import type { Href } from "expo-router";
 import { Platform } from "react-native";
+
+import { isExpoGo } from "@/lib/runtime";
 
 // Remote push (Expo Push Service). The backend stores each device's Expo push
 // token (POST /notifications/register) and sends a push whenever new content is
@@ -17,10 +18,23 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 // logout / when push is disabled (even after the auth token is gone).
 const STORED_TOKEN_KEY = "pdl.pushToken";
 
-// Expo Go (SDK 53+) removed remote-push support, so getExpoPushTokenAsync
-// errors there. Skip all push work when running in Expo Go — it re-enables
-// automatically in a dev/production build. Use a dev build to test push.
-export const isExpoGo = Constants.appOwnership === "expo";
+// Re-exported for the PushNotifications component. See @/lib/runtime.
+export { isExpoGo };
+
+// Lazily load expo-notifications. Importing it at module scope throws in Expo
+// Go (SDK 53+), so it's required on demand and only outside Expo Go. Returns
+// null when unavailable, so every caller can no-op safely.
+function getNotifications(): typeof import("expo-notifications") | null {
+  if (isExpoGo) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("expo-notifications");
+  } catch {
+    return null;
+  }
+}
+
+export { getNotifications };
 
 function projectId(): string | undefined {
   return (
@@ -30,20 +44,22 @@ function projectId(): string | undefined {
   );
 }
 
-async function ensurePermission(): Promise<boolean> {
-  const current = await Notifications.getPermissionsAsync();
+type NotificationsModule = NonNullable<ReturnType<typeof getNotifications>>;
+
+async function ensurePermission(N: NotificationsModule): Promise<boolean> {
+  const current = await N.getPermissionsAsync();
   if (current.granted) return true;
-  const req = await Notifications.requestPermissionsAsync();
+  const req = await N.requestPermissionsAsync();
   return !!req.granted;
 }
 
 // Android needs a channel for notifications to display. Must match the
 // `channelId` the backend sends ("default").
-async function ensureAndroidChannel(): Promise<void> {
+async function ensureAndroidChannel(N: NotificationsModule): Promise<void> {
   if (Platform.OS !== "android") return;
-  await Notifications.setNotificationChannelAsync("default", {
+  await N.setNotificationChannelAsync("default", {
     name: "Nouveautés",
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: N.AndroidImportance.HIGH,
     lightColor: "#E8883C",
   });
 }
@@ -52,11 +68,13 @@ async function ensureAndroidChannel(): Promise<void> {
 // (the OS prompt) the first time. No-op on web / when the API URL is unset.
 export async function registerPushToken(authToken: string): Promise<void> {
   if (Platform.OS === "web" || !API_URL || isExpoGo) return;
+  const N = getNotifications();
+  if (!N) return;
   try {
-    if (!(await ensurePermission())) return;
-    await ensureAndroidChannel();
+    if (!(await ensurePermission(N))) return;
+    await ensureAndroidChannel(N);
     const pid = projectId();
-    const { data: expoToken } = await Notifications.getExpoPushTokenAsync(
+    const { data: expoToken } = await N.getExpoPushTokenAsync(
       pid ? { projectId: pid } : undefined,
     );
     if (!expoToken) return;
