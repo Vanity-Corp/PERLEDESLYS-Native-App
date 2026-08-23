@@ -91,6 +91,12 @@ export const GRADIENTS = {
   overlay: ["transparent", "hsla(8.9, 29.2%, 9.2%, 0.85)"],
   roseOverlay: ["transparent", "hsla(354.3, 74.6%, 13.9%, 0.85)"],
   creamOverlay: ["transparent", "hsla(10, 100.0%, 98.2%, 0.90)"],
+  // Fades the auth hero photo down into the solid bordeaux background.
+  bordeauxOverlay: [
+    "transparent",
+    "hsla(354.3, 74.6%, 13.9%, 0.55)",
+    "hsl(354.3, 74.6%, 13.9%)",
+  ],
 } as const;
 
 // Hex fallbacks for props that need a real resolved color rather than a

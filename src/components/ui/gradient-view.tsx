@@ -49,6 +49,7 @@ const DIRECTIONS: Record<
   overlay: VERTICAL,
   roseOverlay: VERTICAL,
   creamOverlay: VERTICAL,
+  bordeauxOverlay: VERTICAL,
 };
 
 type GradientViewProps = Omit<
