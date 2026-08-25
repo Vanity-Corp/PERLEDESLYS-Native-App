@@ -35,12 +35,14 @@ export const queryClient = new QueryClient({
   mutationCache: new MutationCache({ onError: handleAuthError }),
   defaultOptions: {
     queries: {
-      // Always treat cached content as stale and refetch on mount, so
-      // navigating back to a screen picks up dashboard updates without the
-      // app having to be force-killed. Pull-to-refresh goes further and
-      // resets the query to its loading state (see `useHardRefresh`).
-      staleTime: 0,
-      refetchOnMount: "always",
+      // Content changes infrequently (one creator), so keep it fresh for a few
+      // minutes: revisiting a screen renders the cached list INSTANTLY with no
+      // refetch (feels fast + no network churn), and only refetches in the
+      // background once stale. Pull-to-refresh still forces fresh data and
+      // resets the query to its loading state (see `useHardRefresh`), and
+      // dashboard mutations invalidate their queries explicitly.
+      staleTime: 5 * 60_000,
+      refetchOnMount: true,
       retry: 2,
     },
   },

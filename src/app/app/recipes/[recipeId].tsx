@@ -148,23 +148,25 @@ export default function RecipeDetailScreen() {
 
           <Text className="mt-5 text-sm leading-relaxed text-muted-foreground">{recipe.description}</Text>
 
-          {/* Cookidoo CTA */}
-          <Pressable onPress={() => Linking.openURL(recipe.cookidooUrl)}>
-            <GradientView tone="luxe" className="mt-5 flex-row items-center gap-3 rounded-2xl p-4">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-background/20">
-                <Icon as={ExternalLink} size={20} className="text-primary-foreground" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
-                  Ouvrir sur
-                </Text>
-                <Text className="text-sm font-medium text-primary-foreground">Cookidoo · Thermomix TM7</Text>
-              </View>
-              <View className="rounded-full bg-background/20 px-3 py-1.5">
-                <Text className="text-xs font-medium text-primary-foreground">Lancer</Text>
-              </View>
-            </GradientView>
-          </Pressable>
+          {/* Cookidoo CTA — only when the recipe has a Cookidoo link */}
+          {recipe.cookidooUrl ? (
+            <Pressable onPress={() => Linking.openURL(recipe.cookidooUrl)}>
+              <GradientView tone="luxe" className="mt-5 flex-row items-center gap-3 rounded-2xl p-4">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-background/20">
+                  <Icon as={ExternalLink} size={20} className="text-primary-foreground" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
+                    Ouvrir sur
+                  </Text>
+                  <Text className="text-sm font-medium text-primary-foreground">Cookidoo · Thermomix TM7</Text>
+                </View>
+                <View className="rounded-full bg-background/20 px-3 py-1.5">
+                  <Text className="text-xs font-medium text-primary-foreground">Lancer</Text>
+                </View>
+              </GradientView>
+            </Pressable>
+          ) : null}
 
           {/* Ingredients */}
           <Text className="mt-7 mb-3 font-display text-xl font-semibold text-foreground">Ingrédients</Text>

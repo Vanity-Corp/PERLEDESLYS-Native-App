@@ -99,6 +99,18 @@ export function useArticles() {
   return useArticlesQuery().data ?? [];
 }
 
+// Full article (incl. the rich-text `content` body) from the detail endpoint.
+// The list endpoint omits `content` for a lighter payload, so the article
+// screen fetches the complete row by id here.
+export function useArticle(id?: string) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["article", id],
+    queryFn: () => contentApi.article(id!),
+    enabled: !!token && !!id,
+  });
+}
+
 export function useLivesQuery() {
   const token = useToken();
   return useQuery({

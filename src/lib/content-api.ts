@@ -48,6 +48,7 @@ export const contentApi = {
   videos: () => get<Video[]>("/videos"),
   video: (id: string) => get<Video>(`/videos/${id}`),
   articles: () => get<Article[]>("/articles"),
+  article: (id: string) => get<Article>(`/articles/${id}`),
   lives: () => get<Live[]>("/lives"),
   events: () => get<AppEvent[]>("/events"),
   faq: () => get<FaqItem[]>("/faq"),

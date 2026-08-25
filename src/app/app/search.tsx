@@ -67,7 +67,7 @@ export default function SearchScreen() {
     if (!needle) return { recipes: [], videos: [], articles: [], faq: [] as typeof faqItems };
     return {
       recipes: recipes.filter((r) =>
-        [r.title, r.category, r.description, ...r.ingredients.map((i) => i.label)]
+        [r.title, r.category, r.description, ...(r.ingredients ?? []).map((i) => i.label)]
           .map(norm)
           .some((t) => t.includes(needle)),
       ),

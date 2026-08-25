@@ -328,16 +328,18 @@ export default function DashboardScreen() {
                           {featured.difficulty}
                         </Text>
                       </View>
-                      <View className="ml-auto flex-row items-center gap-1 rounded-full bg-background/95 px-2 py-0.5">
-                        <Icon
-                          as={ExternalLink}
-                          size={12}
-                          className="text-foreground"
-                        />
-                        <Text className="text-[11px] text-foreground">
-                          Cookidoo
-                        </Text>
-                      </View>
+                      {featured.cookidooUrl ? (
+                        <View className="ml-auto flex-row items-center gap-1 rounded-full bg-background/95 px-2 py-0.5">
+                          <Icon
+                            as={ExternalLink}
+                            size={12}
+                            className="text-foreground"
+                          />
+                          <Text className="text-[11px] text-foreground">
+                            Cookidoo
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
                 </View>

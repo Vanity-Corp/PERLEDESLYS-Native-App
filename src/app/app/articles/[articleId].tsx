@@ -13,20 +13,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { RichTextView } from "@/components/rich-text-view";
 import { Icon } from "@/components/ui/icon";
-import { useArticlesQuery, useHardRefresh } from "@/lib/content-queries";
+import { useArticle, useHardRefresh } from "@/lib/content-queries";
 
-// Article ("Astuce") detail. Resolves from the shared articles list query (same
-// pattern as the live detail) and renders the rich HTML `content` via the
-// shared RichTextView (auto-height so the full article is shown, never clipped).
+// Article ("Astuce") detail. Fetches the full article (incl. the rich HTML
+// `content` body) from the detail endpoint by id — the list endpoint omits
+// `content` for a lighter payload. Renders via the shared RichTextView
+// (auto-height so the full article is shown, never clipped).
 export default function ArticleDetailScreen() {
   const { articleId } = useLocalSearchParams<{ articleId: string }>();
   const router = useRouter();
-  const articlesQ = useArticlesQuery();
-  const articles = articlesQ.data ?? [];
-  const article = articles.find((a) => a.id === articleId);
-  const onRefresh = useHardRefresh([["articles"]]);
+  const articleQ = useArticle(articleId);
+  const article = articleQ.data;
+  const onRefresh = useHardRefresh([["article", articleId]]);
 
-  if (articles.length === 0 && !article) {
+  if (articleQ.isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator />
@@ -49,7 +49,7 @@ export default function ArticleDetailScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={articlesQ.isFetching}
+            refreshing={articleQ.isFetching}
             onRefresh={onRefresh}
           />
         }
