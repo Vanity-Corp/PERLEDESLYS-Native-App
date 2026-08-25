@@ -151,9 +151,9 @@ export default function DashboardScreen() {
           <Link href="/app/notifications" asChild>
             <Pressable
               role="button"
-              className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card"
+              className="h-10 w-10 items-center justify-center rounded-full bg-accent"
             >
-              <Icon as={Bell} size={20} className="text-foreground" />
+              <Icon as={Bell} size={20} className="text-white" />
               {unreadCount > 0 && (
                 <View className="absolute -right-1.5 -top-1.5 h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1">
                   <Text className="text-[10px] font-semibold text-primary-foreground">

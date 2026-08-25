@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -43,6 +44,23 @@ export function useRecipes() {
   return useRecipesQuery().data ?? [];
 }
 
+// Paginated variant for the Recipes list screen's numbered pager. Keyed
+// separately from `["recipes"]` above so it never conflates with the
+// full-array fetch other screens (search, AI chat) depend on.
+export function useRecipesPageQuery(params: {
+  page: number;
+  category?: string;
+  search?: string;
+}) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["recipes", "page", params],
+    queryFn: () => contentApi.recipesPaged(params),
+    enabled: !!token,
+    placeholderData: keepPreviousData,
+  });
+}
+
 // Dashboard-managed category names for a given scope ("recipe" | "video"),
 // mapped to a plain `string[]` for the filter pills. Empty while loading or
 // when the dashboard has no categories yet (callers fall back to the distinct
@@ -78,6 +96,17 @@ export function useVideos() {
   return useVideosQuery().data ?? [];
 }
 
+// Paginated variant for the Vidéos (tutorials) list screen.
+export function useVideosPageQuery(params: { page: number; category?: string }) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["videos", "page", params],
+    queryFn: () => contentApi.videosPaged(params),
+    enabled: !!token,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useVideo(id?: string) {
   const token = useToken();
   return useQuery({
@@ -97,6 +126,17 @@ export function useArticlesQuery() {
 }
 export function useArticles() {
   return useArticlesQuery().data ?? [];
+}
+
+// Paginated variant for the Astuces & conseils (tips) list screen.
+export function useArticlesPageQuery(params: { page: number; category?: string }) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["articles", "page", params],
+    queryFn: () => contentApi.articlesPaged(params),
+    enabled: !!token,
+    placeholderData: keepPreviousData,
+  });
 }
 
 // Full article (incl. the rich-text `content` body) from the detail endpoint.
@@ -121,6 +161,19 @@ export function useLivesQuery() {
 }
 export function useLives() {
   return useLivesQuery().data ?? [];
+}
+
+// Paginated variant for the Lives list screen's upcoming/replays tabs — each
+// tab keeps its own `page` state and passes its own `status` filter so the
+// two lists paginate independently.
+export function useLivesPageQuery(params: { page: number; status?: string }) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["lives", "page", params],
+    queryFn: () => contentApi.livesPaged(params),
+    enabled: !!token,
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useEventsQuery() {

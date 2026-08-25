@@ -55,8 +55,8 @@ export default function WhoAmIScreen() {
           Qui suis-je ?
         </Text>
         <Link href="/app/notifications" asChild>
-          <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-primary">
-            <Icon as={Bell} size={18} className="text-primary-foreground" />
+          <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-accent">
+            <Icon as={Bell} size={18} className="text-white" />
           </Pressable>
         </Link>
       </View>

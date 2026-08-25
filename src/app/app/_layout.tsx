@@ -1,7 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
 
-import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
 import { EventReminders } from "@/components/event-reminders";
 import { PushNotifications } from "@/components/push-notifications";
@@ -37,23 +36,44 @@ export default function AppLayout() {
   // screen and float over every /app/* screen.
   return (
     <View style={{ flex: 1 }}>
-      <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <BottomNav {...props} />}>
+      <Tabs
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <BottomNav {...props} />}
+      >
         <Tabs.Screen name="index" options={{ title: "Accueil" }} />
         <Tabs.Screen name="recipes" options={{ title: "Recettes" }} />
         <Tabs.Screen name="tutorials" options={{ title: "Vidéos" }} />
         <Tabs.Screen name="lives" options={{ title: "Lives" }} />
         <Tabs.Screen name="profile" options={{ title: "Profil" }} />
 
-        <Tabs.Screen name="search" options={{ href: null, title: "Recherche" }} />
-        <Tabs.Screen name="calendar" options={{ href: null, title: "Calendrier" }} />
-        <Tabs.Screen name="first-steps" options={{ href: null, title: "Mes premiers pas" }} />
-        <Tabs.Screen name="reviews" options={{ href: null, title: "Donner mon avis" }} />
+        <Tabs.Screen
+          name="search"
+          options={{ href: null, title: "Recherche" }}
+        />
+        <Tabs.Screen
+          name="calendar"
+          options={{ href: null, title: "Calendrier" }}
+        />
+        <Tabs.Screen
+          name="first-steps"
+          options={{ href: null, title: "Mes premiers pas" }}
+        />
+        <Tabs.Screen
+          name="reviews"
+          options={{ href: null, title: "Donner mon avis" }}
+        />
         <Tabs.Screen name="about" options={{ href: null, title: "À propos" }} />
-        <Tabs.Screen name="who-am-i" options={{ href: null, title: "Qui suis-je ?" }} />
+        <Tabs.Screen
+          name="who-am-i"
+          options={{ href: null, title: "Qui suis-je ?" }}
+        />
         <Tabs.Screen name="tips" options={{ href: null, title: "Astuces" }} />
-        <Tabs.Screen name="notifications" options={{ href: null, title: "Notifications" }} />
+        <Tabs.Screen
+          name="notifications"
+          options={{ href: null, title: "Notifications" }}
+        />
       </Tabs>
-      <AIChat />
+      {/*<AIChat />*/}
       <EventReminders />
       <PushNotifications />
     </View>

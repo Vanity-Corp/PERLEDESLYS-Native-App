@@ -22,6 +22,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Text as TabLabel } from "@/components/ui/text";
 import { ApiError, type UserStatus } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 
@@ -184,12 +185,20 @@ export default function LoginScreen() {
             }}
             className="mt-4"
           >
-            <TabsList className="h-fit w-full flex-row rounded-2xl bg-secondary/60 p-1">
-              <TabsTrigger value="login" className="h-fit flex-1 rounded-xl py-2.5">
-                <Text className="text-xs font-medium">Se connecter</Text>
+            <TabsList className="h-fit w-full flex-row rounded-2xl bg-secondary p-1">
+              <TabsTrigger
+                value="login"
+                className="h-fit flex-1 rounded-xl py-2.5"
+              >
+                <TabLabel className="text-xs font-medium">
+                  Se connecter
+                </TabLabel>
               </TabsTrigger>
-              <TabsTrigger value="register" className="h-fit flex-1 rounded-xl py-2.5">
-                <Text className="text-xs font-medium">S'inscrire</Text>
+              <TabsTrigger
+                value="register"
+                className="h-fit flex-1 rounded-xl py-2.5"
+              >
+                <TabLabel className="text-xs font-medium">S'inscrire</TabLabel>
               </TabsTrigger>
             </TabsList>
 
@@ -210,7 +219,7 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       autoCapitalize="none"
                       placeholder="Identifiant"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
                     />
                   )}
                 />
@@ -226,7 +235,7 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       secureTextEntry
                       placeholder="Mot de passe"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
                     />
                   )}
                 />
@@ -253,7 +262,7 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       autoCapitalize="none"
                       placeholder="Nom d'utilisateur"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 bg-white"
                     />
                   )}
                 />
@@ -269,7 +278,7 @@ export default function LoginScreen() {
                       onBlur={field.onBlur}
                       secureTextEntry
                       placeholder="Mot de passe"
-                      className="h-fit rounded-full py-3.5 pl-11 pr-4"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 bg-white"
                     />
                   )}
                 />
@@ -290,10 +299,14 @@ export default function LoginScreen() {
                   className="mt-0.5"
                 />
                 <View className="flex-1 flex-row flex-wrap items-center gap-x-1">
-                  <Text className="text-xs text-muted-foreground">J'accepte les</Text>
+                  <Text className="text-xs text-muted-foreground">
+                    J'accepte les
+                  </Text>
                   <LegalLink doc="terms">conditions générales</LegalLink>
                   <Text className="text-xs text-muted-foreground">et la</Text>
-                  <LegalLink doc="privacy">politique de confidentialité</LegalLink>
+                  <LegalLink doc="privacy">
+                    politique de confidentialité
+                  </LegalLink>
                   <Text className="text-xs text-muted-foreground">.</Text>
                 </View>
               </View>
@@ -301,7 +314,9 @@ export default function LoginScreen() {
           </Tabs>
 
           {error && (
-            <Text className="mt-4 text-center text-sm text-destructive">{error}</Text>
+            <Text className="mt-4 text-center text-sm text-destructive">
+              {error}
+            </Text>
           )}
 
           <GradientButton
@@ -344,7 +359,11 @@ function FieldRow({
 }) {
   return (
     <View className="justify-center">
-      <Icon as={icon} size={16} className="absolute left-4 z-10 text-muted-foreground" />
+      <Icon
+        as={icon}
+        size={16}
+        className="absolute left-4 z-10 text-muted-foreground"
+      />
       {children}
     </View>
   );

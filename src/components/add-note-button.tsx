@@ -29,7 +29,10 @@ type AddNoteButtonProps = {
   contextHref: string;
 };
 
-export function AddNoteButton({ contextLabel, contextHref }: AddNoteButtonProps) {
+export function AddNoteButton({
+  contextLabel,
+  contextHref,
+}: AddNoteButtonProps) {
   const { add } = useNotes();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -47,7 +50,11 @@ export function AddNoteButton({ contextLabel, contextHref }: AddNoteButtonProps)
         onPress={() => setOpen(true)}
         className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-black/20"
       >
-        <Icon as={StickyNotePlus} size={24} className="text-primary-foreground" />
+        <Icon
+          as={StickyNotePlus}
+          size={24}
+          className="text-primary-foreground"
+        />
       </Pressable>
       <Dialog
         open={open}
@@ -56,29 +63,35 @@ export function AddNoteButton({ contextLabel, contextHref }: AddNoteButtonProps)
           if (!next) setText("");
         }}
       >
-        <DialogContent className="w-fit">
+        <DialogContent className="w-[94%]">
           <DialogHeader>
             <DialogTitle>Nouvelle note</DialogTitle>
           </DialogHeader>
           <View className="rounded-xl bg-secondary px-3 py-2">
-            <Text className="text-[11px] text-muted-foreground">{contextLabel}</Text>
+            <Text className="text-[11px] text-muted-foreground">
+              {contextLabel}
+            </Text>
           </View>
           <Textarea
             value={text}
             onChangeText={setText}
             placeholder="Écrivez votre note..."
             autoFocus
-            className="w-fit"
+            className="w-fit bg-white"
             multiline
             textAlignVertical="top"
           />
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">
+              <Button className="bg-white" variant="outline">
                 <Text>Annuler</Text>
               </Button>
             </DialogClose>
-            <Button onPress={onSave} disabled={!text.trim()}>
+            <Button
+              variant={"default"}
+              onPress={onSave}
+              disabled={!text.trim()}
+            >
               <Text>Enregistrer</Text>
             </Button>
           </DialogFooter>

@@ -9,6 +9,7 @@ import type {
   FounderInfo,
   Live,
   NotificationItem,
+  Paginated,
   Recipe,
   RecentItem,
   Video,
@@ -42,14 +43,35 @@ async function get<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+// Builds a `?a=1&b=2` query string, skipping undefined/empty values.
+function qs(params: Record<string, string | number | undefined>): string {
+  const usp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") usp.set(key, String(value));
+  }
+  const s = usp.toString();
+  return s ? `?${s}` : "";
+}
+
 export const contentApi = {
   recipes: () => get<Recipe[]>("/recipes"),
   recipe: (id: string) => get<Recipe>(`/recipes/${id}`),
+  // Paginated variant for the Recipes list screen — the plain `recipes()`
+  // above (no query params) still returns the full array for search.tsx/the
+  // AI chat, which must not be paginated.
+  recipesPaged: (params: { page: number; pageSize?: number; category?: string; search?: string }) =>
+    get<Paginated<Recipe>>(`/recipes${qs(params)}`),
   videos: () => get<Video[]>("/videos"),
   video: (id: string) => get<Video>(`/videos/${id}`),
+  videosPaged: (params: { page: number; pageSize?: number; category?: string }) =>
+    get<Paginated<Video>>(`/videos${qs(params)}`),
   articles: () => get<Article[]>("/articles"),
   article: (id: string) => get<Article>(`/articles/${id}`),
+  articlesPaged: (params: { page: number; pageSize?: number; category?: string }) =>
+    get<Paginated<Article>>(`/articles${qs(params)}`),
   lives: () => get<Live[]>("/lives"),
+  livesPaged: (params: { page: number; pageSize?: number; status?: string }) =>
+    get<Paginated<Live>>(`/lives${qs(params)}`),
   events: () => get<AppEvent[]>("/events"),
   faq: () => get<FaqItem[]>("/faq"),
   welcomeMessage: () => get<WelcomeMessage>("/welcome-message"),

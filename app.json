@@ -8,19 +8,21 @@
     "scheme": "perledelys",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.gahnia.perledeslys"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.ghania.perledeslys",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-  "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#3E090E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.gahnia.perledeslys",
+      "package": "com.ghania.perledeslys",
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -55,6 +57,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#C4849B"
         }
       ]

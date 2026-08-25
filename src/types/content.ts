@@ -7,6 +7,18 @@ import type { ImageSourcePropType } from "react-native";
 // with no component changes.
 export type ImageRef = ImageSourcePropType | string;
 
+// Envelope returned by the list endpoints' paginated branch (page-based
+// pagination for the Recipes/Videos/Lives/Tips screens). The same endpoints
+// still return a bare `T[]` when called with no `page` param (search, home
+// previews, the AI chat, and the video/live detail screens rely on that).
+export type Paginated<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 export type Recipe = {
   id: string;
   title: string;

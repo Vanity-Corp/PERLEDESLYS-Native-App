@@ -1,22 +1,31 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Flame, Search, Sparkles } from "lucide-react-native";
-import { memo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { memo, useEffect, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useCategories,
   useHardRefresh,
-  useRecipesQuery,
+  useRecipes,
+  useRecipesPageQuery,
 } from "@/lib/content-queries";
-import { useDebounce } from "@/hooks/use-debounce";
 import { isRecent } from "@/lib/utils";
 import type { Recipe } from "@/types/content";
 
@@ -63,7 +72,9 @@ const RecipeCard = memo(function RecipeCard({ recipe: r }: { recipe: Recipe }) {
           <View className="mt-1 flex-row items-center gap-2">
             <View className="flex-row items-center gap-0.5">
               <Icon as={Clock} size={10} className="text-muted-foreground" />
-              <Text className="text-[10px] text-muted-foreground">{r.time}</Text>
+              <Text className="text-[10px] text-muted-foreground">
+                {r.time}
+              </Text>
             </View>
             <Text className="text-[10px] text-muted-foreground">·</Text>
             <View className="flex-row items-center gap-0.5">
@@ -81,27 +92,37 @@ const RecipeCard = memo(function RecipeCard({ recipe: r }: { recipe: Recipe }) {
 
 // Web source: kitchen-haven-club/src/routes/app/recipes/index.tsx
 export default function RecipesScreen() {
-  const recipesQ = useRecipesQuery();
-  const recipes = recipesQ.data ?? [];
   const onRefresh = useHardRefresh([["recipes"]]);
   // Filter pills come from the dashboard-managed categories; if that endpoint
-  // is empty, fall back to the distinct categories present in the loaded
-  // recipes so the tabs are never blank.
+  // is empty, fall back to the distinct categories present across all recipes
+  // (the full, unpaginated array — a separate cached fetch from the page
+  // below) so the tabs are never blank.
   const managedCategories = useCategories("recipe");
+  const allRecipes = useRecipes();
   const CATEGORIES = [
     "Tout",
     ...(managedCategories.length > 0
       ? managedCategories
-      : [...new Set(recipes.map((r) => r.category))]),
+      : [...new Set(allRecipes.map((r) => r.category))]),
   ];
   const [active, setActive] = useState("Tout");
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q);
-  const filtered = recipes.filter(
-    (r) =>
-      (active === "Tout" || r.category === active) &&
-      r.title.toLowerCase().includes(debouncedQ.toLowerCase()),
-  );
+  const [page, setPage] = useState(1);
+  // Any filter change invalidates the current page — start back at 1.
+  const setActiveAndResetPage = (v: string) => {
+    setActive(v);
+    setPage(1);
+  };
+  useEffect(() => setPage(1), [debouncedQ]);
+
+  const recipesQ = useRecipesPageQuery({
+    page,
+    category: active === "Tout" ? undefined : active,
+    search: debouncedQ || undefined,
+  });
+  const recipes = recipesQ.data?.items ?? [];
+  const totalPages = recipesQ.data?.totalPages ?? 1;
 
   const Header = (
     <>
@@ -122,7 +143,7 @@ export default function RecipesScreen() {
       </View>
 
       <View className="mt-4 px-5">
-        <View className="justify-center">
+        <View className="justify-center ">
           <View className="pointer-events-none absolute left-4 z-10">
             <Icon as={Search} size={16} className="text-muted-foreground" />
           </View>
@@ -130,7 +151,7 @@ export default function RecipesScreen() {
             value={q}
             onChangeText={setQ}
             placeholder="Rechercher une recette..."
-            className="rounded-2xl py-3.5 pl-11 pr-4 h-fit"
+            className="rounded-2xl py-3.5 pl-11 pr-4  bg-white h-fit"
           />
         </View>
       </View>
@@ -144,7 +165,7 @@ export default function RecipesScreen() {
         <ToggleGroup
           type="single"
           value={active}
-          onValueChange={(v) => v && setActive(v)}
+          onValueChange={(v) => v && setActiveAndResetPage(v)}
         >
           {CATEGORIES.map((c) => (
             <ToggleGroupItem
@@ -177,20 +198,29 @@ export default function RecipesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <FlatList
-        data={recipesQ.isLoading || recipesQ.isError ? [] : filtered}
+        data={recipesQ.isLoading || recipesQ.isError ? [] : recipes}
         renderItem={({ item }) => <RecipeCard recipe={item} />}
         keyExtractor={(r) => r.id}
         numColumns={2}
-        columnWrapperStyle={{ justifyContent: "space-between", paddingHorizontal: 20 }}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          paddingHorizontal: 20,
+        }}
         contentContainerStyle={{ paddingBottom: 64 }}
         ListHeaderComponent={Header}
+        ListFooterComponent={
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        }
         ListEmptyComponent={Empty}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={7}
         refreshControl={
-          <RefreshControl refreshing={recipesQ.isFetching} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={recipesQ.isFetching}
+            onRefresh={onRefresh}
+          />
         }
       />
     </SafeAreaView>
