@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
 import OgeeArch from "@/assets/perledeslys/ogee-arch.svg";
+import { Button } from "@/components/ui/button";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -91,6 +92,15 @@ export default function ForgotPasswordScreen() {
                   Retour à la connexion
                 </Text>
               </GradientButton>
+              <Button
+                variant="link"
+                size="sm"
+                onPress={() => router.push("/(auth)/reset-password")}
+              >
+                <Text className="text-xs font-medium text-muted-foreground">
+                  J'ai déjà un code
+                </Text>
+              </Button>
             </View>
           ) : (
             <View className="mt-6 gap-4">
@@ -146,6 +156,17 @@ export default function ForgotPasswordScreen() {
                   </Text>
                 )}
               </GradientButton>
+              <View className="items-center">
+                <Button
+                  variant="link"
+                  size="sm"
+                  onPress={() => router.push("/(auth)/reset-password")}
+                >
+                  <Text className="text-xs font-medium text-muted-foreground">
+                    J'ai déjà un code
+                  </Text>
+                </Button>
+              </View>
             </View>
           )}
         </ScrollView>

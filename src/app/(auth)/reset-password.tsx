@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CheckCircle2, KeyRound } from "lucide-react-native";
-import { useState } from "react";
+import { CheckCircle2, KeyRound, Ticket } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,11 +14,15 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { authApi, ApiError } from "@/lib/auth-api";
 
-// Reached via the deep link in the reset email: perledelys://reset-password?token=…
-// (see AuthService.forgotPassword on the backend). No auth token needed — the
-// reset token IS the credential.
+// Reached two ways: (1) tapping the deep link in the reset email —
+// perledelys://reset-password?token=… — which pre-fills the token field, or
+// (2) manually, from the "J'ai déjà un code" link on the forgot-password
+// screen, for anyone whose mail client didn't make that link tappable (read
+// on a computer, etc.) — the email also prints the raw token for this case.
+// No auth token needed either way — the reset token IS the credential.
 const schema = z
   .object({
+    token: z.string().trim().min(1, "Colle le code reçu par email."),
     password: z.string().min(6, "Au moins 6 caractères."),
     confirm: z.string().min(1, "Confirme ton mot de passe."),
   })
@@ -30,25 +34,27 @@ type Values = z.infer<typeof schema>;
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const { token } = useLocalSearchParams<{ token?: string }>();
+  const { token: tokenParam } = useLocalSearchParams<{ token?: string }>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { password: "", confirm: "" },
+    defaultValues: { token: tokenParam ?? "", password: "", confirm: "" },
   });
 
+  // The param only exists on first mount when opened via the deep link —
+  // sync it in if the screen was already mounted (e.g. warm start).
+  useEffect(() => {
+    if (tokenParam) form.setValue("token", tokenParam);
+  }, [tokenParam, form]);
+
   const onSubmit = form.handleSubmit(async (values) => {
-    if (!token) {
-      setError("Lien invalide. Demande un nouveau lien depuis l'écran de connexion.");
-      return;
-    }
     setError(null);
     setLoading(true);
     try {
-      await authApi.resetPassword(token, values.password);
+      await authApi.resetPassword(values.token.trim(), values.password);
       setDone(true);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Une erreur est survenue.");
@@ -74,13 +80,6 @@ export default function ResetPasswordScreen() {
             </View>
           </View>
 
-          {!token && !done && (
-            <Text className="mt-6 text-center text-sm text-destructive">
-              Lien invalide ou expiré. Demande un nouveau lien depuis l'écran
-              de connexion.
-            </Text>
-          )}
-
           {done ? (
             <View className="mt-6 items-center gap-4 px-2">
               <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
@@ -101,78 +100,111 @@ export default function ResetPasswordScreen() {
               </GradientButton>
             </View>
           ) : (
-            token && (
-              <View className="mt-6 gap-4">
-                <View className="justify-center">
-                  <Icon
-                    as={KeyRound}
-                    size={16}
-                    className="absolute left-4 z-10 text-muted-foreground"
-                  />
-                  <Controller
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <Input
-                        value={field.value}
-                        onChangeText={field.onChange}
-                        onBlur={field.onBlur}
-                        secureTextEntry
-                        placeholder="Nouveau mot de passe"
-                        className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
-                      />
-                    )}
-                  />
-                </View>
-                <View className="justify-center">
-                  <Icon
-                    as={KeyRound}
-                    size={16}
-                    className="absolute left-4 z-10 text-muted-foreground"
-                  />
-                  <Controller
-                    control={form.control}
-                    name="confirm"
-                    render={({ field }) => (
-                      <Input
-                        value={field.value}
-                        onChangeText={field.onChange}
-                        onBlur={field.onBlur}
-                        secureTextEntry
-                        placeholder="Confirme le mot de passe"
-                        className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
-                      />
-                    )}
-                  />
-                </View>
-                {(form.formState.errors.password || form.formState.errors.confirm) && (
-                  <Text className="px-1 text-xs text-destructive">
-                    {form.formState.errors.password?.message ??
-                      form.formState.errors.confirm?.message}
-                  </Text>
-                )}
-                {error && (
-                  <Text className="px-1 text-center text-sm text-destructive">
-                    {error}
-                  </Text>
-                )}
+            <View className="mt-6 gap-4">
+              {!tokenParam && (
+                <Text className="text-center text-sm text-muted-foreground">
+                  Colle ci-dessous le code reçu par email, puis choisis ton
+                  nouveau mot de passe.
+                </Text>
+              )}
 
-                <GradientButton
-                  tone="luxe"
-                  onPress={onSubmit}
-                  disabled={loading}
-                  className="mt-2"
-                >
-                  {loading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text className="font-medium text-primary-foreground">
-                      Réinitialiser
-                    </Text>
+              {!tokenParam && (
+                <View className="justify-center">
+                  <Icon
+                    as={Ticket}
+                    size={16}
+                    className="absolute left-4 z-10 text-muted-foreground"
+                  />
+                  <Controller
+                    control={form.control}
+                    name="token"
+                    render={({ field }) => (
+                      <Input
+                        value={field.value}
+                        onChangeText={field.onChange}
+                        onBlur={field.onBlur}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        placeholder="Code reçu par email"
+                        className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
+                      />
+                    )}
+                  />
+                </View>
+              )}
+
+              <View className="justify-center">
+                <Icon
+                  as={KeyRound}
+                  size={16}
+                  className="absolute left-4 z-10 text-muted-foreground"
+                />
+                <Controller
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      secureTextEntry
+                      placeholder="Nouveau mot de passe"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
+                    />
                   )}
-                </GradientButton>
+                />
               </View>
-            )
+              <View className="justify-center">
+                <Icon
+                  as={KeyRound}
+                  size={16}
+                  className="absolute left-4 z-10 text-muted-foreground"
+                />
+                <Controller
+                  control={form.control}
+                  name="confirm"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      secureTextEntry
+                      placeholder="Confirme le mot de passe"
+                      className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
+                    />
+                  )}
+                />
+              </View>
+              {(form.formState.errors.token ||
+                form.formState.errors.password ||
+                form.formState.errors.confirm) && (
+                <Text className="px-1 text-xs text-destructive">
+                  {form.formState.errors.token?.message ??
+                    form.formState.errors.password?.message ??
+                    form.formState.errors.confirm?.message}
+                </Text>
+              )}
+              {error && (
+                <Text className="px-1 text-center text-sm text-destructive">
+                  {error}
+                </Text>
+              )}
+
+              <GradientButton
+                tone="luxe"
+                onPress={onSubmit}
+                disabled={loading}
+                className="mt-2"
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="font-medium text-primary-foreground">
+                    Réinitialiser
+                  </Text>
+                )}
+              </GradientButton>
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>

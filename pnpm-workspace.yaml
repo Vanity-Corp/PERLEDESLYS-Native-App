@@ -1,0 +1,4 @@
+minimumReleaseAgeExclude:
+  - expo-dev-client@56.0.26
+  - expo-dev-launcher@56.0.27
+  - expo-dev-menu@56.0.23
