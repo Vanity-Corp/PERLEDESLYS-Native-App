@@ -25,6 +25,7 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
 import { aiChat } from "@/lib/api";
+import { useAuth } from "@/lib/auth-store";
 import { useRecipes, useVideos } from "@/lib/content-queries";
 import type { Recipe, Video } from "@/types/content";
 
@@ -136,6 +137,7 @@ function FormattedMessage({ content }: { content: string }) {
 }
 
 export function AIChat() {
+  const token = useAuth((s) => s.token);
   const recipes = useRecipes();
   const videos = useVideos();
   const [open, setOpen] = useState(false);
@@ -156,7 +158,7 @@ export function AIChat() {
 
   async function send(text: string) {
     const value = text.trim();
-    if (!value || loading) return;
+    if (!value || loading || !token) return;
     const next: Msg[] = [...messages, { role: "user", content: value }];
     setMessages(next);
     setInput("");
@@ -164,6 +166,7 @@ export function AIChat() {
     try {
       const res = await aiChat({
         messages: next.map(({ role, content }) => ({ role, content })),
+        token,
       });
       if (res.ok) {
         setMessages([...next, { role: "assistant", content: res.content }]);

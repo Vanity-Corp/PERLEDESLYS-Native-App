@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { asyncStorage } from "@/lib/storage";
+import { secureAuthStorage } from "@/lib/secure-auth-storage";
 import {
   authApi,
   type AuthUser,
@@ -9,10 +9,12 @@ import {
   type UpdateProfileInput,
 } from "@/lib/auth-api";
 
-// Auth session store. Persisted (token + user) via the same AsyncStorage engine
-// as the rest of the app (see storage.ts — MMKV was dropped for Expo-Go
-// compatibility; a future hardening step could move the token to
-// expo-secure-store, per CLAUDE.md's localStorage→SecureStore rule).
+// Auth session store. Persisted (token + user) via expo-secure-store — the
+// platform keychain/keystore — per CLAUDE.md's localStorage→SecureStore rule
+// (the rest of the app's local state stays on plain AsyncStorage; see
+// storage.ts, where MMKV was dropped for Expo-Go compatibility — that
+// tradeoff is unrelated to this one, which is about not keeping a session
+// token in unencrypted storage).
 //
 // `hydrated` guards against a first-render flash: zustand's persist rehydrates
 // asynchronously, so layouts wait for `hydrated` before deciding auth routes.
@@ -76,7 +78,7 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "pdl.auth",
-      storage: createJSONStorage(() => asyncStorage),
+      storage: createJSONStorage(() => secureAuthStorage),
       // Only the session is persisted; `hydrated`/actions come from the creator.
       partialize: (state) => ({ token: state.token, user: state.user }),
       // Fires once rehydration settles (even with nothing stored) — flip the

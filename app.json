@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "perle-de-lys",
-    "slug": "perle-de-lys",
+    "name": "Perledeslys",
+    "slug": "Perledeslys",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -23,9 +23,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.ghania.perledeslys",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "output": "static",

@@ -171,4 +171,19 @@ export const authApi = {
       token,
       schema: authUserSchema,
     }),
+
+  // Always resolves (the backend never reveals whether the email exists).
+  forgotPassword: (email: string) =>
+    request("/auth/forgot-password", {
+      method: "POST",
+      body: { email },
+      schema: z.object({ ok: z.literal(true) }),
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    request("/auth/reset-password", {
+      method: "POST",
+      body: { token, password },
+      schema: z.object({ ok: z.literal(true) }),
+    }),
 };

@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
 
+import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
 import { EventReminders } from "@/components/event-reminders";
 import { PushNotifications } from "@/components/push-notifications";
@@ -73,7 +74,7 @@ export default function AppLayout() {
           options={{ href: null, title: "Notifications" }}
         />
       </Tabs>
-      {/*<AIChat />*/}
+      <AIChat />
       <EventReminders />
       <PushNotifications />
     </View>

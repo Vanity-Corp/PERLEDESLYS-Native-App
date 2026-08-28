@@ -3,7 +3,13 @@ import { Link, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -82,7 +88,7 @@ export default function ReviewScreen() {
         ) : (
           <>
             <Text className="mt-2 text-sm text-muted-foreground">
-              Partagez votre expérience avec la communauté Perle de Lys.
+              Partagez votre expérience avec la communauté Perledeslys.
             </Text>
 
             <View className="mt-6 gap-2">

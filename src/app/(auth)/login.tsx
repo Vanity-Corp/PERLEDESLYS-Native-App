@@ -140,7 +140,7 @@ export default function LoginScreen() {
             <View className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-secondary">
               <Icon as={Mail} size={22} className="text-primary" />
             </View>
-            <DialogTitle>Bienvenue chez Perle de Lys 🌸</DialogTitle>
+            <DialogTitle>Bienvenue chez Perledeslys 🌸</DialogTitle>
           </DialogHeader>
           <Text className="text-sm leading-relaxed text-muted-foreground">
             Pensez à ajouter votre adresse e-mail dans{" "}
@@ -336,7 +336,11 @@ export default function LoginScreen() {
 
           {tab === "login" && (
             <View className="mt-auto items-center pt-8">
-              <Button variant="link" size="sm">
+              <Button
+                variant="link"
+                size="sm"
+                onPress={() => router.push("/(auth)/forgot-password")}
+              >
                 <Text className="text-xs font-medium text-muted-foreground">
                   Mot de passe oublié ?
                 </Text>

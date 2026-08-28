@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "618564187036",
-    "project_id": "perledeslys-4e12c",
-    "storage_bucket": "perledeslys-4e12c.firebasestorage.app"
+    "project_number": "383411032469",
+    "project_id": "perledeslys-f56b9",
+    "storage_bucket": "perledeslys-f56b9.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:618564187036:android:98a080322ebfc4402e4e59",
+        "mobilesdk_app_id": "1:383411032469:android:77f6b1db13203b1bc5669c",
         "android_client_info": {
-          "package_name": "com.gahnia.perledeslys"
+          "package_name": "com.ghania.perledeslys"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDgJDlN43M83EEV8ui6kfgYqTBozxxRGFg"
+          "current_key": "AIzaSyDhywVgKNjoHm_akks7rskkNka9kLtbOSY"
         }
       ],
       "services": {
