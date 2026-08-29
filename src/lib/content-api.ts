@@ -5,11 +5,11 @@ import type {
   Article,
   AppEvent,
   Category,
+  CursorPage,
   FaqItem,
   FounderInfo,
   Live,
   NotificationItem,
-  Paginated,
   Recipe,
   RecentItem,
   Video,
@@ -56,22 +56,26 @@ function qs(params: Record<string, string | number | undefined>): string {
 export const contentApi = {
   recipes: () => get<Recipe[]>("/recipes"),
   recipe: (id: string) => get<Recipe>(`/recipes/${id}`),
-  // Paginated variant for the Recipes list screen — the plain `recipes()`
-  // above (no query params) still returns the full array for search.tsx/the
-  // AI chat, which must not be paginated.
-  recipesPaged: (params: { page: number; pageSize?: number; category?: string; search?: string }) =>
-    get<Paginated<Recipe>>(`/recipes${qs(params)}`),
+  // Cursor-paginated variant for the Recipes list screen's infinite scroll —
+  // the plain `recipes()` above (no query params) still returns the full
+  // array for search.tsx/the AI chat, which must not be paginated.
+  recipesPaged: (params: {
+    cursor?: string;
+    limit?: number;
+    category?: string;
+    search?: string;
+  }) => get<CursorPage<Recipe>>(`/recipes${qs(params)}`),
   videos: () => get<Video[]>("/videos"),
   video: (id: string) => get<Video>(`/videos/${id}`),
-  videosPaged: (params: { page: number; pageSize?: number; category?: string }) =>
-    get<Paginated<Video>>(`/videos${qs(params)}`),
+  videosPaged: (params: { cursor?: string; limit?: number; category?: string; search?: string }) =>
+    get<CursorPage<Video>>(`/videos${qs(params)}`),
   articles: () => get<Article[]>("/articles"),
   article: (id: string) => get<Article>(`/articles/${id}`),
-  articlesPaged: (params: { page: number; pageSize?: number; category?: string }) =>
-    get<Paginated<Article>>(`/articles${qs(params)}`),
+  articlesPaged: (params: { cursor?: string; limit?: number; category?: string; search?: string }) =>
+    get<CursorPage<Article>>(`/articles${qs(params)}`),
   lives: () => get<Live[]>("/lives"),
-  livesPaged: (params: { page: number; pageSize?: number; status?: string }) =>
-    get<Paginated<Live>>(`/lives${qs(params)}`),
+  livesPaged: (params: { cursor?: string; limit?: number; status?: string; search?: string }) =>
+    get<CursorPage<Live>>(`/lives${qs(params)}`),
   events: () => get<AppEvent[]>("/events"),
   faq: () => get<FaqItem[]>("/faq"),
   welcomeMessage: () => get<WelcomeMessage>("/welcome-message"),

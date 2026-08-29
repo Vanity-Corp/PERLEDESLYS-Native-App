@@ -13,12 +13,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { GradientView } from "@/components/ui/gradient-view";
@@ -151,6 +151,7 @@ export function AIChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -213,9 +214,12 @@ export function AIChat() {
               (a separate native window), and KeyboardAvoidingView cannot measure
               the keyboard from inside it, so the input stayed hidden behind the
               keyboard. Here the KeyboardAvoidingView wraps the sheet directly in
-              the app's own window: on iOS `behavior="padding"` lifts the sheet
-              above the keyboard; on Android it's left to the OS's default
-              adjustResize (Expo's default) so adding padding wouldn't double up. */}
+              the app's own window, on both platforms, using `behavior="padding"`
+              to lift the sheet above the keyboard. `padding` is driven purely by
+              JS Keyboard events (keyboardWillShow/keyboardDidShow), not by the
+              native window resize — important because `android.edgeToEdgeEnabled`
+              (on for this project) makes Android's `adjustResize` a no-op, so
+              relying on the OS to resize the window no longer works. */}
           <View
             className="absolute bottom-0 left-0 right-0 top-0"
             style={{ pointerEvents: "box-none" }}
@@ -225,7 +229,7 @@ export function AIChat() {
               onPress={() => setOpen(false)}
             />
             <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              behavior="padding"
               className="flex-1 justify-end"
               style={{ pointerEvents: "box-none" }}
             >
@@ -384,7 +388,10 @@ export function AIChat() {
                 )}
 
                 {/* Input */}
-                <View className="flex-row items-end gap-2 border-t border-border bg-background p-3">
+                <View
+                  className="flex-row items-end gap-2 border-t border-border bg-background p-3"
+                  style={{ paddingBottom: 12 + insets.bottom }}
+                >
                   <Textarea
                     value={input}
                     onChangeText={setInput}

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ArrowLeft, Play } from "lucide-react-native";
+import { ArrowLeft, Play, Search } from "lucide-react-native";
 import { memo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,15 +8,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { Pagination } from "@/components/ui/pagination";
+import { InfiniteScrollFooter } from "@/components/ui/infinite-scroll-footer";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useCategories,
   useHardRefresh,
   useVideos,
-  useVideosPageQuery,
+  useVideosInfiniteQuery,
 } from "@/lib/content-queries";
 import type { Video } from "@/types/content";
 
@@ -79,18 +81,14 @@ export default function TutorialsScreen() {
       : [...new Set(allVideos.map((v) => v.category))]),
   ];
   const [tab, setTab] = useState("Tout");
-  const [page, setPage] = useState(1);
-  const setTabAndResetPage = (v: string) => {
-    setTab(v);
-    setPage(1);
-  };
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q);
 
-  const videosQ = useVideosPageQuery({
-    page,
+  const videosQ = useVideosInfiniteQuery({
     category: tab === "Tout" ? undefined : tab,
+    search: debouncedQ || undefined,
   });
-  const videos = videosQ.data?.items ?? [];
-  const totalPages = videosQ.data?.totalPages ?? 1;
+  const videos = videosQ.data?.pages.flatMap((p) => p.items) ?? [];
 
   const Header = (
     <>
@@ -108,13 +106,27 @@ export default function TutorialsScreen() {
         </View>
       </View>
 
+      <View className="mt-4 px-5">
+        <View className="justify-center ">
+          <View className="pointer-events-none absolute left-4 z-10">
+            <Icon as={Search} size={16} className="text-muted-foreground" />
+          </View>
+          <Input
+            value={q}
+            onChangeText={setQ}
+            placeholder="Rechercher une vidéo..."
+            className="rounded-2xl py-3.5 pl-11 pr-4  bg-white h-fit"
+          />
+        </View>
+      </View>
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerClassName="gap-2 px-5 pb-1"
         className="mt-4"
       >
-        <ToggleGroup type="single" value={tab} onValueChange={(v) => v && setTabAndResetPage(v)}>
+        <ToggleGroup type="single" value={tab} onValueChange={(v) => v && setTab(v)}>
           {TABS.map((t) => (
             <ToggleGroupItem
               key={t}
@@ -139,7 +151,7 @@ export default function TutorialsScreen() {
     </View>
   ) : (
     <Text className="mt-10 px-6 text-center text-sm text-muted-foreground">
-      Aucune vidéo dans cette catégorie.
+      Aucune vidéo ne correspond à votre recherche.
     </Text>
   );
 
@@ -151,16 +163,21 @@ export default function TutorialsScreen() {
         keyExtractor={(v) => v.id}
         contentContainerClassName="pb-16"
         ListHeaderComponent={Header}
-        ListFooterComponent={
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-        }
+        ListFooterComponent={<InfiniteScrollFooter visible={videosQ.isFetchingNextPage} />}
         ListEmptyComponent={Empty}
+        onEndReached={() => {
+          if (videosQ.hasNextPage && !videosQ.isFetchingNextPage) void videosQ.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={7}
         refreshControl={
-          <RefreshControl refreshing={videosQ.isFetching} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={videosQ.isFetching && !videosQ.isFetchingNextPage}
+            onRefresh={onRefresh}
+          />
         }
       />
     </SafeAreaView>

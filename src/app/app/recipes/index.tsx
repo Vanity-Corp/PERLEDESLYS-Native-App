@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Clock, Flame, Search, Sparkles } from "lucide-react-native";
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -15,8 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { InfiniteScrollFooter } from "@/components/ui/infinite-scroll-footer";
 import { Input } from "@/components/ui/input";
-import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -24,7 +24,7 @@ import {
   useCategories,
   useHardRefresh,
   useRecipes,
-  useRecipesPageQuery,
+  useRecipesInfiniteQuery,
 } from "@/lib/content-queries";
 import { isRecent } from "@/lib/utils";
 import type { Recipe } from "@/types/content";
@@ -108,21 +108,12 @@ export default function RecipesScreen() {
   const [active, setActive] = useState("Tout");
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q);
-  const [page, setPage] = useState(1);
-  // Any filter change invalidates the current page — start back at 1.
-  const setActiveAndResetPage = (v: string) => {
-    setActive(v);
-    setPage(1);
-  };
-  useEffect(() => setPage(1), [debouncedQ]);
 
-  const recipesQ = useRecipesPageQuery({
-    page,
+  const recipesQ = useRecipesInfiniteQuery({
     category: active === "Tout" ? undefined : active,
     search: debouncedQ || undefined,
   });
-  const recipes = recipesQ.data?.items ?? [];
-  const totalPages = recipesQ.data?.totalPages ?? 1;
+  const recipes = recipesQ.data?.pages.flatMap((p) => p.items) ?? [];
 
   const Header = (
     <>
@@ -165,7 +156,7 @@ export default function RecipesScreen() {
         <ToggleGroup
           type="single"
           value={active}
-          onValueChange={(v) => v && setActiveAndResetPage(v)}
+          onValueChange={(v) => v && setActive(v)}
         >
           {CATEGORIES.map((c) => (
             <ToggleGroupItem
@@ -208,17 +199,19 @@ export default function RecipesScreen() {
         }}
         contentContainerStyle={{ paddingBottom: 64 }}
         ListHeaderComponent={Header}
-        ListFooterComponent={
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-        }
+        ListFooterComponent={<InfiniteScrollFooter visible={recipesQ.isFetchingNextPage} />}
         ListEmptyComponent={Empty}
+        onEndReached={() => {
+          if (recipesQ.hasNextPage && !recipesQ.isFetchingNextPage) void recipesQ.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={7}
         refreshControl={
           <RefreshControl
-            refreshing={recipesQ.isFetching}
+            refreshing={recipesQ.isFetching && !recipesQ.isFetchingNextPage}
             onRefresh={onRefresh}
           />
         }

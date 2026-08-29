@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ArrowLeft, BookOpen, Sparkles } from "lucide-react-native";
+import { ArrowLeft, BookOpen, Search, Sparkles } from "lucide-react-native";
 import { memo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,11 +9,13 @@ import { AddNoteButton } from "@/components/add-note-button";
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { Pagination } from "@/components/ui/pagination";
+import { InfiniteScrollFooter } from "@/components/ui/infinite-scroll-footer";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
-  useArticlesPageQuery,
+  useArticlesInfiniteQuery,
   useHardRefresh,
   useWhoAmI,
 } from "@/lib/content-queries";
@@ -94,19 +96,15 @@ export default function TipsScreen() {
     who.quote ||
     "Cuisiner, c'est offrir de l'amour. Et le faire au TM7, c'est se libérer du temps pour les siens.";
   const [cat, setCat] = useState("Tout");
-  const [page, setPage] = useState(1);
-  const setCatAndResetPage = (v: string) => {
-    setCat(v);
-    setPage(1);
-  };
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q);
   const onRefresh = useHardRefresh([["articles"]]);
 
-  const articlesQ = useArticlesPageQuery({
-    page,
+  const articlesQ = useArticlesInfiniteQuery({
     category: cat === "Tout" ? undefined : cat,
+    search: debouncedQ || undefined,
   });
-  const list = articlesQ.data?.items ?? [];
-  const totalPages = articlesQ.data?.totalPages ?? 1;
+  const list = articlesQ.data?.pages.flatMap((p) => p.items) ?? [];
 
   const Header = (
     <>
@@ -142,6 +140,20 @@ export default function TipsScreen() {
         </Text>
       </GradientView>
 
+      <View className="mt-5 px-5">
+        <View className="justify-center ">
+          <View className="pointer-events-none absolute left-4 z-10">
+            <Icon as={Search} size={16} className="text-muted-foreground" />
+          </View>
+          <Input
+            value={q}
+            onChangeText={setQ}
+            placeholder="Rechercher un article..."
+            className="rounded-2xl py-3.5 pl-11 pr-4  bg-white h-fit"
+          />
+        </View>
+      </View>
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -151,7 +163,7 @@ export default function TipsScreen() {
         <ToggleGroup
           type="single"
           value={cat}
-          onValueChange={(v) => v && setCatAndResetPage(v)}
+          onValueChange={(v) => v && setCat(v)}
         >
           {CATS.map((c) => (
             <ToggleGroupItem
@@ -178,7 +190,7 @@ export default function TipsScreen() {
     </View>
   ) : (
     <Text className="mt-10 px-6 text-center text-sm text-muted-foreground">
-      Aucun article dans cette catégorie.
+      Aucun article ne correspond à votre recherche.
     </Text>
   );
 
@@ -190,16 +202,21 @@ export default function TipsScreen() {
         keyExtractor={(a) => a.id}
         contentContainerClassName="pb-16"
         ListHeaderComponent={Header}
-        ListFooterComponent={
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-        }
+        ListFooterComponent={<InfiniteScrollFooter visible={articlesQ.isFetchingNextPage} />}
         ListEmptyComponent={Empty}
+        onEndReached={() => {
+          if (articlesQ.hasNextPage && !articlesQ.isFetchingNextPage) void articlesQ.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={7}
         refreshControl={
-          <RefreshControl refreshing={articlesQ.isFetching} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={articlesQ.isFetching && !articlesQ.isFetchingNextPage}
+            onRefresh={onRefresh}
+          />
         }
       />
       {/* Same note affordance as recipe/video detail, scoped to the tips

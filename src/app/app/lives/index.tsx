@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ArrowLeft, Bell, Calendar, Clock, PlayCircle, Radio } from "lucide-react-native";
+import { ArrowLeft, Bell, Calendar, Clock, PlayCircle, Radio, Search } from "lucide-react-native";
 import { memo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,12 +8,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
-import { Pagination } from "@/components/ui/pagination";
+import { InfiniteScrollFooter } from "@/components/ui/infinite-scroll-footer";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text as TabLabel } from "@/components/ui/text";
+import { useDebounce } from "@/hooks/use-debounce";
 import { addToCalendar, parseEventDate } from "@/lib/calendar";
-import { useHardRefresh, useLivesPageQuery } from "@/lib/content-queries";
+import { useHardRefresh, useLivesInfiniteQuery } from "@/lib/content-queries";
 import type { Live } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/lives/index.tsx
@@ -31,19 +33,20 @@ import type { Live } from "@/types/content";
 export default function LivesScreen() {
   const onRefresh = useHardRefresh([["lives"]]);
   const [tab, setTab] = useState<"upcoming" | "replays">("upcoming");
-  // Each tab keeps its own page — switching tabs doesn't reset the other's.
-  const [upcomingPage, setUpcomingPage] = useState(1);
-  const [replaysPage, setReplaysPage] = useState(1);
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q);
+  const search = debouncedQ || undefined;
 
-  const upcomingQ = useLivesPageQuery({ page: upcomingPage, status: "À venir" });
-  const replaysQ = useLivesPageQuery({ page: replaysPage, status: "Replay" });
-  const next = upcomingQ.data?.items[0];
+  // Each tab keeps its own cursor chain — switching tabs doesn't reset the
+  // other's, and a search term change resets both via their query keys.
+  const upcomingQ = useLivesInfiniteQuery({ status: "À venir", search });
+  const replaysQ = useLivesInfiniteQuery({ status: "Replay", search });
+  const next = upcomingQ.data?.pages[0]?.items[0];
 
   const activeQ = tab === "upcoming" ? upcomingQ : replaysQ;
-  const activePage = tab === "upcoming" ? upcomingPage : replaysPage;
-  const setActivePage = tab === "upcoming" ? setUpcomingPage : setReplaysPage;
-  const items = activeQ.data?.items ?? [];
-  const totalPages = activeQ.data?.totalPages ?? 1;
+  const items = activeQ.data?.pages.flatMap((p) => p.items) ?? [];
+  const upcomingTotal = upcomingQ.data?.pages[0]?.total ?? 0;
+  const replaysTotal = replaysQ.data?.pages[0]?.total ?? 0;
 
   const Header = (
     <>
@@ -137,17 +140,27 @@ export default function LivesScreen() {
         </View>
       ) : null}
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "upcoming" | "replays")} className="mx-5 mt-6">
+      <View className="mx-5 mt-6">
+        <View className="justify-center ">
+          <View className="pointer-events-none absolute left-4 z-10">
+            <Icon as={Search} size={16} className="text-muted-foreground" />
+          </View>
+          <Input
+            value={q}
+            onChangeText={setQ}
+            placeholder="Rechercher un live..."
+            className="rounded-2xl py-3.5 pl-11 pr-4  bg-white h-fit"
+          />
+        </View>
+      </View>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "upcoming" | "replays")} className="mx-5 mt-4">
         <TabsList className="w-full flex-row rounded-2xl bg-secondary/60 p-1">
           <TabsTrigger value="upcoming" className="flex-1 rounded-xl ">
-            <TabLabel className="text-xs font-medium">
-              À venir ({upcomingQ.data?.total ?? 0})
-            </TabLabel>
+            <TabLabel className="text-xs font-medium">À venir ({upcomingTotal})</TabLabel>
           </TabsTrigger>
           <TabsTrigger value="replays" className="flex-1 rounded-xl ">
-            <TabLabel className="text-xs font-medium">
-              Replays ({replaysQ.data?.total ?? 0})
-            </TabLabel>
+            <TabLabel className="text-xs font-medium">Replays ({replaysTotal})</TabLabel>
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -163,6 +176,10 @@ export default function LivesScreen() {
         <Skeleton key={i} className="h-24 w-full rounded-2xl" />
       ))}
     </View>
+  ) : search ? (
+    <Text className="mt-10 px-6 text-center text-sm text-muted-foreground">
+      Aucun résultat pour votre recherche.
+    </Text>
   ) : (
     <Text className="mt-10 px-6 text-center text-sm text-muted-foreground">
       {tab === "upcoming" ? "Aucun live à venir." : "Aucun replay pour le moment."}
@@ -180,17 +197,22 @@ export default function LivesScreen() {
         keyExtractor={(l) => l.id}
         contentContainerClassName="pb-16"
         ListHeaderComponent={Header}
-        ListFooterComponent={
-          <Pagination page={activePage} totalPages={totalPages} onPageChange={setActivePage} />
-        }
+        ListFooterComponent={<InfiniteScrollFooter visible={activeQ.isFetchingNextPage} />}
         ListEmptyComponent={Empty}
+        onEndReached={() => {
+          if (activeQ.hasNextPage && !activeQ.isFetchingNextPage) void activeQ.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={7}
         refreshControl={
           <RefreshControl
-            refreshing={upcomingQ.isFetching || replaysQ.isFetching}
+            refreshing={
+              (upcomingQ.isFetching && !upcomingQ.isFetchingNextPage) ||
+              (replaysQ.isFetching && !replaysQ.isFetchingNextPage)
+            }
             onRefresh={onRefresh}
           />
         }

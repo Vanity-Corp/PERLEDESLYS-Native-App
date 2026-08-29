@@ -1,5 +1,5 @@
 import {
-  keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -44,20 +44,20 @@ export function useRecipes() {
   return useRecipesQuery().data ?? [];
 }
 
-// Paginated variant for the Recipes list screen's numbered pager. Keyed
-// separately from `["recipes"]` above so it never conflates with the
-// full-array fetch other screens (search, AI chat) depend on.
-export function useRecipesPageQuery(params: {
-  page: number;
-  category?: string;
-  search?: string;
-}) {
+// Infinite-scroll variant for the Recipes list screen. Keyed separately from
+// `["recipes"]` above so it never conflates with the full-array fetch other
+// screens (search, AI chat) depend on. Changing `category`/`search` changes
+// the query key, so React Query starts a fresh cursor chain automatically —
+// no manual "reset to page 1" needed.
+export function useRecipesInfiniteQuery(params: { category?: string; search?: string }) {
   const token = useToken();
-  return useQuery({
-    queryKey: ["recipes", "page", params],
-    queryFn: () => contentApi.recipesPaged(params),
+  return useInfiniteQuery({
+    queryKey: ["recipes", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      contentApi.recipesPaged({ ...params, cursor: pageParam, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!token,
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -96,14 +96,16 @@ export function useVideos() {
   return useVideosQuery().data ?? [];
 }
 
-// Paginated variant for the Vidéos (tutorials) list screen.
-export function useVideosPageQuery(params: { page: number; category?: string }) {
+// Infinite-scroll variant for the Vidéos (tutorials) list screen.
+export function useVideosInfiniteQuery(params: { category?: string; search?: string }) {
   const token = useToken();
-  return useQuery({
-    queryKey: ["videos", "page", params],
-    queryFn: () => contentApi.videosPaged(params),
+  return useInfiniteQuery({
+    queryKey: ["videos", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      contentApi.videosPaged({ ...params, cursor: pageParam, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!token,
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -128,14 +130,16 @@ export function useArticles() {
   return useArticlesQuery().data ?? [];
 }
 
-// Paginated variant for the Astuces & conseils (tips) list screen.
-export function useArticlesPageQuery(params: { page: number; category?: string }) {
+// Infinite-scroll variant for the Astuces & conseils (tips) list screen.
+export function useArticlesInfiniteQuery(params: { category?: string; search?: string }) {
   const token = useToken();
-  return useQuery({
-    queryKey: ["articles", "page", params],
-    queryFn: () => contentApi.articlesPaged(params),
+  return useInfiniteQuery({
+    queryKey: ["articles", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      contentApi.articlesPaged({ ...params, cursor: pageParam, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!token,
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -163,16 +167,18 @@ export function useLives() {
   return useLivesQuery().data ?? [];
 }
 
-// Paginated variant for the Lives list screen's upcoming/replays tabs — each
-// tab keeps its own `page` state and passes its own `status` filter so the
-// two lists paginate independently.
-export function useLivesPageQuery(params: { page: number; status?: string }) {
+// Infinite-scroll variant for the Lives list screen's upcoming/replays tabs —
+// each tab gets its own cursor chain (keyed on its own `status`) so the two
+// lists paginate independently.
+export function useLivesInfiniteQuery(params: { status?: string; search?: string }) {
   const token = useToken();
-  return useQuery({
-    queryKey: ["lives", "page", params],
-    queryFn: () => contentApi.livesPaged(params),
+  return useInfiniteQuery({
+    queryKey: ["lives", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      contentApi.livesPaged({ ...params, cursor: pageParam, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!token,
-    placeholderData: keepPreviousData,
   });
 }
 

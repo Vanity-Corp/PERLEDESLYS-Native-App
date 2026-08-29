@@ -7,16 +7,18 @@ import type { ImageSourcePropType } from "react-native";
 // with no component changes.
 export type ImageRef = ImageSourcePropType | string;
 
-// Envelope returned by the list endpoints' paginated branch (page-based
-// pagination for the Recipes/Videos/Lives/Tips screens). The same endpoints
-// still return a bare `T[]` when called with no `page` param (search, home
-// previews, the AI chat, and the video/live detail screens rely on that).
-export type Paginated<T> = {
+// Envelope returned by the list endpoints' paginated branch (cursor/keyset
+// pagination for the Recipes/Videos/Lives/Tips screens' infinite-scroll
+// lists). The same endpoints still return a bare `T[]` when called with no
+// `limit` param (search, home previews, the AI chat, and the video/live
+// detail screens rely on that). `nextCursor` is `null` once the last page has
+// been reached; pass it back as `cursor` to fetch the next page. `total` is
+// the count of all rows matching the current filters (regardless of cursor
+// position) — used for e.g. the Lives screen's tab counts.
+export type CursorPage<T> = {
   items: T[];
-  page: number;
-  pageSize: number;
+  nextCursor: string | null;
   total: number;
-  totalPages: number;
 };
 
 export type Recipe = {
