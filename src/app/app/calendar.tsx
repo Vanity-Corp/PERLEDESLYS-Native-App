@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { Link } from "expo-router";
 import {
   ArrowLeft,
@@ -41,7 +42,7 @@ const MONTHS = [
   "Décembre",
 ];
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+const iso = (d: Date) => format(d, "yyyy-MM-dd");
 
 function typeColor(t: AppEvent["type"]) {
   return t === "live"

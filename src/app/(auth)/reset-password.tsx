@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CheckCircle2, KeyRound, Ticket } from "lucide-react-native";
+import { CheckCircle2, ClipboardPaste, KeyRound, Ticket } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -49,6 +50,11 @@ export default function ResetPasswordScreen() {
   useEffect(() => {
     if (tokenParam) form.setValue("token", tokenParam);
   }, [tokenParam, form]);
+
+  const onPasteToken = async () => {
+    const text = await Clipboard.getStringAsync();
+    if (text.trim()) form.setValue("token", text.trim());
+  };
 
   const onSubmit = form.handleSubmit(async (values) => {
     setError(null);
@@ -126,10 +132,22 @@ export default function ResetPasswordScreen() {
                         autoCapitalize="none"
                         autoCorrect={false}
                         placeholder="Code reçu par email"
-                        className="h-fit rounded-full py-3.5 pl-11 pr-4 tracking-wide bg-white"
+                        className="h-fit rounded-full py-3.5 pl-11 pr-12 tracking-wide bg-white"
                       />
                     )}
                   />
+                  <Pressable
+                    onPress={onPasteToken}
+                    accessibilityLabel="Coller le code"
+                    hitSlop={8}
+                    className="absolute right-4 z-10"
+                  >
+                    <Icon
+                      as={ClipboardPaste}
+                      size={18}
+                      className="text-muted-foreground"
+                    />
+                  </Pressable>
                 </View>
               )}
 

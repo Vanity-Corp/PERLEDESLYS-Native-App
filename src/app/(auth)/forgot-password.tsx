@@ -93,11 +93,12 @@ export default function ForgotPasswordScreen() {
                 </Text>
               </GradientButton>
               <Button
-                variant="link"
+                variant="outline"
                 size="sm"
                 onPress={() => router.push("/(auth)/reset-password")}
+                className="w-full rounded-full"
               >
-                <Text className="text-xs font-medium text-muted-foreground">
+                <Text className="text-xs font-medium text-primary">
                   J'ai déjà un code
                 </Text>
               </Button>
@@ -156,17 +157,16 @@ export default function ForgotPasswordScreen() {
                   </Text>
                 )}
               </GradientButton>
-              <View className="items-center">
-                <Button
-                  variant="link"
-                  size="sm"
-                  onPress={() => router.push("/(auth)/reset-password")}
-                >
-                  <Text className="text-xs font-medium text-muted-foreground">
-                    J'ai déjà un code
-                  </Text>
-                </Button>
-              </View>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => router.push("/(auth)/reset-password")}
+                className="w-full rounded-full"
+              >
+                <Text className="text-xs font-medium text-primary">
+                  J'ai déjà un code
+                </Text>
+              </Button>
             </View>
           )}
         </ScrollView>

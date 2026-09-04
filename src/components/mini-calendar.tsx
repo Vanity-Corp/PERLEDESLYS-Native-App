@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { Link } from "expo-router";
 import {
   Bell,
@@ -30,7 +31,7 @@ function startOfWeek(d: Date) {
 }
 
 function iso(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return format(d, "yyyy-MM-dd");
 }
 
 function typeIcon(t: AppEvent["type"]) {
