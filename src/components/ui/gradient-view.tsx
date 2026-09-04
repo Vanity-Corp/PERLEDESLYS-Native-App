@@ -50,6 +50,8 @@ const DIRECTIONS: Record<
   roseOverlay: VERTICAL,
   creamOverlay: VERTICAL,
   bordeauxOverlay: VERTICAL,
+  cardFadeTop: VERTICAL,
+  cardFadeBottom: VERTICAL,
 };
 
 type GradientViewProps = Omit<

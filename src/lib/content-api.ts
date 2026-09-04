@@ -9,6 +9,8 @@ import type {
   FaqItem,
   FounderInfo,
   Live,
+  Menu,
+  MenuDetail,
   NotificationItem,
   Recipe,
   RecentItem,
@@ -65,6 +67,8 @@ export const contentApi = {
     category?: string;
     search?: string;
   }) => get<CursorPage<Recipe>>(`/recipes${qs(params)}`),
+  menus: () => get<Menu[]>("/menus"),
+  menu: (id: string) => get<MenuDetail>(`/menus/${id}`),
   videos: () => get<Video[]>("/videos"),
   video: (id: string) => get<Video>(`/videos/${id}`),
   videosPaged: (params: { cursor?: string; limit?: number; category?: string; search?: string }) =>

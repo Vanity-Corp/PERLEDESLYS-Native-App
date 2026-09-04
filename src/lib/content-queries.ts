@@ -84,6 +84,27 @@ export function useRecipe(id?: string) {
   });
 }
 
+export function useMenusQuery() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["menus"],
+    queryFn: contentApi.menus,
+    enabled: !!token,
+  });
+}
+export function useMenus() {
+  return useMenusQuery().data ?? [];
+}
+
+export function useMenu(id?: string) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ["menu", id],
+    queryFn: () => contentApi.menu(id!),
+    enabled: !!token && !!id,
+  });
+}
+
 export function useVideosQuery() {
   const token = useToken();
   return useQuery({

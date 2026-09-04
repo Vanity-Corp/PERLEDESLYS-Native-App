@@ -69,6 +69,7 @@ export default function AppLayout() {
           options={{ href: null, title: "Qui suis-je ?" }}
         />
         <Tabs.Screen name="tips" options={{ href: null, title: "Astuces" }} />
+        <Tabs.Screen name="menus" options={{ href: null, title: "Menus" }} />
         <Tabs.Screen
           name="notifications"
           options={{ href: null, title: "Notifications" }}

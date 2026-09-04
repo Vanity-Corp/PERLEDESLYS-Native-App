@@ -45,6 +45,21 @@ export type Recipe = {
   steps: string[];
 };
 
+// A curated, ordered set of existing recipes (e.g. "Menu Ramadan"). List
+// endpoints return the bare `Menu`; the detail endpoint resolves `recipeIds`
+// server-side into `MenuDetail.recipes` (same recipe shape as everywhere
+// else in the app — no separate "menu recipe" model).
+export type Menu = {
+  id: string;
+  title: string;
+  image: ImageRef;
+  description?: string;
+  recipeIds: string[];
+  createdAt?: string;
+};
+
+export type MenuDetail = Menu & { recipes: Recipe[] };
+
 export type Video = {
   id: string;
   title: string;

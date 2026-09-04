@@ -89,6 +89,11 @@ export const GRADIENTS = {
   luxe: ["hsl(354.3, 74.6%, 13.9%)", "hsl(354.3, 74.6%, 13.9%)"],
   cream: ["hsl(8.1, 100.0%, 98.2%)", "hsl(2.0, 78.3%, 94.1%)"],
   overlay: ["transparent", "hsla(8.9, 29.2%, 9.2%, 0.85)"],
+  // Thin edge-fade strips for the home page's Menus bento thumbnails: fades
+  // between the card's white background and transparent, softening the
+  // photo's top/bottom edge into `bg-card` instead of a hard border.
+  cardFadeTop: ["hsl(0, 0%, 100%)", "transparent"],
+  cardFadeBottom: ["transparent", "hsl(0, 0%, 100%)"],
   roseOverlay: ["transparent", "hsla(354.3, 74.6%, 13.9%, 0.85)"],
   creamOverlay: ["transparent", "hsla(10, 100.0%, 98.2%, 0.90)"],
   // Fades the auth hero photo down into the solid bordeaux background.

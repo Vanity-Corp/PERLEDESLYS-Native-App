@@ -3,6 +3,7 @@ import { Link } from "expo-router";
 import {
   Bell,
   BookOpen,
+  CalendarRange,
   ChevronRight,
   Clock,
   Compass,
@@ -16,7 +17,13 @@ import {
   User,
 } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MiniCalendar } from "@/components/mini-calendar";
@@ -31,6 +38,7 @@ import {
   useFounder,
   useHardRefresh,
   useLivesQuery,
+  useMenus,
   useMyReview,
   useNotificationsFeedQuery,
   useRecipesQuery,
@@ -39,6 +47,7 @@ import {
 } from "@/lib/content-queries";
 import { useNotificationsStore } from "@/lib/notifications-store";
 import { isRecent } from "@/lib/utils";
+import type { ImageRef } from "@/types/content";
 
 // Web source: kitchen-haven-club/src/routes/app/index.tsx (Dashboard)
 export default function DashboardScreen() {
@@ -47,6 +56,7 @@ export default function DashboardScreen() {
   const recipesQ = useRecipesQuery();
   const reviewsQ = useReviewsQuery();
   const videosQ = useVideosQuery();
+  const menus = useMenus();
   const founderInfo = useFounder();
   const notifications = useNotificationsFeedQuery().data ?? [];
   const lastSeenAt = useNotificationsStore((s) => s.lastSeenAt);
@@ -65,8 +75,7 @@ export default function DashboardScreen() {
   const videos = videosQ.data ?? [];
 
   // First-load / network state driven by the core content queries.
-  const isLoading =
-    recipesQ.isLoading || videosQ.isLoading || livesQ.isLoading;
+  const isLoading = recipesQ.isLoading || videosQ.isLoading || livesQ.isLoading;
   const isError = recipesQ.isError || videosQ.isError || livesQ.isError;
   const refetchAll = () => {
     void recipesQ.refetch();
@@ -272,81 +281,81 @@ export default function DashboardScreen() {
 
         {/* Featured recipe */}
         {featured && (
-        <Section title="Recette signature" href="/app/recipes">
-          <View className="px-5">
-            <Link
-              href={{
-                pathname: "/app/recipes/[recipeId]",
-                params: { recipeId: featured.id },
-              }}
-              asChild
-            >
-              <Pressable className="aspect-[16/10] overflow-hidden rounded-3xl">
-                <View className="relative h-full w-full">
-                  <Image
-                    source={featured.image}
-                    contentFit="cover"
-                    style={{ width: "100%", height: "100%" }}
-                    accessibilityLabel={featured.title}
-                  />
-                  <GradientView tone="overlay" className="absolute inset-0" />
-                  {isRecent(featured.createdAt) && (
-                    <GradientView
-                      tone="gold"
-                      className="absolute left-3 top-3 rounded-full px-2.5 py-1"
-                    >
-                      <Text className="text-[10px] font-semibold uppercase tracking-wider text-foreground">
-                        ✨ Nouveau
+          <Section title="Recette signature" href="/app/recipes">
+            <View className="px-5">
+              <Link
+                href={{
+                  pathname: "/app/recipes/[recipeId]",
+                  params: { recipeId: featured.id },
+                }}
+                asChild
+              >
+                <Pressable className="aspect-[16/10] overflow-hidden rounded-3xl">
+                  <View className="relative h-full w-full">
+                    <Image
+                      source={featured.image}
+                      contentFit="cover"
+                      style={{ width: "100%", height: "100%" }}
+                      accessibilityLabel={featured.title}
+                    />
+                    <GradientView tone="overlay" className="absolute inset-0" />
+                    {isRecent(featured.createdAt) && (
+                      <GradientView
+                        tone="gold"
+                        className="absolute left-3 top-3 rounded-full px-2.5 py-1"
+                      >
+                        <Text className="text-[10px] font-semibold uppercase tracking-wider text-foreground">
+                          ✨ Nouveau
+                        </Text>
+                      </GradientView>
+                    )}
+                    <View className="absolute bottom-4 left-4 right-4">
+                      <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
+                        {featured.category}
                       </Text>
-                    </GradientView>
-                  )}
-                  <View className="absolute bottom-4 left-4 right-4">
-                    <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
-                      {featured.category}
-                    </Text>
-                    <Text className="mt-0.5 font-display text-2xl leading-tight text-primary-foreground">
-                      {featured.title}
-                    </Text>
-                    <View className="mt-2 flex-row items-center gap-3">
-                      <View className="flex-row items-center gap-1">
-                        <Icon
-                          as={Clock}
-                          size={12}
-                          className="text-primary-foreground"
-                        />
-                        <Text className="text-[11px] text-primary-foreground opacity-95">
-                          {featured.time}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center gap-1">
-                        <Icon
-                          as={Flame}
-                          size={12}
-                          className="text-primary-foreground"
-                        />
-                        <Text className="text-[11px] text-primary-foreground opacity-95">
-                          {featured.difficulty}
-                        </Text>
-                      </View>
-                      {featured.cookidooUrl ? (
-                        <View className="ml-auto flex-row items-center gap-1 rounded-full bg-background/95 px-2 py-0.5">
+                      <Text className="mt-0.5 font-display text-2xl leading-tight text-primary-foreground">
+                        {featured.title}
+                      </Text>
+                      <View className="mt-2 flex-row items-center gap-3">
+                        <View className="flex-row items-center gap-1">
                           <Icon
-                            as={ExternalLink}
+                            as={Clock}
                             size={12}
-                            className="text-foreground"
+                            className="text-primary-foreground"
                           />
-                          <Text className="text-[11px] text-foreground">
-                            Cookidoo
+                          <Text className="text-[11px] text-primary-foreground opacity-95">
+                            {featured.time}
                           </Text>
                         </View>
-                      ) : null}
+                        <View className="flex-row items-center gap-1">
+                          <Icon
+                            as={Flame}
+                            size={12}
+                            className="text-primary-foreground"
+                          />
+                          <Text className="text-[11px] text-primary-foreground opacity-95">
+                            {featured.difficulty}
+                          </Text>
+                        </View>
+                        {featured.cookidooUrl ? (
+                          <View className="ml-auto flex-row items-center gap-1 rounded-full bg-background/95 px-2 py-0.5">
+                            <Icon
+                              as={ExternalLink}
+                              size={12}
+                              className="text-foreground"
+                            />
+                            <Text className="text-[11px] text-foreground">
+                              Cookidoo
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
                     </View>
                   </View>
-                </View>
-              </Pressable>
-            </Link>
-          </View>
-        </Section>
+                </Pressable>
+              </Link>
+            </View>
+          </Section>
         )}
 
         {/* Continue watching */}
@@ -481,41 +490,60 @@ export default function DashboardScreen() {
 
         {/* Quick access tiles */}
         <Section title="Votre univers TM7">
-          <View className="flex-row gap-3 px-5">
-            <Link href="/app/tutorials" asChild>
-              <Pressable className="flex-1">
-                <GradientView
-                  tone="luxe"
-                  className="aspect-square flex-col justify-between rounded-2xl p-4"
-                >
-                  <Icon
-                    as={Play}
-                    size={24}
-                    className="text-primary-foreground"
-                  />
-                  <View>
-                    <Text className="font-display text-lg leading-tight text-primary-foreground">
-                      Tutoriels
-                    </Text>
-                    <Text className="mt-0.5 text-[10px] text-primary-foreground opacity-90">
-                      {videos.length} vidéos TM7
-                    </Text>
+          <View className="gap-3 px-5">
+            <View className="flex-row gap-3">
+              <Link href="/app/tutorials" asChild>
+                <Pressable className="flex-1">
+                  <GradientView
+                    tone="luxe"
+                    className="aspect-square flex-col justify-between rounded-2xl p-4"
+                  >
+                    <Icon
+                      as={Play}
+                      size={24}
+                      className="text-primary-foreground"
+                    />
+                    <View>
+                      <Text className="font-display text-lg leading-tight text-primary-foreground">
+                        Tutoriels
+                      </Text>
+                      <Text className="mt-0.5 text-[10px] text-primary-foreground opacity-90">
+                        {videos.length} vidéos TM7
+                      </Text>
+                    </View>
+                  </GradientView>
+                </Pressable>
+              </Link>
+              <Link href="/app/tips" asChild>
+                <Pressable className="flex-1">
+                  <View className="aspect-square flex-col justify-between rounded-2xl border border-border bg-card p-4">
+                    <Icon as={Sparkles} size={24} className="text-primary" />
+                    <View>
+                      <Text className="font-display text-lg leading-tight text-foreground">
+                        Astuces
+                      </Text>
+                      <Text className="mt-0.5 text-[10px] text-muted-foreground">
+                        Conseils & batch cooking
+                      </Text>
+                    </View>
                   </View>
-                </GradientView>
-              </Pressable>
-            </Link>
-            <Link href="/app/tips" asChild>
-              <Pressable className="flex-1">
-                <View className="aspect-square flex-col justify-between rounded-2xl border border-border bg-card p-4">
-                  <Icon as={Sparkles} size={24} className="text-primary" />
-                  <View>
-                    <Text className="font-display text-lg leading-tight text-foreground">
-                      Astuces
+                </Pressable>
+              </Link>
+            </View>
+
+            <Link href="/app/menus" asChild>
+              <Pressable>
+                <View className="flex-row items-center justify-between rounded-2xl border border-border bg-card p-4">
+                  <View className="flex-1 pr-3">
+                    <Icon as={CalendarRange} size={24} className="text-primary" />
+                    <Text className="mt-3 font-display text-lg leading-tight text-foreground">
+                      Menus
                     </Text>
                     <Text className="mt-0.5 text-[10px] text-muted-foreground">
-                      Conseils & batch cooking
+                      Planifiez votre semaine
                     </Text>
                   </View>
+                  <MenuBento images={menus.slice(0, 2).map((m) => m.image)} />
                 </View>
               </Pressable>
             </Link>
@@ -593,7 +621,7 @@ export default function DashboardScreen() {
               accessibilityLabel={founderInfo.name}
             />
             <View className="min-w-0 flex-1">
-              <Text className="font-italiana text-xl tracking-wide text-primary-foreground">
+              <Text className="font-italiana text-xl tracking-wide font-semibold text-primary-foreground">
                 {founderInfo.fullName}
               </Text>
               <Text className="mt-1 text-[11px] leading-snug text-primary-foreground opacity-90">
@@ -677,7 +705,11 @@ export default function DashboardScreen() {
                 <Text className="flex-1 text-sm font-medium text-foreground">
                   Qui suis-je ?
                 </Text>
-                <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
+                <Icon
+                  as={ChevronRight}
+                  size={16}
+                  className="text-muted-foreground"
+                />
               </Pressable>
             </Link>
             <Link href="/app/about" asChild>
@@ -686,13 +718,43 @@ export default function DashboardScreen() {
                 <Text className="flex-1 text-sm font-medium text-foreground">
                   À propos
                 </Text>
-                <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
+                <Icon
+                  as={ChevronRight}
+                  size={16}
+                  className="text-muted-foreground"
+                />
               </Pressable>
             </Link>
           </View>
         </Section>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// Small stacked-thumbnail preview for the Menus card: two images, 1 column /
+// 2 rows, each with a thin top/bottom fade into the card's white background
+// instead of a hard photo edge (no native blur — GradientView is the only
+// gradient primitive in this codebase).
+function MenuBento({ images }: { images: ImageRef[] }) {
+  return (
+    <View className="w-[84px] flex-col gap-1.5">
+      {[0, 1].map((i) => (
+        <View key={i} className="relative aspect-[16/10] overflow-hidden rounded-xl bg-card">
+          {images[i] ? (
+            <Image
+              source={images[i]}
+              contentFit="cover"
+              style={{ width: "100%", height: "100%" }}
+            />
+          ) : (
+            <View className="h-full w-full bg-secondary" />
+          )}
+          <GradientView tone="cardFadeTop" className="absolute inset-x-0 top-0 h-3" />
+          <GradientView tone="cardFadeBottom" className="absolute inset-x-0 bottom-0 h-3" />
+        </View>
+      ))}
+    </View>
   );
 }
 
