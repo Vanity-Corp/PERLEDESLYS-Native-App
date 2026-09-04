@@ -6,6 +6,8 @@ import {
   PlayCircle,
   Send,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
   User as UserIcon,
   X,
 } from "lucide-react-native";
@@ -24,7 +26,7 @@ import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
-import { aiChat } from "@/lib/api";
+import { fetchAiHistory, rateAiMessage, streamAiChat } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
 import { useRecipes, useVideos } from "@/lib/content-queries";
 import type { Recipe, Video } from "@/types/content";
@@ -45,7 +47,22 @@ import type { Recipe, Video } from "@/types/content";
 // `aiChat()` (Task 9) already returns the raw error string; the web's `😔 `
 // prefix is added here at render time, matching the web's own separation.
 
-type Msg = { role: "user" | "assistant"; content: string };
+// `id` is the persisted AiMessage id — present once a reply has finished
+// streaming (or was loaded from history); absent for the hardcoded greeting
+// and for a reply still mid-stream. Feedback (thumbs) is only offerable once
+// `id` exists, since it's what the rating endpoint targets.
+type Msg = {
+  id?: string;
+  role: "user" | "assistant";
+  content: string;
+  feedback?: "up" | "down" | null;
+};
+
+const GREETING: Msg = {
+  role: "assistant",
+  content:
+    "Bonjour 🌸 Je suis l'assistante IA de Ghania. Pose-moi une question sur une recette, une astuce TM7 ou colle-moi une recette à convertir au Thermomix.",
+};
 
 const SUGGESTIONS = [
   "As-tu une recette de pizza ?",
@@ -141,17 +158,27 @@ export function AIChat() {
   const recipes = useRecipes();
   const videos = useVideos();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content:
-        "Bonjour 🌸 Je suis l'assistante IA de Ghania. Pose-moi une question sur une recette, une astuce TM7 ou colle-moi une recette à convertir au Thermomix.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([GREETING]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
+
+  // Seeds the chat with the member's persisted history on first open, so it
+  // survives an app restart — falls back to the greeting if there's none.
+  useEffect(() => {
+    if (!token || historyLoaded) return;
+    let active = true;
+    fetchAiHistory({ token }).then((rows) => {
+      if (!active) return;
+      if (rows.length > 0) setMessages(rows.map((r) => ({ ...r })));
+      setHistoryLoaded(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [token, historyLoaded]);
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -164,28 +191,68 @@ export function AIChat() {
     setMessages(next);
     setInput("");
     setLoading(true);
-    try {
-      const res = await aiChat({
-        messages: next.map(({ role, content }) => ({ role, content })),
-        token,
-      });
-      if (res.ok) {
-        setMessages([...next, { role: "assistant", content: res.content }]);
-      } else {
-        setMessages([...next, { role: "assistant", content: `😔 ${res.error}` }]);
-      }
-    } catch {
-      setMessages([
-        ...next,
-        {
-          role: "assistant",
-          content:
-            "😔 Je n'ai pas pu joindre l'assistance. Vérifie ta connexion et réessaie.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+
+    // The assistant's reply grows in place as deltas arrive; its index is a
+    // closure variable (not state) since stream events fire synchronously in
+    // sequence, one at a time — no risk of it going stale between them.
+    let assistantIndex = -1;
+
+    await streamAiChat({
+      messages: next.map(({ role, content }) => ({ role, content })),
+      token,
+      onEvent: (event) => {
+        setLoading(false); // hide the "réfléchit…" spinner as soon as anything happens
+        if (event.type === "delta") {
+          setMessages((prev) => {
+            if (assistantIndex === -1) {
+              assistantIndex = prev.length;
+              return [...prev, { role: "assistant", content: event.text }];
+            }
+            const copy = [...prev];
+            const current = copy[assistantIndex];
+            copy[assistantIndex] = { ...current, content: current.content + event.text };
+            return copy;
+          });
+        } else if (event.type === "done") {
+          setMessages((prev) => {
+            if (assistantIndex === -1) return prev;
+            const copy = [...prev];
+            copy[assistantIndex] = { ...copy[assistantIndex], id: event.messageId, feedback: null };
+            return copy;
+          });
+        } else if (event.type === "error") {
+          const errorText = `😔 ${event.error}`;
+          setMessages((prev) => {
+            if (assistantIndex === -1) {
+              assistantIndex = prev.length;
+              return [...prev, { role: "assistant", content: errorText }];
+            }
+            const copy = [...prev];
+            const current = copy[assistantIndex];
+            copy[assistantIndex] = {
+              ...current,
+              content: current.content ? `${current.content}\n\n${errorText}` : errorText,
+            };
+            return copy;
+          });
+        }
+      },
+    });
+
+    setLoading(false);
+  }
+
+  function rate(index: number, value: "up" | "down") {
+    if (!token) return;
+    setMessages((prev) => {
+      const msg = prev[index];
+      if (!msg.id) return prev;
+      const nextValue = msg.feedback === value ? null : value; // tap again to clear
+      void rateAiMessage({ token, messageId: msg.id, feedback: nextValue });
+      const copy = [...prev];
+      copy[index] = { ...msg, feedback: nextValue };
+      return copy;
+    });
   }
 
   return (
@@ -343,6 +410,26 @@ export function AIChat() {
                                   </Pressable>
                                 </Link>
                               ))}
+                            </View>
+                          )}
+                          {m.role === "assistant" && m.id && (
+                            <View className="mt-2 flex-row items-center gap-3 border-t border-border/60 pt-2">
+                              <Pressable onPress={() => rate(i, "up")} hitSlop={8}>
+                                <Icon
+                                  as={ThumbsUp}
+                                  size={14}
+                                  className={m.feedback === "up" ? "text-primary" : "text-muted-foreground"}
+                                  fill={m.feedback === "up" ? "currentColor" : "none"}
+                                />
+                              </Pressable>
+                              <Pressable onPress={() => rate(i, "down")} hitSlop={8}>
+                                <Icon
+                                  as={ThumbsDown}
+                                  size={14}
+                                  className={m.feedback === "down" ? "text-primary" : "text-muted-foreground"}
+                                  fill={m.feedback === "down" ? "currentColor" : "none"}
+                                />
+                              </Pressable>
                             </View>
                           )}
                         </View>
