@@ -85,8 +85,13 @@ export async function uploadImage(
       headers: { Authorization: `Bearer ${token}` },
       body: form,
     });
-  } catch {
-    throw new ApiError("Impossible de joindre le serveur.", 0, "NETWORK");
+  } catch (e) {
+    // Surface the real error instead of a blanket "can't reach the server" —
+    // fetch() throws for genuine network failures too, but also for e.g. a
+    // picked file URI it can't actually read, which looks identical to the
+    // user unless the underlying message is shown.
+    const detail = e instanceof Error && e.message ? ` (${e.message})` : "";
+    throw new ApiError(`Impossible de joindre le serveur${detail}.`, 0, "NETWORK");
   }
   const json = (await res.json().catch(() => null)) as
     | { url?: string; message?: string }
