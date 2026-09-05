@@ -115,9 +115,13 @@ export async function unregisterPushToken(authToken?: string): Promise<void> {
   }
 }
 
-// Map a notification's `data` payload ({ type, id }) to an app route.
+// Map a notification's `data` payload to an in-app route: either a content
+// target ({ type, id }, from automatic content pushes and admin-linked
+// content) or a fixed app screen ({ screen }, from an admin announcement).
+// External links ({ url }) aren't routes — see externalUrlForPushData.
 export function hrefForPushData(data: unknown): Href | null {
-  const d = (data ?? {}) as { type?: string; id?: string };
+  const d = (data ?? {}) as { type?: string; id?: string; screen?: string };
+  if (d.screen) return d.screen as Href;
   if (!d.type || !d.id) return null;
   switch (d.type) {
     case "recipe":
@@ -131,4 +135,11 @@ export function hrefForPushData(data: unknown): Href | null {
     default:
       return null;
   }
+}
+
+// An admin announcement can instead point at an external URL — opened via
+// Linking.openURL rather than router navigation.
+export function externalUrlForPushData(data: unknown): string | null {
+  const d = (data ?? {}) as { url?: string };
+  return d.url?.trim() || null;
 }

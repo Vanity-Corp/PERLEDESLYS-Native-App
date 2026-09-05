@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
+import { FullscreenVideoButton } from "@/components/video-fullscreen-button";
 import { useHardRefresh, useRecipe } from "@/lib/content-queries";
 import { useFavorites, useHistory } from "@/lib/local-store";
 
@@ -218,8 +219,9 @@ export default function RecipeDetailScreen() {
               (vimeoUrl holds a YouTube URL). Tapping reveals an inline player. */}
           {recipe.vimeoUrl ? (
             showTutorial ? (
-              <View className="mt-7 overflow-hidden rounded-2xl">
-                <VideoEmbed url={recipe.vimeoUrl} title={recipe.title} />
+              <View className="relative mt-7 overflow-hidden rounded-2xl">
+                <VideoEmbed url={recipe.vimeoUrl} title={recipe.title} posterUri={recipe.image} />
+                <FullscreenVideoButton url={recipe.vimeoUrl} title={recipe.title} />
               </View>
             ) : (
               <Pressable

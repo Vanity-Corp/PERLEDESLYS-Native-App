@@ -178,17 +178,12 @@ export const authApi = {
     }),
 
   // Always resolves (the backend never reveals whether the email exists).
+  // The reset itself now happens entirely on the web page the email links to
+  // (backend-rendered, POSTs to /auth/reset-password itself) — no in-app step.
   forgotPassword: (email: string) =>
     request("/auth/forgot-password", {
       method: "POST",
       body: { email },
-      schema: z.object({ ok: z.literal(true) }),
-    }),
-
-  resetPassword: (token: string, password: string) =>
-    request("/auth/reset-password", {
-      method: "POST",
-      body: { token, password },
       schema: z.object({ ok: z.literal(true) }),
     }),
 };

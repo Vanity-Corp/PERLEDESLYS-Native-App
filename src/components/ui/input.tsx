@@ -1,11 +1,15 @@
-import { cn } from '@/lib/utils';
+import { blockInsertKeyOverwriteMode, cn } from '@/lib/utils';
 import { Platform, TextInput } from 'react-native';
 
-function Input({ className, ...props }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {
+function Input({
+  className,
+  onKeyDown,
+  ...props
+}: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput> & { onKeyDown?: (e: never) => void }) {
   return (
     <TextInput
       className={cn(
-        'border-input bg-background text-foreground flex h-10 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5 shadow-sm shadow-black/5 sm:h-9',
+        'border-input bg-white text-foreground flex h-10 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5 shadow-sm shadow-black/5 sm:h-9',
         props.editable === false &&
         cn(
           'opacity-50',
@@ -22,6 +26,7 @@ function Input({ className, ...props }: React.ComponentProps<typeof TextInput> &
         className
       )}
       {...props}
+      {...(Platform.OS === 'web' ? { onKeyDown: blockInsertKeyOverwriteMode(onKeyDown) } : null)}
     />
   );
 }

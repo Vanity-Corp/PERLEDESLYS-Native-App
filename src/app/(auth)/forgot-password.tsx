@@ -8,7 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
 import OgeeArch from "@/assets/perledeslys/ogee-arch.svg";
-import { Button } from "@/components/ui/button";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -80,8 +79,9 @@ export default function ForgotPasswordScreen() {
               </View>
               <Text className="text-center text-sm leading-relaxed text-muted-foreground">
                 Si un compte est associé à cet email, un lien de
-                réinitialisation vient de lui être envoyé. Pense à vérifier
-                tes spams.
+                réinitialisation vient de lui être envoyé. Ouvre-le depuis ton
+                téléphone pour choisir ton nouveau mot de passe — pense à
+                vérifier tes spams.
               </Text>
               <GradientButton
                 tone="luxe"
@@ -92,16 +92,6 @@ export default function ForgotPasswordScreen() {
                   Retour à la connexion
                 </Text>
               </GradientButton>
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={() => router.push("/(auth)/reset-password")}
-                className="w-full rounded-full"
-              >
-                <Text className="text-xs font-medium text-primary">
-                  J'ai déjà un code
-                </Text>
-              </Button>
             </View>
           ) : (
             <View className="mt-6 gap-4">
@@ -157,16 +147,6 @@ export default function ForgotPasswordScreen() {
                   </Text>
                 )}
               </GradientButton>
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={() => router.push("/(auth)/reset-password")}
-                className="w-full rounded-full"
-              >
-                <Text className="text-xs font-medium text-primary">
-                  J'ai déjà un code
-                </Text>
-              </Button>
             </View>
           )}
         </ScrollView>

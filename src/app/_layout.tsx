@@ -1,7 +1,9 @@
 import { PortalHost } from "@rn-primitives/portal";
+import * as ScreenOrientation from "expo-screen-orientation";
 import * as SplashScreen from "expo-splash-screen";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { useAppFonts } from "@/hooks/use-app-fonts";
@@ -21,6 +23,16 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  // The app is portrait-only everywhere except the video fullscreen viewer
+  // (VideoFullscreenModal), which briefly unlocks to landscape. app.json's
+  // `orientation` had to move from "portrait" to "default" to allow that at
+  // all, so this re-asserts portrait as the app's actual resting state on
+  // every native platform (web has no orientation lock to fight).
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  }, []);
 
   // Render nothing (native splash stays up) until fonts have resolved,
   // one way or the other.

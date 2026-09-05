@@ -621,7 +621,11 @@ export default function DashboardScreen() {
               accessibilityLabel={founderInfo.name}
             />
             <View className="min-w-0 flex-1">
-              <Text className="font-italiana text-xl tracking-wide font-semibold text-primary-foreground">
+              {/* Italiana ships one weight (400) only — `font-semibold` is a
+                  no-op on it in RN, leaving this too thin to read. Swapped to
+                  Cormorant Garamond Bold here only; other font-italiana
+                  usages are untouched. */}
+              <Text className="font-display-bold text-xl tracking-wide text-primary-foreground">
                 {founderInfo.fullName}
               </Text>
               <Text className="mt-1 text-[11px] leading-snug text-primary-foreground opacity-90">

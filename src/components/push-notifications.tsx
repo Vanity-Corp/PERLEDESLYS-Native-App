@@ -1,11 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { InteractionManager } from "react-native";
+import { InteractionManager, Linking } from "react-native";
 
 import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/local-store";
 import {
+  externalUrlForPushData,
   getNotifications,
   hrefForPushData,
   registerPushToken,
@@ -42,6 +43,11 @@ export function PushNotifications() {
     const Notifications = getNotifications();
     if (!Notifications) return;
     const route = (data: unknown) => {
+      const url = externalUrlForPushData(data);
+      if (url) {
+        void Linking.openURL(url);
+        return;
+      }
       const href = hrefForPushData(data);
       if (href) router.push(href);
     };

@@ -41,7 +41,11 @@ export default function LivesScreen() {
   // other's, and a search term change resets both via their query keys.
   const upcomingQ = useLivesInfiniteQuery({ status: "À venir", search });
   const replaysQ = useLivesInfiniteQuery({ status: "Replay", search });
-  const next = upcomingQ.data?.pages[0]?.items[0];
+  // The hero "Prochain live" card always shows the true next upcoming live,
+  // independent of the search box — a separate, unfiltered query so typing a
+  // search term can't hide or swap out the banner.
+  const nextLiveQ = useLivesInfiniteQuery({ status: "À venir" });
+  const next = nextLiveQ.data?.pages[0]?.items[0];
 
   const activeQ = tab === "upcoming" ? upcomingQ : replaysQ;
   const items = activeQ.data?.pages.flatMap((p) => p.items) ?? [];
@@ -66,12 +70,12 @@ export default function LivesScreen() {
         </View>
       </View>
 
-      {upcomingQ.isLoading ? (
+      {nextLiveQ.isLoading ? (
         <View className="mx-5 mt-5">
           <Skeleton className="h-56 w-full rounded-3xl" />
         </View>
-      ) : upcomingQ.isError ? (
-        <NetworkError onRetry={() => void upcomingQ.refetch()} />
+      ) : nextLiveQ.isError ? (
+        <NetworkError onRetry={() => void nextLiveQ.refetch()} />
       ) : next ? (
         <View className="relative mx-5 mt-5 overflow-hidden rounded-3xl">
           <Image

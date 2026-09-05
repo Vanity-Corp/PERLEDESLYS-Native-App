@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -10,13 +11,13 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { memo, useEffect, useState } from "react";
-import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { FlatList, Linking, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
 import { useHardRefresh, useNotificationsFeedQuery } from "@/lib/content-queries";
 import { useNotificationsStore } from "@/lib/notifications-store";
-import { hrefForPushData } from "@/lib/push";
+import { externalUrlForPushData, hrefForPushData } from "@/lib/push";
 import type { NotificationItem } from "@/types/content";
 
 // Icon per notification type.
@@ -56,16 +57,24 @@ const NotificationRow = memo(function NotificationRow({
   item: NotificationItem;
   onPress: (item: NotificationItem) => void;
 }) {
-  const hasLink = !!hrefForPushData(item.data);
+  const hasLink = !!hrefForPushData(item.data) || !!externalUrlForPushData(item.data);
   return (
     <Pressable
       onPress={() => onPress(item)}
       disabled={!hasLink}
       className="mb-3 flex-row items-center gap-3 rounded-2xl border border-border bg-card p-3"
     >
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-        <Icon as={ICONS[item.type] ?? Sparkles} size={18} className="text-primary" />
-      </View>
+      {item.image ? (
+        <Image
+          source={item.image}
+          contentFit="cover"
+          style={{ width: 40, height: 40, borderRadius: 20 }}
+        />
+      ) : (
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+          <Icon as={ICONS[item.type] ?? Sparkles} size={18} className="text-primary" />
+        </View>
+      )}
       <View className="min-w-0 flex-1">
         <Text className="text-sm font-medium leading-snug text-foreground" numberOfLines={1}>
           {item.title}
@@ -99,6 +108,11 @@ export default function NotificationsScreen() {
   const shown = items.slice(0, visible);
 
   const openItem = (item: NotificationItem) => {
+    const url = externalUrlForPushData(item.data);
+    if (url) {
+      void Linking.openURL(url);
+      return;
+    }
     const href = hrefForPushData(item.data);
     if (href) router.push(href);
   };

@@ -330,6 +330,7 @@ export function AIChat() {
                   className="flex-1 bg-secondary/30"
                   contentContainerClassName="gap-3 px-4 py-4"
                   showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
                 >
                   {messages.map((m, i) => {
                     const refs =

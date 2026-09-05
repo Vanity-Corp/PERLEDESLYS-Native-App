@@ -5,6 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// On web, react-native-web's TextInput renders a real <textarea>/<input>, and
+// Firefox natively toggles overwrite mode on those elements when the user
+// presses the physical Insert key — typed characters then replace the ones
+// ahead of the cursor instead of being inserted, which reads as the field
+// "eating" letters while typing. Blocking the key's default behavior at the
+// DOM level is the only way to suppress it; RN's TextInput has no
+// insert-mode concept to configure.
+export function blockInsertKeyOverwriteMode<E extends { key: string; preventDefault: () => void }>(
+  onKeyDown?: (e: E) => void
+) {
+  return (e: E) => {
+    if (e.key === "Insert") e.preventDefault();
+    onKeyDown?.(e);
+  };
+}
+
 export function formatSeconds(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
   const s = Math.floor(totalSeconds % 60);

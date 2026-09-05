@@ -165,6 +165,7 @@ export type Review = {
 // "À propos" page content.
 export type About = {
   image?: string | null;
+  logoImage?: string | null; // overrides the bundled logo when set
   body: string; // rich-text HTML
 };
 
@@ -197,13 +198,17 @@ export type RecentItem = {
   createdAt: string;
 };
 
-// A backend-driven notification (GET /api/content/notifications). The server
-// prunes to the last 14 days. `data` carries a deep-link target when present.
+// A backend-driven notification (GET /api/content/notifications), scoped to
+// members created after their account and pruned to the retention window
+// server-side. `data` carries a deep-link target when present: content
+// ({ type, id }), a fixed app screen ({ screen }), or an external link
+// ({ url }) — see hrefForPushData / externalUrlForPushData in @/lib/push.
 export type NotificationItem = {
   id: string;
   type: "recipe" | "video" | "live" | "replay" | "article" | "ramadan" | "promo";
   title: string;
   body: string;
-  data?: { type?: string; id?: string };
+  data?: { type?: string; id?: string; screen?: string; url?: string };
+  image?: string | null;
   createdAt: string;
 };

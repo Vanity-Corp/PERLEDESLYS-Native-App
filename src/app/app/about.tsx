@@ -16,7 +16,7 @@ import { useAboutQuery, useHardRefresh } from "@/lib/content-queries";
 export default function AboutScreen() {
   const router = useRouter();
   const aboutQ = useAboutQuery();
-  const about = aboutQ.data ?? { image: null, body: "" };
+  const about = aboutQ.data ?? { image: null, logoImage: null, body: "" };
   const onRefresh = useHardRefresh([["about"]]);
 
   return (
@@ -47,7 +47,16 @@ export default function AboutScreen() {
             bottom-right — faithful to the design. */}
         <GradientView tone="luxe" className="mt-2 rounded-3xl p-6">
           <View className="items-center">
-            <PerleDesLysLogo width={200} height={120} />
+            {about.logoImage ? (
+              <Image
+                source={{ uri: about.logoImage }}
+                contentFit="contain"
+                style={{ width: 200, height: 120 }}
+                accessibilityLabel="Logo PerleDesLys"
+              />
+            ) : (
+              <PerleDesLysLogo width={200} height={120} />
+            )}
           </View>
 
           {about.body?.trim() ? (
