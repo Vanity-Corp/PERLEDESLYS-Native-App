@@ -46,17 +46,17 @@ export function AddNoteButton({
 
   return (
     <>
-      {/* Stacked directly above the global AI FAB (bottom-44 right-4 in
-          ai-chat.tsx) — same right offset, one FAB-height + gap higher —
-          instead of floating separately at bottom-6, where it used to clash
-          with both the AI button and the bottom tab bar underneath it. */}
+      {/* Stacked directly below the global AI FAB (52x52 at bottom-44 right-4
+          in ai-chat.tsx) — same size and right offset, ~8px gap between them
+          — instead of floating separately at bottom-6, where it used to
+          clash with both the AI button and the bottom tab bar underneath. */}
       <Pressable
         onPress={() => setOpen(true)}
-        className="absolute bottom-[15rem] right-4 h-14 w-14 items-center justify-center rounded-full bg-accent shadow-lg shadow-black/20"
+        className="absolute bottom-[116px] right-4 h-[52px] w-[52px] items-center justify-center rounded-full bg-accent shadow-lg shadow-black/20"
       >
         <Icon
           as={StickyNotePlus}
-          size={24}
+          size={20}
           className="text-primary-foreground"
         />
       </Pressable>

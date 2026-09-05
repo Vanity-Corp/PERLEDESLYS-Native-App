@@ -1,4 +1,5 @@
 import { blockInsertKeyOverwriteMode, cn } from '@/lib/utils';
+import { useTextInputCursorFix } from '@/hooks/use-text-input-cursor-fix';
 import { Platform, TextInput } from 'react-native';
 
 function Textarea({
@@ -7,8 +8,12 @@ function Textarea({
   numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.
   placeholderClassName,
   onKeyDown,
+  value,
+  onChangeText,
+  onSelectionChange,
   ...props
 }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput> & { onKeyDown?: (e: never) => void }) {
+  const cursorFix = useTextInputCursorFix(value as string | undefined, onChangeText, onSelectionChange);
   return (
     <TextInput
       className={cn(
@@ -23,7 +28,9 @@ function Textarea({
       multiline={multiline}
       numberOfLines={numberOfLines}
       textAlignVertical="top"
+      value={value}
       {...props}
+      {...cursorFix}
       {...(Platform.OS === 'web' ? { onKeyDown: blockInsertKeyOverwriteMode(onKeyDown) } : null)}
     />
   );

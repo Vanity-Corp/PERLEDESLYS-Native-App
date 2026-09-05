@@ -1,11 +1,16 @@
 import { blockInsertKeyOverwriteMode, cn } from '@/lib/utils';
+import { useTextInputCursorFix } from '@/hooks/use-text-input-cursor-fix';
 import { Platform, TextInput } from 'react-native';
 
 function Input({
   className,
   onKeyDown,
+  value,
+  onChangeText,
+  onSelectionChange,
   ...props
 }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput> & { onKeyDown?: (e: never) => void }) {
+  const cursorFix = useTextInputCursorFix(value as string | undefined, onChangeText, onSelectionChange);
   return (
     <TextInput
       className={cn(
@@ -25,7 +30,9 @@ function Input({
         }),
         className
       )}
+      value={value}
       {...props}
+      {...cursorFix}
       {...(Platform.OS === 'web' ? { onKeyDown: blockInsertKeyOverwriteMode(onKeyDown) } : null)}
     />
   );
