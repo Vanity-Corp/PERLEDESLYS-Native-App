@@ -9,8 +9,9 @@ import { VideoEmbed, type VideoEmbedProps } from "@/components/video-embed";
 
 // A small round button overlaid on a VideoEmbed that opens a real in-app
 // fullscreen player instead of the YouTube WebView's own (unreliable, since
-// the app was portrait-locked) fullscreen control. Rotates the device to
-// landscape for the duration and restores portrait on close.
+// the app was portrait-locked) fullscreen control. Stays portrait-locked —
+// videos always play full-screen in portrait (short-format), never rotate
+// the device to landscape.
 type FullscreenVideoButtonProps = Omit<VideoEmbedProps, "fullscreen" | "className" | "style"> & {
   className?: string;
 };
@@ -21,7 +22,7 @@ export function FullscreenVideoButton({ className, ...playerProps }: FullscreenV
   const enter = async () => {
     setOpen(true);
     if (Platform.OS !== "web") {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     }
   };
 
@@ -46,10 +47,10 @@ export function FullscreenVideoButton({ className, ...playerProps }: FullscreenV
         visible={open}
         animationType="fade"
         onRequestClose={exit}
-        supportedOrientations={["landscape"]}
+        supportedOrientations={["portrait"]}
         statusBarTranslucent
       >
-        <SafeAreaView className="flex-1 flex-row bg-black">
+        <SafeAreaView className="flex-1 bg-black">
           <VideoEmbed {...playerProps} fullscreen autoplay />
           <Pressable
             onPress={exit}

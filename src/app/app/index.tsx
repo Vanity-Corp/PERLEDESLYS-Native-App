@@ -190,38 +190,32 @@ export default function DashboardScreen() {
           </Link>
         </View>
 
-        {/* Live banner */}
-        {nextLive && (
-          <Link href="/app/lives" asChild>
-            <Pressable className="mx-5 mt-5 overflow-hidden rounded-3xl">
-              <View className="relative h-32 w-full">
-                <Image
-                  source={nextLive.image}
-                  contentFit="cover"
-                  style={{ width: "100%", height: "100%" }}
-                  accessibilityLabel={nextLive.title}
-                />
-                <GradientView tone="roseOverlay" className="absolute inset-0" />
-                <View className="absolute inset-0 flex-col justify-between p-4">
-                  <View className="flex-row items-center gap-1.5 self-start rounded-full bg-background/95 px-2.5 py-1">
-                    <Icon as={Radio} size={12} className="text-primary" />
-                    <Text className="text-[10px] font-semibold uppercase tracking-wider text-foreground">
-                      Prochain live
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-[11px] uppercase tracking-wider text-primary-foreground opacity-90">
-                      {nextLive.date} · {nextLive.time}
-                    </Text>
-                    <Text className="mt-0.5 font-display text-base leading-tight text-primary-foreground">
-                      {nextLive.title}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          </Link>
-        )}
+        {/* Founder card */}
+        <Section title="Votre conseillère">
+          <GradientView
+            tone="luxe"
+            className="mx-5 flex-row items-center gap-4 rounded-3xl p-5"
+          >
+            <Image
+              source={founderInfo.avatar}
+              contentFit="cover"
+              style={{ width: 64, height: 64, borderRadius: 32 }}
+              accessibilityLabel={founderInfo.name}
+            />
+            <View className="min-w-0 flex-1">
+              {/* Italiana ships one weight (400) only — `font-semibold` is a
+                  no-op on it in RN, leaving this too thin to read. Swapped to
+                  Cormorant Garamond Bold here only; other font-italiana
+                  usages are untouched. */}
+              <Text className="font-display-bold text-xl tracking-wide text-primary-foreground">
+                {founderInfo.fullName}
+              </Text>
+              <Text className="mt-1 text-[11px] leading-snug text-primary-foreground opacity-90">
+                {founderInfo.bio}
+              </Text>
+            </View>
+          </GradientView>
+        </Section>
 
         <MiniCalendar />
 
@@ -608,32 +602,38 @@ export default function DashboardScreen() {
           </View>
         </Section>
 
-        {/* Founder card */}
-        <Section title="Votre conseillère">
-          <GradientView
-            tone="luxe"
-            className="mx-5 flex-row items-center gap-4 rounded-3xl p-5"
-          >
-            <Image
-              source={founderInfo.avatar}
-              contentFit="cover"
-              style={{ width: 64, height: 64, borderRadius: 32 }}
-              accessibilityLabel={founderInfo.name}
-            />
-            <View className="min-w-0 flex-1">
-              {/* Italiana ships one weight (400) only — `font-semibold` is a
-                  no-op on it in RN, leaving this too thin to read. Swapped to
-                  Cormorant Garamond Bold here only; other font-italiana
-                  usages are untouched. */}
-              <Text className="font-display-bold text-xl tracking-wide text-primary-foreground">
-                {founderInfo.fullName}
-              </Text>
-              <Text className="mt-1 text-[11px] leading-snug text-primary-foreground opacity-90">
-                {founderInfo.bio}
-              </Text>
-            </View>
-          </GradientView>
-        </Section>
+        {/* Live banner */}
+        {nextLive && (
+          <Link href="/app/lives" asChild>
+            <Pressable className="mx-5 mt-5 overflow-hidden rounded-3xl">
+              <View className="relative h-32 w-full">
+                <Image
+                  source={nextLive.image}
+                  contentFit="cover"
+                  style={{ width: "100%", height: "100%" }}
+                  accessibilityLabel={nextLive.title}
+                />
+                <GradientView tone="roseOverlay" className="absolute inset-0" />
+                <View className="absolute inset-0 flex-col justify-between p-4">
+                  <View className="flex-row items-center gap-1.5 self-start rounded-full bg-background/95 px-2.5 py-1">
+                    <Icon as={Radio} size={12} className="text-primary" />
+                    <Text className="text-[10px] font-semibold uppercase tracking-wider text-foreground">
+                      Prochain live
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="text-[11px] uppercase tracking-wider text-primary-foreground opacity-90">
+                      {nextLive.date} · {nextLive.time}
+                    </Text>
+                    <Text className="mt-0.5 font-display text-base leading-tight text-primary-foreground">
+                      {nextLive.title}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          </Link>
+        )}
 
         {/* Customer reviews (testimonials) — approved reviews in an auto-looping
             carousel; a "Laisser un avis" CTA opens the submission screen. */}

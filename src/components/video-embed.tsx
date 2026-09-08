@@ -7,6 +7,20 @@ import { cn } from "@/lib/utils";
 import type { ImageRef } from "@/types/content";
 import { DEFAULT_YOUTUBE_URL, parseYouTube } from "./video-embed.shared";
 
+// YouTube's IFrame Player API has no param to hide just the share button
+// (`controls: 0` hides every control, not what we want) — this hides it via
+// a CSS rule injected into the WebView. Native-only: the web build
+// (video-embed.web.tsx) embeds a cross-origin youtube.com iframe the browser
+// blocks us from reaching into, so the share button can't be hidden there.
+const HIDE_SHARE_BUTTON_JS = `
+  (function () {
+    var style = document.createElement('style');
+    style.textContent = '.ytp-share-button, .ytp-share-panel { display: none !important; }';
+    document.head.appendChild(style);
+  })();
+  true;
+`;
+
 // Native (iOS/Android) YouTube player using react-native-youtube-iframe (pure
 // JS over react-native-webview). We measure the container width and render the
 // player at an exact 16:9 height so it always fits its frame. The web build
@@ -112,7 +126,11 @@ function VideoEmbed({
             rel: false,
             modestbranding: true,
           }}
-          webViewProps={{ allowsInlineMediaPlayback: true, allowsFullscreenVideo: true }}
+          webViewProps={{
+            allowsInlineMediaPlayback: true,
+            allowsFullscreenVideo: true,
+            injectedJavaScript: HIDE_SHARE_BUTTON_JS,
+          }}
           webViewStyle={{ backgroundColor: "transparent" }}
         />
       )}
