@@ -21,7 +21,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AddNoteButton } from "@/components/add-note-button";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
@@ -332,10 +331,6 @@ function VideoDetail({
         </View>
       </View>
     </ScrollView>
-    <AddNoteButton
-      contextLabel={`Vidéo : ${video.title}`}
-      contextHref={`/app/videos/${video.id}`}
-    />
     </View>
   );
 }

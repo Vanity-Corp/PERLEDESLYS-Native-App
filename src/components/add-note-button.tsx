@@ -17,13 +17,13 @@ import { useNotes } from "@/lib/local-store";
 
 // The web's NotesFAB (kitchen-haven-club/src/components/NotesFAB.tsx) is a
 // floating bottom-right button mounted globally, detecting context from the
-// current route for every screen in the app. Per the user's explicit
-// direction, note-taking here keeps the floating-button look but is scoped
-// to single-item content pages instead (recipe detail, video detail, and
-// tips detail once that screen exists) — each page renders its own
-// `AddNoteButton` with a fixed context, rather than a route-based global
-// affordance. The dialog itself is sized to nearly fill the screen rather
-// than the small centered `DialogContent` default.
+// current route. This is mounted the same way now — by GlobalFabs
+// (src/components/global-fabs.tsx), which resolves contextLabel/contextHref
+// from the current route and only renders this at all on the content pages
+// where it makes sense (recipe detail, video detail, tips). This component
+// itself stays route-agnostic: it just renders the trigger + dialog for
+// whatever context it's given. The dialog itself is sized to nearly fill the
+// screen rather than the small centered `DialogContent` default.
 type AddNoteButtonProps = {
   contextLabel: string;
   contextHref: string;
@@ -46,13 +46,12 @@ export function AddNoteButton({
 
   return (
     <>
-      {/* Stacked directly below the global AI FAB (52x52 at bottom-44 right-4
-          in ai-chat.tsx) — same size and right offset, ~8px gap between them
-          — instead of floating separately at bottom-6, where it used to
-          clash with both the AI button and the bottom tab bar underneath. */}
+      {/* No absolute positioning — stacked as a plain flex child below the AI
+          FAB by GlobalFabs (src/components/global-fabs.tsx). Same 52x52 size
+          as the AI button so the two read as one pair. */}
       <Pressable
         onPress={() => setOpen(true)}
-        className="absolute bottom-[116px] right-4 h-[52px] w-[52px] items-center justify-center rounded-full bg-accent shadow-lg shadow-black/20"
+        className="h-[52px] w-[52px] items-center justify-center rounded-full bg-accent shadow-lg shadow-black/20"
       >
         <Icon
           as={StickyNotePlus}

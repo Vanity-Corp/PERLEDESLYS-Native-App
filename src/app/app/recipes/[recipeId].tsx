@@ -22,7 +22,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AddNoteButton } from "@/components/add-note-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -236,10 +235,6 @@ export default function RecipeDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
-      <AddNoteButton
-        contextLabel={`Recette : ${recipe.title}`}
-        contextHref={`/app/recipes/${recipe.id}`}
-      />
     </View>
   );
 }

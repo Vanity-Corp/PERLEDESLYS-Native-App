@@ -5,7 +5,6 @@ import { memo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AddNoteButton } from "@/components/add-note-button";
 import { NetworkError } from "@/components/network-error";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
@@ -135,7 +134,7 @@ export default function TipsScreen() {
         <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
           Un mot de Ghania
         </Text>
-        <Text className="mt-2 font-italiana text-xl leading-snug text-primary-foreground">
+        <Text className="mt-2 font-display-bold text-xl leading-snug text-primary-foreground">
           «&nbsp;{quote}&nbsp;»
         </Text>
       </GradientView>
@@ -219,9 +218,6 @@ export default function TipsScreen() {
           />
         }
       />
-      {/* Same note affordance as recipe/video detail, scoped to the tips
-          section (reuses the shared notes store + dialog). */}
-      <AddNoteButton contextLabel="Astuces & conseils" contextHref="/app/tips" />
     </SafeAreaView>
   );
 }

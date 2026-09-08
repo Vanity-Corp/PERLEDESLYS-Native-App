@@ -1,9 +1,9 @@
 import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
 
-import { AIChat } from "@/components/ai-chat";
 import { BottomNav } from "@/components/bottom-nav";
 import { EventReminders } from "@/components/event-reminders";
+import { GlobalFabs } from "@/components/global-fabs";
 import { PushNotifications } from "@/components/push-notifications";
 import { useAuth } from "@/lib/auth-store";
 
@@ -31,9 +31,10 @@ export default function AppLayout() {
   if (!token) return <Redirect href="/(auth)" />;
   if (user?.status !== "ACTIVE") return <Redirect href="/(auth)/activate" />;
 
-  // AIChat is a global floating overlay mounted above the tab navigator (the
-  // web mounts <AIChat /> globally in MobileShell too). Wrapping <Tabs> in a
-  // flex-1 View lets the FAB's `absolute` positioning measure against the full
+  // GlobalFabs (AI assistant + conditional "add note" button) is a global
+  // floating overlay mounted above the tab navigator (the web mounts its
+  // NotesFAB/AI trigger globally in MobileShell too). Wrapping <Tabs> in a
+  // flex-1 View lets its `absolute` positioning measure against the full
   // screen and float over every /app/* screen.
   return (
     <View style={{ flex: 1 }}>
@@ -75,7 +76,7 @@ export default function AppLayout() {
           options={{ href: null, title: "Notifications" }}
         />
       </Tabs>
-      <AIChat />
+      <GlobalFabs />
       <EventReminders />
       <PushNotifications />
     </View>

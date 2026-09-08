@@ -257,10 +257,11 @@ export function AIChat() {
 
   return (
     <>
+      {/* No absolute positioning here — GlobalFabs (src/components/global-fabs.tsx)
+          stacks this as a plain flex child alongside AddNoteButton. */}
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityLabel="Ouvrir l'assistante IA"
-        className="absolute bottom-44 right-4 z-40"
       >
         <GradientView
           tone="gold"
