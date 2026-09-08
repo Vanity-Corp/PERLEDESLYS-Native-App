@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Bell, Calendar, Clock, PlayCircle, Radio, Search } from "lucide-react-native";
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -33,6 +33,16 @@ import type { Live } from "@/types/content";
 export default function LivesScreen() {
   const onRefresh = useHardRefresh([["lives"]]);
   const [tab, setTab] = useState<"upcoming" | "replays">("upcoming");
+  const listRef = useRef<FlatList<Live>>(null);
+  // Resets scroll position on tab switch (upcoming/replays are unrelated
+  // datasets, so keeping whatever offset the old list had makes no sense for
+  // the new one) via the list's own imperative API instead of remounting the
+  // whole FlatList with `key={tab}` — that used to also tear down and rebuild
+  // ListHeaderComponent (back button, hero card, search bar, tab pills) on
+  // every switch, not just the row content below it.
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [tab]);
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q);
   const search = debouncedQ || undefined;
@@ -193,9 +203,7 @@ export default function LivesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <FlatList
-        // Keying on `tab` resets scroll position when switching lists, since
-        // upcoming/replays are otherwise unrelated datasets.
-        key={tab}
+        ref={listRef}
         data={activeQ.isLoading || activeQ.isError ? [] : items}
         renderItem={({ item }) => <LiveRow live={item} />}
         keyExtractor={(l) => l.id}
