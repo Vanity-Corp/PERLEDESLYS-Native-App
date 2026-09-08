@@ -1,9 +1,10 @@
 import type { Tabs } from "expo-router";
 import { BookOpen, Home, PlayCircle, Radio, User, type LucideIcon } from "lucide-react-native";
 import type { ComponentProps } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useLayoutMetricsStore } from "@/lib/layout-metrics-store";
 import { cn } from "@/lib/utils";
 
 // Web source: kitchen-haven-club/src/components/BottomNav.tsx
@@ -44,12 +45,19 @@ type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tab
 
 export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const setBottomNavHeight = useLayoutMetricsStore((s) => s.setBottomNavHeight);
   const routes = state.routes.filter((route) =>
     (TAB_ORDER as readonly string[]).includes(route.name),
   );
 
+  // Real rendered height (icons + labels + padding all vary if the design
+  // changes) — shared with GlobalFabs so the draggable FAB pair can't be
+  // dropped underneath this bar. See layout-metrics-store.ts.
+  const onLayout = (e: LayoutChangeEvent) => setBottomNavHeight(e.nativeEvent.layout.height);
+
   return (
     <View
+      onLayout={onLayout}
       className="w-full flex-row items-center justify-around bg-primary pt-2"
       style={{ paddingBottom: Math.max(insets.bottom, 12) }}
     >

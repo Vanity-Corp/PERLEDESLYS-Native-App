@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddNoteButton } from "@/components/add-note-button";
 import { AIChat } from "@/components/ai-chat";
 import { useFabPosition } from "@/lib/fab-position-store";
+import { useLayoutMetricsStore } from "@/lib/layout-metrics-store";
 import { useRecipe, useVideo } from "@/lib/content-queries";
 
 // AI assistant + "add note" FABs, mounted once at the app root (AppLayout)
@@ -27,6 +28,14 @@ import { useRecipe, useVideo } from "@/lib/content-queries";
 // position dragging is an offset from.
 const DEFAULT_RIGHT = 16;
 const DEFAULT_BOTTOM = 176;
+
+// Extra breathing room kept between the FABs and the status bar / tab bar
+// while dragging — without this they can be dropped flush against either,
+// which reads as merged into it rather than just clear of it.
+const EDGE_GAP = 8;
+// Used for the bottom clamp before BottomNav's real (measured) height is
+// known yet — see layout-metrics-store.ts.
+const FALLBACK_BOTTOM_NAV_HEIGHT = 70;
 
 function useNoteContext(): { contextLabel: string; contextHref: string } | null {
   const pathname = usePathname();
@@ -62,6 +71,7 @@ export function GlobalFabs() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { offset, setOffset } = useFabPosition();
+  const bottomNavHeight = useLayoutMetricsStore((s) => s.bottomNavHeight);
 
   // Measured after first paint — starts at the single-button size so bounds
   // math below is sane even before onLayout fires.
@@ -92,8 +102,13 @@ export function GlobalFabs() {
   const defaultY = screenHeight - DEFAULT_BOTTOM - size.height;
   const minX = -defaultX;
   const maxX = screenWidth - size.width - defaultX;
-  const minY = insets.top - defaultY;
-  const maxY = screenHeight - insets.bottom - size.height - defaultY;
+  // Top: stay clear of the status bar/notch (insets.top) plus a gap so it
+  // doesn't sit flush against it. Bottom: stay clear of the *actual*
+  // rendered tab bar (measured height, not just insets.bottom — the custom
+  // bar is taller than the OS safe-area inset alone) plus the same gap.
+  const minY = insets.top + EDGE_GAP - defaultY;
+  const maxY =
+    screenHeight - (bottomNavHeight || FALLBACK_BOTTOM_NAV_HEIGHT) - EDGE_GAP - size.height - defaultY;
 
   const persist = (dx: number, dy: number) => setOffset({ dx, dy });
 
