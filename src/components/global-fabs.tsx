@@ -98,6 +98,11 @@ export function GlobalFabs() {
   const persist = (dx: number, dy: number) => setOffset({ dx, dy });
 
   const pan = Gesture.Pan()
+    // Only arms after a genuine hold — a quick swipe starting on/near the
+    // FABs (e.g. a nearby carousel or horizontal scroll) never activates
+    // this, so it can't steal that gesture. Plain taps are unaffected
+    // either way (they never move far enough to matter).
+    .activateAfterLongPress(350)
     .onStart(() => {
       dragStartTx.value = tx.value;
       dragStartTy.value = ty.value;
