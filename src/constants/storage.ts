@@ -5,4 +5,7 @@ export const STORAGE_KEYS = {
   HISTORY: "pdl.history",
   SETTINGS: "pdl.settings",
   FAVORITES: "pdl.favorites",
+  // Native-only addition, no web equivalent: the dragged offset of the
+  // global AI/note FAB pair from its default position (see global-fabs.tsx).
+  FAB_POSITION: "pdl.fabPosition",
 } as const;
