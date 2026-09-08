@@ -184,7 +184,12 @@ function VideoDetail({
             onProgress={onProgress}
             posterUri={video.image}
           />
-          <FullscreenVideoButton url={video.vimeoUrl} title={video.title} startAt={startAt} onProgress={onProgress} />
+          <FullscreenVideoButton
+            url={video.vimeoUrl}
+            title={video.title}
+            getStartAt={() => progressRef.current.sec}
+            onProgress={onProgress}
+          />
           <SafeAreaView
             className="absolute inset-x-0 top-0"
             edges={["top"]}
