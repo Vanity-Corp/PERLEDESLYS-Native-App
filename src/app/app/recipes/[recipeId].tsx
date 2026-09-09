@@ -9,7 +9,7 @@ import {
   PlayCircle,
   Users,
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -26,7 +26,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
-import { FullscreenVideoButton } from "@/components/video-fullscreen-button";
 import { useHardRefresh, useRecipe } from "@/lib/content-queries";
 import { useFavorites, useHistory } from "@/lib/local-store";
 
@@ -43,11 +42,6 @@ export default function RecipeDetailScreen() {
   // Reveals the inline tutorial video player when "Voir le tutoriel vidéo" is
   // tapped (only rendered when the recipe actually has a video link).
   const [showTutorial, setShowTutorial] = useState(false);
-  // No persisted resume for recipe videos (unlike videos/[videoId].tsx) —
-  // this is just a live, session-only position so the fullscreen button can
-  // seed the fullscreen player at wherever the inline one currently is,
-  // instead of always restarting it from 0.
-  const tutorialProgressRef = useRef(0);
   const onRefresh = useHardRefresh([["recipe", recipeId]]);
   const { isFavorite, toggle } = useFavorites();
   const { upsert } = useHistory();
@@ -224,19 +218,7 @@ export default function RecipeDetailScreen() {
           {recipe.vimeoUrl ? (
             showTutorial ? (
               <View className="relative mt-7 overflow-hidden rounded-2xl">
-                <VideoEmbed
-                  url={recipe.vimeoUrl}
-                  title={recipe.title}
-                  posterUri={recipe.image}
-                  onProgress={(sec) => {
-                    tutorialProgressRef.current = sec;
-                  }}
-                />
-                <FullscreenVideoButton
-                  url={recipe.vimeoUrl}
-                  title={recipe.title}
-                  getStartAt={() => tutorialProgressRef.current}
-                />
+                <VideoEmbed url={recipe.vimeoUrl} title={recipe.title} posterUri={recipe.image} />
               </View>
             ) : (
               <Pressable

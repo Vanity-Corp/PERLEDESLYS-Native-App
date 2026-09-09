@@ -25,7 +25,6 @@ import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
 import { youTubeWatchUrl } from "@/components/video-embed.shared";
-import { FullscreenVideoButton } from "@/components/video-fullscreen-button";
 import { useHardRefresh, useVideo, useVideos } from "@/lib/content-queries";
 import { formatSeconds, useFavorites, useHistory } from "@/lib/local-store";
 import type { Video } from "@/types/content";
@@ -184,12 +183,6 @@ function VideoDetail({
             onProgress={onProgress}
             posterUri={video.image}
           />
-          <FullscreenVideoButton
-            url={video.vimeoUrl}
-            title={video.title}
-            getStartAt={() => progressRef.current.sec}
-            onProgress={onProgress}
-          />
           <SafeAreaView
             className="absolute inset-x-0 top-0"
             edges={["top"]}
@@ -238,10 +231,9 @@ function VideoDetail({
         </View>
       )}
 
-      {/* In-app fullscreen (the Maximize2 button overlaid on the player above)
-          now works via FullscreenVideoButton — the WebView's own fullscreen
-          control was unreliable while the app was portrait-locked. This link
-          stays as a fallback for opening the video in the YouTube app/site. */}
+      {/* Fallback for opening the video in the YouTube app/site — separate
+          from the WebView's own built-in fullscreen control (allowsFullscreenVideo
+          on the player above). */}
       {watchUrl && (
         <Pressable
           onPress={() => Linking.openURL(watchUrl)}
