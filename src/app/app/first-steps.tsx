@@ -102,7 +102,7 @@ export default function FirstStepsScreen() {
             <Text className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground opacity-90">
               Mot de Ghania
             </Text>
-            <Text className="mt-1 font-italiana text-2xl text-primary-foreground">
+            <Text className="mt-1 font-display-bold text-2xl text-primary-foreground">
               {welcomeMessage.subject}
             </Text>
           </GradientView>

@@ -1,24 +1,24 @@
-import couscous from "@/assets/perledeslys/perle-couscous.jpg";
-import tajine from "@/assets/perledeslys/perle-tajine.jpg";
-import rechta from "@/assets/perledeslys/perle-rechta.jpg";
-import chakhchoukha from "@/assets/perledeslys/perle-chakhchoukha.jpg";
 import baghrir from "@/assets/perledeslys/perle-baghrir.jpg";
-import cornes from "@/assets/perledeslys/perle-cornes.jpg";
-import makrout from "@/assets/perledeslys/perle-makrout.jpg";
-import chorba from "@/assets/perledeslys/perle-chorba.jpg";
 import bourek from "@/assets/perledeslys/perle-bourek.jpg";
-import msemen from "@/assets/perledeslys/perle-msemen.jpg";
-import mhalbi from "@/assets/perledeslys/perle-mhalbi.jpg";
-import the from "@/assets/perledeslys/perle-the.jpg";
-import tm7 from "@/assets/perledeslys/perle-tm7.jpg";
+import chakhchoukha from "@/assets/perledeslys/perle-chakhchoukha.jpg";
+import chorba from "@/assets/perledeslys/perle-chorba.jpg";
+import cornes from "@/assets/perledeslys/perle-cornes.jpg";
+import couscous from "@/assets/perledeslys/perle-couscous.jpg";
 import founder from "@/assets/perledeslys/perle-hero-2.png";
 import liveImg from "@/assets/perledeslys/perle-live.jpg";
+import makrout from "@/assets/perledeslys/perle-makrout.jpg";
+import mhalbi from "@/assets/perledeslys/perle-mhalbi.jpg";
+import msemen from "@/assets/perledeslys/perle-msemen.jpg";
+import rechta from "@/assets/perledeslys/perle-rechta.jpg";
+import tajine from "@/assets/perledeslys/perle-tajine.jpg";
+import the from "@/assets/perledeslys/perle-the.jpg";
+import tm7 from "@/assets/perledeslys/perle-tm7.jpg";
 
 import { FIRST_STEPS_VIDEO_ID } from "@/constants/content";
 import type {
-  Article,
   AppEvent,
   AppUser,
+  Article,
   FaqItem,
   FounderInfo,
   Live,
