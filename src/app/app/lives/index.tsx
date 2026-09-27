@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowLeft, Bell, Calendar, Clock, PlayCircle, Radio, Search } from "lucide-react-native";
 import { memo, useEffect, useRef, useState } from "react";
-import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { FlatList, Linking, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { NetworkError } from "@/components/network-error";
@@ -118,20 +118,32 @@ export default function LivesScreen() {
                 </View>
               </View>
               <View className="mt-4 flex-row gap-2">
-                {/* Join the live (YouTube player) + "Me rappeler" adds it to the
-                    device calendar, pre-filled. */}
-                <Link
-                  href={{ pathname: "/app/lives/[liveId]", params: { liveId: next.id } }}
-                  asChild
-                >
+                {/* Join the live (opens its Microsoft Teams link; falls back to
+                    the detail screen until the admin has set one) + "Me
+                    rappeler" adds it to the device calendar, pre-filled. */}
+                {next.teamsUrl ? (
                   <Pressable
                     role="button"
+                    onPress={() => void Linking.openURL(next.teamsUrl!)}
                     className="flex-row items-center gap-1.5 rounded-full bg-background px-4 py-2"
                   >
                     <Icon as={PlayCircle} size={16} className="text-foreground" />
                     <Text className="text-xs font-semibold text-foreground">Rejoindre le live</Text>
                   </Pressable>
-                </Link>
+                ) : (
+                  <Link
+                    href={{ pathname: "/app/lives/[liveId]", params: { liveId: next.id } }}
+                    asChild
+                  >
+                    <Pressable
+                      role="button"
+                      className="flex-row items-center gap-1.5 rounded-full bg-background px-4 py-2"
+                    >
+                      <Icon as={PlayCircle} size={16} className="text-foreground" />
+                      <Text className="text-xs font-semibold text-foreground">Rejoindre le live</Text>
+                    </Pressable>
+                  </Link>
+                )}
                 <Pressable
                   role="button"
                   onPress={() => {

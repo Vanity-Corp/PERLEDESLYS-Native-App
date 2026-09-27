@@ -1,7 +1,8 @@
 import { Link, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, CalendarDays, Clock, Radio } from "lucide-react-native";
+import { ArrowLeft, CalendarDays, Clock, PlayCircle, Radio } from "lucide-react-native";
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -14,9 +15,11 @@ import { Icon } from "@/components/ui/icon";
 import { VideoEmbed } from "@/components/video-embed";
 import { useHardRefresh, useLivesQuery } from "@/lib/content-queries";
 
-// Live/replay player (WIRING_PLAN B4). Resolves the live from the shared list
-// query and plays its YouTube link. No resume for lives (they're event streams,
-// not resumable lessons).
+// Live detail. Upcoming / on-air lives are joined through their Microsoft
+// Teams link (opened in Teams or the browser); replays play the YouTube link
+// the admin adds once the recording is uploaded. Resolves the live from the
+// shared list query. No resume for replays (they're event recordings, not
+// resumable lessons).
 export default function LiveDetailScreen() {
   const { liveId } = useLocalSearchParams<{ liveId: string }>();
   const livesQ = useLivesQuery();
@@ -39,6 +42,9 @@ export default function LiveDetailScreen() {
     );
   }
 
+  const isReplay = live.status === "Replay";
+  const replayUrl = isReplay ? live.vimeoUrl : null;
+
   return (
     <View className="flex-1 bg-background">
       <ScrollView
@@ -50,9 +56,9 @@ export default function LiveDetailScreen() {
           />
         }
       >
-        {live.vimeoUrl ? (
+        {replayUrl ? (
           <View className="relative">
-            <VideoEmbed url={live.vimeoUrl} title={live.title} />
+            <VideoEmbed url={replayUrl} title={live.title} />
             <SafeAreaView
               className="absolute inset-x-0 top-0"
               edges={["top"]}
@@ -101,10 +107,29 @@ export default function LiveDetailScreen() {
           <Text className="mt-4 text-sm leading-relaxed text-muted-foreground">
             {live.description}
           </Text>
-          {!live.vimeoUrl && (
+          {isReplay ? (
+            !replayUrl && (
+              <View className="mt-5 rounded-2xl border border-border bg-card p-4">
+                <Text className="text-sm text-muted-foreground">
+                  Le replay de ce live sera bientôt disponible.
+                </Text>
+              </View>
+            )
+          ) : live.teamsUrl ? (
+            <Pressable
+              role="button"
+              onPress={() => void Linking.openURL(live.teamsUrl!)}
+              className="mt-5 flex-row items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5"
+            >
+              <Icon as={PlayCircle} size={18} className="text-primary-foreground" />
+              <Text className="text-sm font-semibold text-primary-foreground">
+                Rejoindre sur Microsoft Teams
+              </Text>
+            </Pressable>
+          ) : (
             <View className="mt-5 rounded-2xl border border-border bg-card p-4">
               <Text className="text-sm text-muted-foreground">
-                La vidéo de ce live n'est pas encore disponible.
+                Le lien pour rejoindre ce live sera bientôt disponible.
               </Text>
             </View>
           )}

@@ -105,6 +105,10 @@ export type Live = {
   status: "À venir" | "En direct" | "Replay";
   description: string;
   platform: string;
+  // Microsoft Teams meeting link to join the live (upcoming / on air).
+  teamsUrl?: string | null;
+  // YouTube link of the replay, added by the admin once it's uploaded
+  // (historical field name).
   vimeoUrl?: string | null;
 };
 
