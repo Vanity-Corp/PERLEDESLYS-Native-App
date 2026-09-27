@@ -4,11 +4,11 @@
     "slug": "perle-de-lys",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "perledelys",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/images/icon.png",
+      "icon": "./assets/images/app-icon.png",
       "bundleIdentifier": "com.ghania.perledeslys",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -17,13 +17,22 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#3E090E",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#D8C0A5",
+        "foregroundImage": "./assets/images/app-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.ghania.perledeslys",
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "output": "static",
@@ -35,10 +44,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#3E090E",
+          "image": "./assets/images/splash-logo.png",
+          "imageWidth": 220,
           "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "imageWidth": 145
           }
         }
       ],
@@ -72,9 +82,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a03f7d0d-9558-4a38-b2a2-fabe2cef201e"
+        "projectId": "b5a5a199-0a7b-4cd0-8ea3-44c1bbe78592"
       }
     },
-    "owner": "mohmost"
+    "owner": "scaloris"
   }
 }

@@ -1,11 +1,19 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+
+// Continues the native splash (app.json → expo-splash-screen: gold logo on
+// the brand brown) once JS takes over, then fades it out — same color, same
+// logo at the same size and spot, so the hand-off is seamless.
+const SPLASH_BACKGROUND = '#3E090E';
+const SPLASH_LOGO_WIDTH = Platform.OS === 'android' ? 145 : 220;
+// splash-logo.png is 1200×1017.
+const SPLASH_LOGO_HEIGHT = (SPLASH_LOGO_WIDTH * 1017) / 1200;
 
 export function AnimatedSplashOverlay() {
   const [visible, setVisible] = useState(true);
@@ -14,20 +22,14 @@ export function AnimatedSplashOverlay() {
 
   const splashKeyframe = new Keyframe({
     0: {
-      transform: [{ scale: INITIAL_SCALE_FACTOR }],
       opacity: 1,
     },
-    20: {
+    30: {
       opacity: 1,
-    },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
     },
     100: {
       opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
+      easing: Easing.out(Easing.quad),
     },
   });
 
@@ -39,8 +41,15 @@ export function AnimatedSplashOverlay() {
           scheduleOnRN(setVisible, false);
         }
       })}
+      pointerEvents="none"
       style={styles.backgroundSolidColor}
-    />
+    >
+      <Image
+        source={require('@/assets/images/splash-logo.png')}
+        style={{ width: SPLASH_LOGO_WIDTH, height: SPLASH_LOGO_HEIGHT }}
+        contentFit="contain"
+      />
+    </Animated.View>
   );
 }
 
@@ -126,7 +135,9 @@ const styles = StyleSheet.create({
   },
   backgroundSolidColor: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: SPLASH_BACKGROUND,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1000,
   },
 });
