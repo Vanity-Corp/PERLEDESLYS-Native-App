@@ -45,20 +45,26 @@ export type Recipe = {
   steps: string[];
 };
 
-// A curated, ordered set of existing recipes (e.g. "Menu Ramadan"). List
-// endpoints return the bare `Menu`; the detail endpoint resolves `recipeIds`
-// server-side into `MenuDetail.recipes` (same recipe shape as everywhere
-// else in the app — no separate "menu recipe" model).
+// A weekly menu: one week (its title is e.g. "Semaine 7 sept - 14 sept 2026")
+// whose recipes are grouped per day ("Lun", "Mar", …) via `days`. Legacy menus
+// have no `days` and just list their flat `recipeIds`. List endpoints return
+// the bare `Menu`; the detail endpoint resolves ids server-side into
+// `MenuDetail.recipes` / `MenuDetail.days[].recipes` (same recipe shape as
+// everywhere else in the app — no separate "menu recipe" model).
 export type Menu = {
   id: string;
   title: string;
   image: ImageRef;
   description?: string;
   recipeIds: string[];
+  days?: { label: string; recipeIds: string[] }[];
   createdAt?: string;
 };
 
-export type MenuDetail = Menu & { recipes: Recipe[] };
+export type MenuDetail = Omit<Menu, "days"> & {
+  recipes: Recipe[];
+  days: { label: string; recipes: Recipe[] }[];
+};
 
 export type Video = {
   id: string;

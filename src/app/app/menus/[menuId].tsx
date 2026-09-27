@@ -1,12 +1,53 @@
 import { Image } from "expo-image";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock } from "lucide-react-native";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GradientView } from "@/components/ui/gradient-view";
 import { Icon } from "@/components/ui/icon";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useHardRefresh, useMenu } from "@/lib/content-queries";
+import type { Recipe } from "@/types/content";
+
+function RecipeTile({ recipe: r }: { recipe: Recipe }) {
+  return (
+    <Link
+      href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }}
+      asChild
+    >
+      <Pressable style={{ width: "47%" }}>
+        <View className="relative aspect-square overflow-hidden rounded-2xl">
+          <Image
+            source={r.image}
+            contentFit="cover"
+            style={{ width: "100%", height: "100%" }}
+            accessibilityLabel={r.title}
+          />
+          <View className="absolute left-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
+            <Text className="text-[9px] font-semibold uppercase text-foreground">
+              {r.category}
+            </Text>
+          </View>
+        </View>
+        <View className="mt-2">
+          <Text className="text-sm font-medium leading-snug text-foreground" numberOfLines={2}>
+            {r.title}
+          </Text>
+          <View className="mt-1 flex-row items-center gap-2">
+            <View className="flex-row items-center gap-0.5">
+              <Icon as={Clock} size={10} className="text-muted-foreground" />
+              <Text className="text-[10px] text-muted-foreground">{r.time}</Text>
+            </View>
+            <Text className="text-[10px] text-muted-foreground">·</Text>
+            <Text className="text-[10px] text-muted-foreground">{r.difficulty}</Text>
+          </View>
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
 
 // Mirrors recipes/[recipeId].tsx's hero shell; the recipe grid below reuses
 // the home page's "Recettes" tile layout (index.tsx) for `menu.recipes`,
@@ -15,6 +56,9 @@ export default function MenuDetailScreen() {
   const { menuId } = useLocalSearchParams<{ menuId: string }>();
   const { data: menu, isLoading, isFetching } = useMenu(menuId);
   const onRefresh = useHardRefresh([["menu", menuId]]);
+  // Selected day tab (index into menu.days). Falls back to the first day if the
+  // list shrinks after a refresh.
+  const [dayIdx, setDayIdx] = useState(0);
 
   if (isLoading) {
     return (
@@ -74,50 +118,66 @@ export default function MenuDetailScreen() {
             </Text>
           ) : null}
 
-          <Text className="mt-5 mb-3 font-display text-xl font-semibold text-foreground">
-            Recettes du menu
-          </Text>
-          <View className="flex-row flex-wrap gap-3">
-            {menu.recipes.map((r) => (
-              <Link
-                key={r.id}
-                href={{ pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }}
-                asChild
+          {menu.days.length > 0 ? (
+            <>
+              {/* Day tabs — same pill style as the Recettes category filters. */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="gap-2 pb-1"
+                className="-mx-5 mt-5 px-5"
               >
-                <Pressable style={{ width: "47%" }}>
-                  <View className="relative aspect-square overflow-hidden rounded-2xl">
-                    <Image
-                      source={r.image}
-                      contentFit="cover"
-                      style={{ width: "100%", height: "100%" }}
-                      accessibilityLabel={r.title}
-                    />
-                    <View className="absolute left-2 top-2 rounded-full bg-background/95 px-2 py-0.5">
-                      <Text className="text-[9px] font-semibold uppercase text-foreground">
-                        {r.category}
-                      </Text>
-                    </View>
-                  </View>
-                  <View className="mt-2">
-                    <Text
-                      className="text-sm font-medium leading-snug text-foreground"
-                      numberOfLines={2}
+                <ToggleGroup
+                  type="single"
+                  value={String(Math.min(dayIdx, menu.days.length - 1))}
+                  onValueChange={(v) => v && setDayIdx(Number(v))}
+                >
+                  {menu.days.map((day, i) => (
+                    <ToggleGroupItem
+                      key={`${day.label}-${i}`}
+                      value={String(i)}
+                      className={`mr-2 h-auto min-w-0 rounded-full border px-4 py-2 ${
+                        i === Math.min(dayIdx, menu.days.length - 1)
+                          ? "border-primary bg-primary"
+                          : "border-border bg-card"
+                      }`}
                     >
-                      {r.title}
-                    </Text>
-                    <View className="mt-1 flex-row items-center gap-2">
-                      <View className="flex-row items-center gap-0.5">
-                        <Icon as={Clock} size={10} className="text-muted-foreground" />
-                        <Text className="text-[10px] text-muted-foreground">{r.time}</Text>
-                      </View>
-                      <Text className="text-[10px] text-muted-foreground">·</Text>
-                      <Text className="text-[10px] text-muted-foreground">{r.difficulty}</Text>
-                    </View>
-                  </View>
-                </Pressable>
-              </Link>
-            ))}
-          </View>
+                      <Text
+                        className={`text-xs font-medium ${
+                          i === Math.min(dayIdx, menu.days.length - 1)
+                            ? "text-primary-foreground"
+                            : "text-foreground"
+                        }`}
+                      >
+                        {day.label}
+                      </Text>
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </ScrollView>
+              <View className="mt-4 flex-row flex-wrap gap-3">
+                {(menu.days[Math.min(dayIdx, menu.days.length - 1)]?.recipes ?? []).map((r) => (
+                  <RecipeTile key={r.id} recipe={r} />
+                ))}
+              </View>
+              {(menu.days[Math.min(dayIdx, menu.days.length - 1)]?.recipes.length ?? 0) === 0 ? (
+                <Text className="mt-6 text-center text-sm text-muted-foreground">
+                  Aucune recette ce jour-là.
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Text className="mt-5 mb-3 font-display text-xl font-semibold text-foreground">
+                Recettes du menu
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
+                {menu.recipes.map((r) => (
+                  <RecipeTile key={r.id} recipe={r} />
+                ))}
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
     </View>
