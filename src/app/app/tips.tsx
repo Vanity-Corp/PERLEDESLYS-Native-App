@@ -14,18 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
+  useArticles,
   useArticlesInfiniteQuery,
+  useCategories,
   useHardRefresh,
   useWhoAmI,
 } from "@/lib/content-queries";
 import type { Article } from "@/types/content";
 
-// Web source: kitchen-haven-club/src/routes/app/tips/index.tsx
-//
-// Category switcher uses the same ToggleGroup-as-independent-pills pattern (and
-// the same flat-bg-accent selected-state simplification vs. the web's
-// bg-gradient-luxe) already established by the Recipes list (Task 18) — see
-// that screen's notes for the full reasoning.
+// Category pills come from the dashboard-managed "article" categories (same
+// source as the Recettes/Vidéos filters); when that list is empty they fall
+// back to the distinct categories actually present on the articles, so the
+// pills always match real content instead of a hardcoded list.
 //
 // Copy note: the web's "Le carnet de Lys" / "Le mot de Lys" refer to the
 // founder, renamed "Ghania" in the v2 client rebrand — updated here for
@@ -33,15 +33,6 @@ import type { Article } from "@/types/content";
 //
 // Article rows link to the article detail screen (/app/articles/[articleId]),
 // which renders the rich-text content authored in the dashboard.
-const CATS = [
-  "Tout",
-  "Ramadan",
-  "Organisation",
-  "Entretien",
-  "Astuces",
-  "Techniques",
-  "Inspiration",
-];
 
 const ArticleCard = memo(function ArticleCard({ article: a }: { article: Article }) {
   return (
@@ -94,10 +85,18 @@ export default function TipsScreen() {
   const quote =
     who.quote ||
     "Cuisiner, c'est offrir de l'amour. Et le faire au TM7, c'est se libérer du temps pour les siens.";
+  const managedCategories = useCategories("article");
+  const allArticles = useArticles();
+  const CATS = [
+    "Tout",
+    ...(managedCategories.length > 0
+      ? managedCategories
+      : [...new Set(allArticles.map((a) => a.category))]),
+  ];
   const [cat, setCat] = useState("Tout");
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q);
-  const onRefresh = useHardRefresh([["articles"]]);
+  const onRefresh = useHardRefresh([["articles"], ["categories", "article"]]);
 
   const articlesQ = useArticlesInfiniteQuery({
     category: cat === "Tout" ? undefined : cat,
@@ -141,7 +140,7 @@ export default function TipsScreen() {
 
       <View className="mt-5 px-5">
         <View className="justify-center ">
-          <View className="pointer-events-none absolute left-4 z-10">
+          <View className="pointer-events-none absolute left-4 z-10" style={{ elevation: 4 }}>
             <Icon as={Search} size={16} className="text-muted-foreground" />
           </View>
           <Input
