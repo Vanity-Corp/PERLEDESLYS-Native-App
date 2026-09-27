@@ -156,7 +156,7 @@ export default function LivesScreen() {
 
       <View className="mx-5 mt-6">
         <View className="justify-center ">
-          <View className="pointer-events-none absolute left-4 z-10">
+          <View className="pointer-events-none absolute left-4 z-10" style={{ elevation: 4 }}>
             <Icon as={Search} size={16} className="text-muted-foreground" />
           </View>
           <Input
