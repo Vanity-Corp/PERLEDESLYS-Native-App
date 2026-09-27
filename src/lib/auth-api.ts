@@ -191,6 +191,10 @@ export const authApi = {
       schema: authUserSchema,
     }),
 
+  // Permanently deletes the member's account and data (204, empty body).
+  deleteAccount: (token: string) =>
+    request("/auth/me", { method: "DELETE", token, schema: z.null() }),
+
   // Always resolves (the backend never reveals whether the email exists).
   // The reset itself now happens entirely on the web page the email links to
   // (backend-rendered, POSTs to /auth/reset-password itself) — no in-app step.

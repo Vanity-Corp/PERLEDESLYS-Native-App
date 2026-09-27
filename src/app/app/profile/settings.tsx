@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { Link } from "expo-router";
-import { ArrowLeft, Bell, Camera, Save } from "lucide-react-native";
+import { Link, useRouter } from "expo-router";
+import { ArrowLeft, Bell, Camera, Save, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -15,9 +15,10 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ApiError, uploadImage } from "@/lib/auth-api";
+import { ApiError, authApi, uploadImage } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/local-store";
+import { unregisterPushToken } from "@/lib/push";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB (matches the backend)
 const ALLOWED_AVATAR = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -36,12 +37,15 @@ export default function SettingsScreen() {
   const user = useAuth((s) => s.user);
   const token = useAuth((s) => s.token);
   const updateProfile = useAuth((s) => s.updateProfile);
+  const logout = useAuth((s) => s.logout);
+  const router = useRouter();
   const [settings, setSettings] = useSettings();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatar, setAvatar] = useState(user?.avatar ?? "");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const initials = (
     (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
@@ -121,6 +125,41 @@ export default function SettingsScreen() {
       setSaving(false);
     }
   });
+
+  // Account deletion (required by Google Play for apps with sign-up). The
+  // backend drops the device's push tokens with the user, so only the local
+  // copy needs clearing — hence unregisterPushToken() without the auth token.
+  const onDeleteAccount = () => {
+    Alert.alert(
+      "Supprimer mon compte",
+      "Votre compte et toutes vos données seront définitivement supprimés. Cette action est irréversible.",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            if (!token) return;
+            setError(null);
+            setDeleting(true);
+            try {
+              await authApi.deleteAccount(token);
+              void unregisterPushToken();
+              logout();
+              router.replace("/(auth)");
+            } catch (e) {
+              setError(
+                e instanceof ApiError
+                  ? e.message
+                  : "Impossible de supprimer le compte.",
+              );
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -230,6 +269,23 @@ export default function SettingsScreen() {
             </>
           )}
         </GradientButton>
+
+        <Pressable
+          onPress={onDeleteAccount}
+          disabled={deleting}
+          className="mx-5 mt-4 flex-row items-center justify-center gap-2 rounded-2xl border border-border bg-card py-4"
+        >
+          {deleting ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <>
+              <Icon as={Trash2} size={16} className="text-destructive" />
+              <Text className="font-medium text-destructive">
+                Supprimer mon compte
+              </Text>
+            </>
+          )}
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
