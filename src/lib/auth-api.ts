@@ -78,26 +78,40 @@ export async function uploadImage(
     name: file.name,
     type: file.type,
   } as unknown as Blob);
-  let res: Response;
+  // XMLHttpRequest, not fetch: since Expo SDK 55 the global fetch is Expo's own
+  // implementation, which rejects React Native's `{ uri, name, type }` file
+  // part ("Unsupported FormDataPart implementation"). RN's XHR still streams
+  // those local files natively, so no extra native module is needed.
+  let status: number;
+  let body: string;
   try {
-    res = await fetch(`${API_URL}/api/uploads`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
+    ({ status, body } = await new Promise<{ status: number; body: string }>(
+      (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_URL}/api/uploads`);
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.onload = () => resolve({ status: xhr.status, body: xhr.responseText });
+        xhr.onerror = () => reject(new Error("réseau indisponible"));
+        xhr.ontimeout = () => reject(new Error("délai dépassé"));
+        xhr.timeout = 60_000;
+        xhr.send(form);
+      },
+    ));
   } catch (e) {
     // Surface the real error instead of a blanket "can't reach the server" —
-    // fetch() throws for genuine network failures too, but also for e.g. a
-    // picked file URI it can't actually read, which looks identical to the
-    // user unless the underlying message is shown.
+    // a failed request also throws for e.g. a picked file URI it can't read,
+    // which looks identical to the user unless the underlying message is shown.
     const detail = e instanceof Error && e.message ? ` (${e.message})` : "";
     throw new ApiError(`Impossible de joindre le serveur${detail}.`, 0, "NETWORK");
   }
-  const json = (await res.json().catch(() => null)) as
-    | { url?: string; message?: string }
-    | null;
-  if (!res.ok || !json?.url) {
-    throw new ApiError(json?.message ?? "Échec du téléversement.", res.status);
+  let json: { url?: string; message?: string } | null = null;
+  try {
+    json = JSON.parse(body) as { url?: string; message?: string };
+  } catch {
+    json = null;
+  }
+  if (status < 200 || status >= 300 || !json?.url) {
+    throw new ApiError(json?.message ?? "Échec du téléversement.", status);
   }
   return json.url;
 }
