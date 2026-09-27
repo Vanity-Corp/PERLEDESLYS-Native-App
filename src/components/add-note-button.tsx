@@ -27,15 +27,26 @@ import { useNotes } from "@/lib/local-store";
 type AddNoteButtonProps = {
   contextLabel: string;
   contextHref: string;
+  // Notifies GlobalFabs when this button's own dialog opens/closes, so it can
+  // hide the whole draggable FAB pair while it's open — otherwise the pair
+  // (wherever it was last dragged to) stays visible/touchable on top of the
+  // dialog and blocks touches in that spot.
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function AddNoteButton({
   contextLabel,
   contextHref,
+  onOpenChange,
 }: AddNoteButtonProps) {
   const { add } = useNotes();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [text, setText] = useState("");
+
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
 
   const onSave = () => {
     if (!text.trim()) return;

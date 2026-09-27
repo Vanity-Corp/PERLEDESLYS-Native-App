@@ -24,10 +24,12 @@ import { useRecipe, useVideo } from "@/lib/content-queries";
 // useFabPosition (AsyncStorage), instead of always snapping back to this
 // default bottom-right dock.
 
-// Matches the pair's previous static `bottom-44 right-4` — the docked
-// position dragging is an offset from.
+// The docked position dragging is an offset from. The bottom is kept high
+// enough that the pair clears the bottom-right corner of an inline video
+// sitting at the end of a screen (e.g. a recipe's "Voir le tutoriel vidéo"
+// player), where YouTube draws its fullscreen button.
 const DEFAULT_RIGHT = 16;
-const DEFAULT_BOTTOM = 176;
+const DEFAULT_BOTTOM = 216;
 
 // Extra breathing room kept between the FABs and the status bar / tab bar
 // while dragging — without this they can be dropped flush against either,
@@ -72,6 +74,16 @@ export function GlobalFabs() {
   const insets = useSafeAreaInsets();
   const { offset, setOffset } = useFabPosition();
   const bottomNavHeight = useLayoutMetricsStore((s) => s.bottomNavHeight);
+
+  // The chat/note dialogs aren't rendered in a true separate native overlay
+  // window (see ai-chat.tsx), so this pair — draggable anywhere on screen and
+  // still mounted/touchable while a dialog is open — can end up sitting on
+  // top of an open dialog at wherever it was last dragged to, blocking
+  // touches (including scroll) in that spot. Hiding the whole pair while
+  // either dialog is open removes it from the hit-test entirely.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const hidden = chatOpen || noteOpen;
 
   // Measured after first paint — starts at the single-button size so bounds
   // math below is sane even before onLayout fires.
@@ -141,14 +153,20 @@ export function GlobalFabs() {
     <GestureDetector gesture={pan}>
       <Animated.View
         onLayout={onLayout}
-        className="absolute bottom-44 right-4 z-40 items-end gap-2"
-        style={animatedStyle}
+        pointerEvents={hidden ? "none" : "auto"}
+        className="absolute z-40 items-end gap-2"
+        style={[
+          { right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM },
+          animatedStyle,
+          hidden && { opacity: 0 },
+        ]}
       >
-        <AIChat />
+        <AIChat onOpenChange={setChatOpen} />
         {noteContext && (
           <AddNoteButton
             contextLabel={noteContext.contextLabel}
             contextHref={noteContext.contextHref}
+            onOpenChange={setNoteOpen}
           />
         )}
       </Animated.View>
