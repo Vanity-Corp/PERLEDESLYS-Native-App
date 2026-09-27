@@ -1,4 +1,11 @@
 import * as DialogPrimitive from "@rn-primitives/dialog";
+import {
+  Chat,
+  useStreamingMessages,
+  type AvatarProps,
+  type BubbleProps,
+  type IMessage,
+} from "@kesha-antonov/react-native-chat";
 import { Link } from "expo-router";
 import {
   BookOpen,
@@ -11,12 +18,11 @@ import {
   User as UserIcon,
   X,
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
+  type LayoutChangeEvent,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -46,22 +52,37 @@ import type { Recipe, Video } from "@/types/content";
 //
 // `aiChat()` (Task 9) already returns the raw error string; the web's `😔 `
 // prefix is added here at render time, matching the web's own separation.
+//
+// The message list/composer/keyboard-avoidance is `@kesha-antonov/react-native-chat`
+// (a maintained react-native-gifted-chat continuation) instead of a hand-rolled
+// ScrollView — a hand-rolled `scrollToEnd` raced the native layout pass under
+// release-build (Hermes) timing, and a separately-managed KeyboardAvoidingView
+// stacked on top of a draggable FAB overlay made touches unreliable. Every
+// visible piece (bubbles, avatars, input, suggestions, thinking indicator) is
+// still our own exact markup via the library's render props — only the
+// scrolling/keyboard mechanics are delegated.
 
-// `id` is the persisted AiMessage id — present once a reply has finished
-// streaming (or was loaded from history); absent for the hardcoded greeting
-// and for a reply still mid-stream. Feedback (thumbs) is only offerable once
-// `id` exists, since it's what the rating endpoint targets.
-type Msg = {
-  id?: string;
-  role: "user" | "assistant";
-  content: string;
+const CURRENT_USER = { _id: "user" };
+const ASSISTANT_USER = { _id: "assistant", name: "Perle, l'IA de Ghania" };
+
+function newId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+// `aiMessageId` is the persisted AiMessage id — present once a reply has
+// finished streaming (or was loaded from history); absent for the hardcoded
+// greeting and for a reply still mid-stream. Feedback (thumbs) is only
+// offerable once it exists, since it's what the rating endpoint targets.
+type Msg = IMessage & {
+  aiMessageId?: string;
   feedback?: "up" | "down" | null;
 };
 
 const GREETING: Msg = {
-  role: "assistant",
-  content:
-    "Bonjour 🌸 Je suis l'assistante IA de Ghania. Pose-moi une question sur une recette, une astuce TM7 ou colle-moi une recette à convertir au Thermomix.",
+  _id: "greeting",
+  user: ASSISTANT_USER,
+  createdAt: new Date(),
+  text: "Bonjour 🌸 Je suis l'assistante IA de Ghania. Pose-moi une question sur une recette, une astuce TM7 ou colle-moi une recette à convertir au Thermomix.",
 };
 
 const SUGGESTIONS = [
@@ -153,17 +174,35 @@ function FormattedMessage({ content }: { content: string }) {
   );
 }
 
-export function AIChat() {
+type AIChatProps = {
+  // Notifies GlobalFabs when this dialog opens/closes, so it can hide the
+  // whole draggable FAB pair while it's open — otherwise the pair (wherever
+  // it was last dragged to) stays visible/touchable on top of the dialog and
+  // blocks touches — including scroll gestures — in that spot.
+  onOpenChange?: (open: boolean) => void;
+};
+
+export function AIChat({ onOpenChange }: AIChatProps = {}) {
   const token = useAuth((s) => s.token);
   const recipes = useRecipes();
   const videos = useVideos();
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([GREETING]);
+  const [open, setOpenState] = useState(false);
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const insets = useSafeAreaInsets();
+
+  // Newest-first (the library's default order) so new messages simply appear
+  // at the visually-fixed bottom of an inverted list — no manual
+  // scroll-to-end call, so nothing can race a layout pass.
+  const { messages, setMessages, append, startStream } = useStreamingMessages<Msg>({
+    initialMessages: [GREETING],
+  });
 
   // Seeds the chat with the member's persisted history on first open, so it
   // survives an app restart — falls back to the greeting if there's none.
@@ -172,69 +211,73 @@ export function AIChat() {
     let active = true;
     fetchAiHistory({ token }).then((rows) => {
       if (!active) return;
-      if (rows.length > 0) setMessages(rows.map((r) => ({ ...r })));
+      if (rows.length > 0) {
+        // The API returns history oldest-first; the inverted list wants
+        // newest-first.
+        setMessages(
+          rows
+            .map(
+              (r): Msg => ({
+                _id: r.id,
+                aiMessageId: r.id,
+                text: r.content,
+                createdAt: new Date(),
+                user: r.role === "user" ? CURRENT_USER : ASSISTANT_USER,
+                feedback: r.role === "assistant" ? r.feedback : undefined,
+              }),
+            )
+            .reverse(),
+        );
+      }
       setHistoryLoaded(true);
     });
     return () => {
       active = false;
     };
-  }, [token, historyLoaded]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages, loading]);
+  }, [token, historyLoaded, setMessages]);
 
   async function send(text: string) {
     const value = text.trim();
     if (!value || loading || !token) return;
-    const next: Msg[] = [...messages, { role: "user", content: value }];
-    setMessages(next);
+
+    // Chronological order for the API, ending with the new message — the
+    // list itself stays newest-first.
+    const history = messages
+      .slice()
+      .reverse()
+      .map((m) => ({
+        role: m.user._id === CURRENT_USER._id ? ("user" as const) : ("assistant" as const),
+        content: m.text,
+      }));
+
+    append({ _id: newId(), text: value, createdAt: new Date(), user: CURRENT_USER });
     setInput("");
     setLoading(true);
 
-    // The assistant's reply grows in place as deltas arrive; its index is a
-    // closure variable (not state) since stream events fire synchronously in
-    // sequence, one at a time — no risk of it going stale between them.
-    let assistantIndex = -1;
+    const stream = startStream({ user: ASSISTANT_USER });
+    let hasContent = false;
 
     await streamAiChat({
-      messages: next.map(({ role, content }) => ({ role, content })),
+      messages: [...history, { role: "user", content: value }],
       token,
       onEvent: (event) => {
-        setLoading(false); // hide the "réfléchit…" spinner as soon as anything happens
+        setLoading(false); // hide the "réfléchit…" indicator as soon as anything happens
         if (event.type === "delta") {
-          setMessages((prev) => {
-            if (assistantIndex === -1) {
-              assistantIndex = prev.length;
-              return [...prev, { role: "assistant", content: event.text }];
-            }
-            const copy = [...prev];
-            const current = copy[assistantIndex];
-            copy[assistantIndex] = { ...current, content: current.content + event.text };
-            return copy;
-          });
+          hasContent = true;
+          stream.push(event.text);
         } else if (event.type === "done") {
-          setMessages((prev) => {
-            if (assistantIndex === -1) return prev;
-            const copy = [...prev];
-            copy[assistantIndex] = { ...copy[assistantIndex], id: event.messageId, feedback: null };
-            return copy;
-          });
+          stream.done();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m._id === stream.id
+                ? { ...m, aiMessageId: event.messageId, feedback: null }
+                : m,
+            ),
+          );
         } else if (event.type === "error") {
           const errorText = `😔 ${event.error}`;
-          setMessages((prev) => {
-            if (assistantIndex === -1) {
-              assistantIndex = prev.length;
-              return [...prev, { role: "assistant", content: errorText }];
-            }
-            const copy = [...prev];
-            const current = copy[assistantIndex];
-            copy[assistantIndex] = {
-              ...current,
-              content: current.content ? `${current.content}\n\n${errorText}` : errorText,
-            };
-            return copy;
-          });
+          stream.push(hasContent ? `\n\n${errorText}` : errorText);
+          stream.done();
         }
       },
     });
@@ -242,18 +285,181 @@ export function AIChat() {
     setLoading(false);
   }
 
-  function rate(index: number, value: "up" | "down") {
+  function rate(id: Msg["_id"], value: "up" | "down") {
     if (!token) return;
     setMessages((prev) => {
-      const msg = prev[index];
-      if (!msg.id) return prev;
+      const msg = prev.find((m) => m._id === id);
+      if (!msg?.aiMessageId) return prev;
       const nextValue = msg.feedback === value ? null : value; // tap again to clear
-      void rateAiMessage({ token, messageId: msg.id, feedback: nextValue });
-      const copy = [...prev];
-      copy[index] = { ...msg, feedback: nextValue };
-      return copy;
+      void rateAiMessage({ token, messageId: msg.aiMessageId, feedback: nextValue });
+      return prev.map((m) => (m._id === id ? { ...m, feedback: nextValue } : m));
     });
   }
+
+  const renderAvatar = useCallback(
+    ({ position }: Pick<AvatarProps<Msg>, "position">) =>
+      position === "right" ? (
+        <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-secondary">
+          <Icon as={UserIcon} size={14} className="text-foreground" />
+        </View>
+      ) : (
+        <GradientView
+          tone="luxe"
+          className="h-7 w-7 shrink-0 items-center justify-center rounded-full"
+        >
+          <Icon as={Bot} size={14} className="text-primary-foreground" />
+        </GradientView>
+      ),
+    [],
+  );
+
+  const renderBubble = useCallback(
+    ({ currentMessage, position }: Pick<BubbleProps<Msg>, "currentMessage" | "position">) => {
+      const isAssistant = position === "left";
+      const refs = isAssistant
+        ? parseReferences(currentMessage.text, recipes, videos)
+        : [];
+      const clean = isAssistant ? cleanContent(currentMessage.text) : currentMessage.text;
+      return (
+        <View
+          className={
+            position === "right"
+              ? "max-w-[82%] rounded-2xl rounded-tr-sm"
+              : "max-w-[82%] rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-2.5"
+          }
+        >
+          {position === "right" ? (
+            <GradientView tone="luxe" className="rounded-2xl rounded-tr-sm px-3.5 py-2.5">
+              <Text className="text-[13.5px] text-primary-foreground">
+                {currentMessage.text}
+              </Text>
+            </GradientView>
+          ) : (
+            <FormattedMessage content={clean} />
+          )}
+          {refs.length > 0 && (
+            <View className="mt-2.5 gap-1.5 border-t border-border/60 pt-2.5">
+              {refs.map((r) => (
+                <Link
+                  key={r.id}
+                  href={
+                    r.type === "recipe"
+                      ? { pathname: "/app/recipes/[recipeId]", params: { recipeId: r.id } }
+                      : { pathname: "/app/videos/[videoId]", params: { videoId: r.id } }
+                  }
+                  asChild
+                >
+                  <Pressable
+                    onPress={() => setOpen(false)}
+                    className="flex-row items-center gap-2 rounded-xl bg-secondary/60 px-2.5 py-1.5"
+                  >
+                    <Icon
+                      as={r.type === "recipe" ? BookOpen : PlayCircle}
+                      size={14}
+                      className="text-primary"
+                    />
+                    <Text className="flex-1 text-[12px] font-medium text-primary" numberOfLines={1}>
+                      {r.title}
+                    </Text>
+                  </Pressable>
+                </Link>
+              ))}
+            </View>
+          )}
+          {isAssistant && currentMessage.aiMessageId && (
+            <View className="mt-2 flex-row items-center gap-3 border-t border-border/60 pt-2">
+              <Pressable onPress={() => rate(currentMessage._id, "up")} hitSlop={8}>
+                <Icon
+                  as={ThumbsUp}
+                  size={14}
+                  className={currentMessage.feedback === "up" ? "text-primary" : "text-muted-foreground"}
+                  fill={currentMessage.feedback === "up" ? "currentColor" : "none"}
+                />
+              </Pressable>
+              <Pressable onPress={() => rate(currentMessage._id, "down")} hitSlop={8}>
+                <Icon
+                  as={ThumbsDown}
+                  size={14}
+                  className={currentMessage.feedback === "down" ? "text-primary" : "text-muted-foreground"}
+                  fill={currentMessage.feedback === "down" ? "currentColor" : "none"}
+                />
+              </Pressable>
+            </View>
+          )}
+        </View>
+      );
+    },
+    [recipes, videos],
+  );
+
+  const renderChatFooter = useCallback(
+    () => (
+      <>
+        {messages.length <= 1 && !loading && (
+          <View className="flex-row flex-wrap gap-2 border-t border-border bg-background px-4 py-2">
+            {SUGGESTIONS.map((s) => (
+              <Pressable
+                key={s}
+                onPress={() => send(s)}
+                className="rounded-full bg-secondary px-2.5 py-1.5"
+              >
+                <Text className="text-[11px] text-foreground/80">{s}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {loading && (
+          <View className="flex-row justify-start gap-2 bg-background px-4 pb-3 pt-1">
+            <GradientView tone="luxe" className="h-7 w-7 items-center justify-center rounded-full">
+              <Icon as={Bot} size={14} className="text-primary-foreground" />
+            </GradientView>
+            <View className="flex-row items-center gap-2 rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-2.5">
+              <ActivityIndicator size="small" />
+              <Text className="text-xs text-muted-foreground">L'assistante réfléchit…</Text>
+            </View>
+          </View>
+        )}
+      </>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [messages.length, loading],
+  );
+
+  const renderInputToolbar = useCallback(
+    () => (
+      <View
+        className="flex-row items-end gap-2 border-t border-border bg-background p-3"
+        style={{ paddingBottom: 12 + insets.bottom }}
+      >
+        <Textarea
+          value={input}
+          onChangeText={setInput}
+          placeholder="Écris ta question ou colle une recette…"
+          className="max-h-32 min-h-0 flex-1 rounded-2xl"
+          numberOfLines={3}
+        />
+        <Pressable
+          onPress={() => send(input)}
+          disabled={!input.trim() || loading}
+          className={`h-10 w-10 items-center justify-center rounded-full ${
+            !input.trim() || loading ? "opacity-50" : ""
+          }`}
+        >
+          <GradientView tone="luxe" className="h-10 w-10 items-center justify-center rounded-full">
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Icon as={Send} size={16} className="text-primary-foreground" />
+            )}
+          </GradientView>
+        </Pressable>
+      </View>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [input, loading, insets.bottom],
+  );
+
+  const onHeaderLayout = (e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height);
 
   return (
     <>
@@ -279,15 +485,14 @@ export function AIChat() {
         <DialogPortal>
           {/* Self-contained overlay — deliberately NOT the shared DialogOverlay.
               On iOS that wraps content in react-native-screens' FullWindowOverlay
-              (a separate native window), and KeyboardAvoidingView cannot measure
-              the keyboard from inside it, so the input stayed hidden behind the
-              keyboard. Here the KeyboardAvoidingView wraps the sheet directly in
-              the app's own window, on both platforms, using `behavior="padding"`
-              to lift the sheet above the keyboard. `padding` is driven purely by
-              JS Keyboard events (keyboardWillShow/keyboardDidShow), not by the
-              native window resize — important because `android.edgeToEdgeEnabled`
-              (on for this project) makes Android's `adjustResize` a no-op, so
-              relying on the OS to resize the window no longer works. */}
+              (a separate native window), which would also isolate <Chat>'s own
+              keyboard handling from the real keyboard. Kept directly in the
+              app's own window, on both platforms. The sheet itself is a plain
+              bottom-docked View (not KeyboardAvoidingView) — <Chat> measures its
+              own on-screen position via react-native-keyboard-controller and
+              raises just its composer above the keyboard, accounting for the
+              fixed header via `keyboardVerticalOffset`, so the sheet's own
+              size/position never needs to change. */}
           <View
             className="absolute bottom-0 left-0 right-0 top-0"
             style={{ pointerEvents: "box-none" }}
@@ -296,15 +501,12 @@ export function AIChat() {
               className="absolute bottom-0 left-0 right-0 top-0 bg-black/50"
               onPress={() => setOpen(false)}
             />
-            <KeyboardAvoidingView
-              behavior="padding"
-              className="flex-1 justify-end"
-              style={{ pointerEvents: "box-none" }}
-            >
+            <View className="flex-1 justify-end" style={{ pointerEvents: "box-none" }}>
               <DialogPrimitive.Content className="mx-auto h-[85%] w-full max-w-md overflow-hidden rounded-t-3xl bg-background sm:rounded-3xl">
                 {/* Header */}
                 <GradientView
                   tone="luxe"
+                  onLayout={onHeaderLayout}
                   className="flex-row items-center gap-3 px-5 py-4"
                 >
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-background/20">
@@ -325,190 +527,30 @@ export function AIChat() {
                   </DialogPrimitive.Close>
                 </GradientView>
 
-                {/* Messages */}
-                <ScrollView
-                  ref={scrollRef}
-                  className="flex-1 bg-secondary/30"
-                  contentContainerClassName="gap-3 px-4 py-4"
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {messages.map((m, i) => {
-                    const refs =
-                      m.role === "assistant"
-                        ? parseReferences(m.content, recipes, videos)
-                        : [];
-                    const clean =
-                      m.role === "assistant"
-                        ? cleanContent(m.content)
-                        : m.content;
-                    return (
-                      <View
-                        key={i}
-                        className={`flex-row gap-2 ${
-                          m.role === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {m.role === "assistant" && (
-                          <GradientView
-                            tone="luxe"
-                            className="h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                          >
-                            <Icon as={Bot} size={14} className="text-primary-foreground" />
-                          </GradientView>
-                        )}
-                        <View
-                          className={
-                            m.role === "user"
-                              ? "max-w-[82%] rounded-2xl rounded-tr-sm"
-                              : "max-w-[82%] rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-2.5"
-                          }
-                        >
-                          {m.role === "user" ? (
-                            <GradientView
-                              tone="luxe"
-                              className="rounded-2xl rounded-tr-sm px-3.5 py-2.5"
-                            >
-                              <Text className="text-[13.5px] text-primary-foreground">
-                                {m.content}
-                              </Text>
-                            </GradientView>
-                          ) : (
-                            <FormattedMessage content={clean} />
-                          )}
-                          {refs.length > 0 && (
-                            <View className="mt-2.5 gap-1.5 border-t border-border/60 pt-2.5">
-                              {refs.map((r) => (
-                                <Link
-                                  key={r.id}
-                                  href={
-                                    r.type === "recipe"
-                                      ? {
-                                          pathname: "/app/recipes/[recipeId]",
-                                          params: { recipeId: r.id },
-                                        }
-                                      : {
-                                          pathname: "/app/videos/[videoId]",
-                                          params: { videoId: r.id },
-                                        }
-                                  }
-                                  asChild
-                                >
-                                  <Pressable
-                                    onPress={() => setOpen(false)}
-                                    className="flex-row items-center gap-2 rounded-xl bg-secondary/60 px-2.5 py-1.5"
-                                  >
-                                    <Icon
-                                      as={r.type === "recipe" ? BookOpen : PlayCircle}
-                                      size={14}
-                                      className="text-primary"
-                                    />
-                                    <Text
-                                      className="flex-1 text-[12px] font-medium text-primary"
-                                      numberOfLines={1}
-                                    >
-                                      {r.title}
-                                    </Text>
-                                  </Pressable>
-                                </Link>
-                              ))}
-                            </View>
-                          )}
-                          {m.role === "assistant" && m.id && (
-                            <View className="mt-2 flex-row items-center gap-3 border-t border-border/60 pt-2">
-                              <Pressable onPress={() => rate(i, "up")} hitSlop={8}>
-                                <Icon
-                                  as={ThumbsUp}
-                                  size={14}
-                                  className={m.feedback === "up" ? "text-primary" : "text-muted-foreground"}
-                                  fill={m.feedback === "up" ? "currentColor" : "none"}
-                                />
-                              </Pressable>
-                              <Pressable onPress={() => rate(i, "down")} hitSlop={8}>
-                                <Icon
-                                  as={ThumbsDown}
-                                  size={14}
-                                  className={m.feedback === "down" ? "text-primary" : "text-muted-foreground"}
-                                  fill={m.feedback === "down" ? "currentColor" : "none"}
-                                />
-                              </Pressable>
-                            </View>
-                          )}
-                        </View>
-                        {m.role === "user" && (
-                          <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-secondary">
-                            <Icon as={UserIcon} size={14} className="text-foreground" />
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                  {loading && (
-                    <View className="flex-row justify-start gap-2">
-                      <GradientView
-                        tone="luxe"
-                        className="h-7 w-7 items-center justify-center rounded-full"
-                      >
-                        <Icon as={Bot} size={14} className="text-primary-foreground" />
-                      </GradientView>
-                      <View className="flex-row items-center gap-2 rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-2.5">
-                        <ActivityIndicator size="small" />
-                        <Text className="text-xs text-muted-foreground">
-                          L'assistante réfléchit…
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </ScrollView>
-
-                {/* Suggestions */}
-                {messages.length <= 1 && !loading && (
-                  <View className="flex-row flex-wrap gap-2 border-t border-border bg-background px-4 py-2">
-                    {SUGGESTIONS.map((s) => (
-                      <Pressable
-                        key={s}
-                        onPress={() => send(s)}
-                        className="rounded-full bg-secondary px-2.5 py-1.5"
-                      >
-                        <Text className="text-[11px] text-foreground/80">{s}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-
-                {/* Input */}
-                <View
-                  className="flex-row items-end gap-2 border-t border-border bg-background p-3"
-                  style={{ paddingBottom: 12 + insets.bottom }}
-                >
-                  <Textarea
-                    value={input}
-                    onChangeText={setInput}
-                    placeholder="Écris ta question ou colle une recette…"
-                    className="max-h-32 min-h-0 flex-1 rounded-2xl"
-                    numberOfLines={3}
+                <View className="flex-1 bg-background">
+                  <Chat<Msg>
+                    messages={messages}
+                    user={CURRENT_USER}
+                    onSend={() => {}} // sending goes through our own composer/send(), not the library's
+                    colorScheme="light"
+                    // The library paints its own lavender-grey list background;
+                    // transparent lets the brand beige (bg-background) behind it show.
+                    theme={{ colors: { background: "transparent" } }}
+                    enableGestureHandlerRootView={false}
+                    isMessageGestureEnabled={false}
+                    isAvatarVisibleForEveryMessage
+                    isUserAvatarVisible
+                    renderAvatar={renderAvatar}
+                    renderBubble={renderBubble}
+                    renderChatFooter={renderChatFooter}
+                    renderInputToolbar={renderInputToolbar}
+                    renderDay={() => null}
+                    isDayAnimationEnabled={false}
+                    keyboardAvoidingViewProps={{ keyboardVerticalOffset: headerHeight }}
                   />
-                  <Pressable
-                    onPress={() => send(input)}
-                    disabled={!input.trim() || loading}
-                    className={`h-10 w-10 items-center justify-center rounded-full ${
-                      !input.trim() || loading ? "opacity-50" : ""
-                    }`}
-                  >
-                    <GradientView
-                      tone="luxe"
-                      className="h-10 w-10 items-center justify-center rounded-full"
-                    >
-                      {loading ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Icon as={Send} size={16} className="text-primary-foreground" />
-                      )}
-                    </GradientView>
-                  </Pressable>
                 </View>
               </DialogPrimitive.Content>
-            </KeyboardAvoidingView>
+            </View>
           </View>
         </DialogPortal>
       </Dialog>
