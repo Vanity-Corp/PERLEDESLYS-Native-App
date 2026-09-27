@@ -43,5 +43,4 @@ export type HistoryEntry = VideoHistoryEntry | RecipeHistoryEntry;
 // username-only and no PII is stored.
 export type UserSettings = {
   notifications: boolean;
-  darkTheme: boolean;
 };

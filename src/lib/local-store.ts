@@ -173,7 +173,6 @@ export function useFavorites() {
 // which took an `initial` argument per call — defaults are fixed here.
 const DEFAULT_SETTINGS: UserSettings = {
   notifications: true,
-  darkTheme: false,
 };
 
 type SettingsState = {

@@ -2,7 +2,6 @@ const { hairlineWidth } = require('nativewind/theme');
  
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
   // Actual source lives under src/ (src/app, src/components, ...) — the
   // default template globs only covered a root-level app/ and components/,
   // which don't exist here, so class scanning was silently missing the
@@ -45,8 +44,7 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // PERLEDESLYS accent tokens — not overridden in the web app's own
-        // .dark block either, so no dark-specific values here.
+        // PERLEDESLYS accent tokens.
         rose: 'hsl(var(--rose))',
         'rose-deep': 'hsl(var(--rose-deep))',
         gold: 'hsl(var(--gold))',
