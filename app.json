@@ -52,12 +52,18 @@
           }
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       [
         "expo-image-picker",
         {
           "photosPermission": "Autorisez l'accès à vos photos pour choisir votre avatar.",
-          "microphonePermission": false
+          "microphonePermission": false,
+          "cameraPermission": false
         }
       ],
       "expo-font",
@@ -73,7 +79,8 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Autorisez l'accès à votre calendrier pour ajouter un rappel de live."
+          "calendarPermission": "Autorisez l'accès à votre calendrier pour ajouter un rappel de live.",
+          "remindersPermission": false
         }
       ]
     ],
