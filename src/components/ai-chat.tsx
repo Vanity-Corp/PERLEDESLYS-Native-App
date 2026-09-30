@@ -21,7 +21,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  type LayoutChangeEvent,
   Pressable,
   Text,
   View,
@@ -194,7 +193,6 @@ export function AIChat({ onOpenChange }: AIChatProps = {}) {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
   const insets = useSafeAreaInsets();
 
   // Newest-first (the library's default order) so new messages simply appear
@@ -459,8 +457,6 @@ export function AIChat({ onOpenChange }: AIChatProps = {}) {
     [input, loading, insets.bottom],
   );
 
-  const onHeaderLayout = (e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height);
-
   return (
     <>
       {/* No absolute positioning here — GlobalFabs (src/components/global-fabs.tsx)
@@ -490,8 +486,7 @@ export function AIChat({ onOpenChange }: AIChatProps = {}) {
               app's own window, on both platforms. The sheet itself is a plain
               bottom-docked View (not KeyboardAvoidingView) — <Chat> measures its
               own on-screen position via react-native-keyboard-controller and
-              raises just its composer above the keyboard, accounting for the
-              fixed header via `keyboardVerticalOffset`, so the sheet's own
+              raises just its composer above the keyboard, so the sheet's own
               size/position never needs to change. */}
           <View
             className="absolute bottom-0 left-0 right-0 top-0"
@@ -506,7 +501,6 @@ export function AIChat({ onOpenChange }: AIChatProps = {}) {
                 {/* Header */}
                 <GradientView
                   tone="luxe"
-                  onLayout={onHeaderLayout}
                   className="flex-row items-center gap-3 px-5 py-4"
                 >
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-background/20">
@@ -546,7 +540,11 @@ export function AIChat({ onOpenChange }: AIChatProps = {}) {
                     renderInputToolbar={renderInputToolbar}
                     renderDay={() => null}
                     isDayAnimationEnabled={false}
-                    keyboardAvoidingViewProps={{ keyboardVerticalOffset: headerHeight }}
+                    // No keyboardVerticalOffset: Chat measures where it sits on screen
+                    // (this sheet's top offset + the header) and keeps the composer on
+                    // the keyboard. Passing only the header height REPLACED that
+                    // measurement with a value ~130px too small, so the composer
+                    // ended up behind the keyboard.
                   />
                 </View>
               </DialogPrimitive.Content>
