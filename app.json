@@ -77,7 +77,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": false,
+          "calendarPermission": "Perledeslys peut ajouter les lives auxquels vous souhaitez assister à votre calendrier.",
           "remindersPermission": false
         }
       ]
