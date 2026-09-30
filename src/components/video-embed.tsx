@@ -21,6 +21,35 @@ const HIDE_SHARE_BUTTON_JS = `
   true;
 `;
 
+// Subtitles off by default. `cc_load_policy: 0` (the library's default) only means "follow the
+// viewer's preference", and YouTube remembers a viewer's caption choice (and, on iOS, follows
+// the system Subtitles & Captioning setting), so once captions were ever on they came back on
+// for every video. Once the player's captions module has loaded, switch the track off. The CC
+// button stays, so a viewer can still turn subtitles on. The player object is a page global
+// (`var player` in the library's page script); ES5 only, for old Android WebViews.
+const HIDE_CAPTIONS_JS = `
+  (function () {
+    var handled = null;
+    var ticks = 0;
+    var timer = setInterval(function () {
+      ticks++;
+      try {
+        var p = window.player;
+        if (p && p !== handled && typeof p.getOptions === 'function') {
+          var modules = p.getOptions() || [];
+          var name = modules.indexOf('captions') !== -1 ? 'captions' : modules.indexOf('cc') !== -1 ? 'cc' : null;
+          if (name) {
+            p.setOption(name, 'track', {});
+            handled = p;
+          }
+        }
+      } catch (e) {}
+      if (ticks > 120) clearInterval(timer);
+    }, 500);
+  })();
+  true;
+`;
+
 // Native (iOS/Android) YouTube player using react-native-youtube-iframe (pure
 // JS over react-native-webview). We measure the container width and render the
 // player at an exact 16:9 height so it always fits its frame. The web build
@@ -125,11 +154,12 @@ function VideoEmbed({
             start: Math.max(0, Math.floor(startAt)),
             rel: false,
             modestbranding: true,
+            showClosedCaptions: false,
           }}
           webViewProps={{
             allowsInlineMediaPlayback: true,
             allowsFullscreenVideo: true,
-            injectedJavaScript: HIDE_SHARE_BUTTON_JS,
+            injectedJavaScript: HIDE_SHARE_BUTTON_JS + HIDE_CAPTIONS_JS,
           }}
           webViewStyle={{ backgroundColor: "transparent" }}
         />
